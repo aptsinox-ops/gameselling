@@ -307,9 +307,14 @@ export default function Footer({ settings }: FooterProps) {
             <div>© Copyright 2026. All Rights Reserved.</div>
             <div className="flex items-center gap-1 flex-shrink-0">
               <span>Developed by</span>
-              <span className="shimmer-hover text-white font-bold transition-colors cursor-pointer uppercase tracking-wider px-1 rounded custom-hover-text">
+              <a
+                href="https://t.me/The_Linuxuser"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shimmer-hover text-white font-bold transition-colors cursor-pointer uppercase tracking-wider px-1 rounded custom-hover-text no-underline inline-block"
+              >
                 SINOX
-              </span>
+              </a>
             </div>
           </div>
 
