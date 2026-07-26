@@ -4,10 +4,10 @@ import { db } from "@/lib/db" // আপনার Prisma বা DB Instance Path
 // PATCH: Navigation Item আপডেট করার জন্য
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await req.json()
     const { name, icon, href, targetAudience, slot, status } = body
 
@@ -39,10 +39,10 @@ export async function PATCH(
 // DELETE: Navigation Item মুছে ফেলার জন্য
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     if (!id) {
       return NextResponse.json({ error: "Nav Item ID is required" }, { status: 400 })
