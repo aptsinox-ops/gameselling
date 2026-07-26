@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 // 🟢 Next.js 15 ডাইনামিক রাউট ফিক্স সহ DELETE মেথড
 export async function DELETE(
   req: Request, 
-  { params }: { params: Promise<{ id: string }> } // 👈 params-কে Promise টাইপ দেওয়া হলো
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 🟢 Next.js 15 রুলস অনুযায়ী params-কে আগে await করতে হবে
+    // Next.js 15 নিয়ম অনুযায়ী params-কে await করা হয়েছে
     const { id } = await params;
 
     if (!id) {

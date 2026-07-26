@@ -17,10 +17,13 @@ export const TakaSvg = ({ className = "h-3.5 w-auto" }: { className?: string }) 
   );
 };
 
-export default async function ProductPage({ params }: { params: any }) {
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   try {
-    const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
-    const { slug } = resolvedParams;
+    const { slug } = await params;
 
     if (!slug) return notFound();
 
@@ -45,17 +48,17 @@ export default async function ProductPage({ params }: { params: any }) {
     let isLoggedIn = !!session?.user;
     let currentBalance = 0.00;
     let currentUserRole = "User";
-    let currentUserId: any = null; // 👈 ১. ইউজার আইডি ট্র্যাক করার জন্য ভ্যারিয়েবল
+    let currentUserId: any = null;
 
     if (isLoggedIn && session?.user?.email) {
       try {
         const userData = await prisma.user.findUnique({
           where: { email: session.user.email },
-          select: { id: true, balance: true, role: true } // 👈 ২. id সিলেক্ট করা হলো
+          select: { id: true, balance: true, role: true }
         });
         currentBalance = userData?.balance || 0.00;
         currentUserRole = userData?.role || "User";
-        currentUserId = userData?.id || (session.user as any)?.id || null; // 👈 ৩. আইডি অ্যাসাইন করা হলো
+        currentUserId = userData?.id || (session.user as any)?.id || null;
       } catch (authError) {
         console.error("Database user fetch failed:", authError);
       }
@@ -70,7 +73,6 @@ export default async function ProductPage({ params }: { params: any }) {
     const serializedProduct = plainData.product;
     const dbVariations = plainData.variations; 
 
-    // ফিল্ড ডেটা পার্সিং সেফটি হ্যান্ডলিং
     let finalFields: any[] = [];
     if (serializedProduct.dynamicFields) {
       if (Array.isArray(serializedProduct.dynamicFields)) {
@@ -103,7 +105,6 @@ export default async function ProductPage({ params }: { params: any }) {
           ) : (
             <div className="absolute inset-0 bg-gradient-to-r from-[#090d16] via-[#111e3d] to-[#090d16]" />
           )}
-
 
           <div className="absolute inset-x-0 bottom-0 top-0 z-10 flex items-center [padding:clamp(10px,3vw,16px)]">
             <div className="flex items-center [gap:clamp(8px,2.5vw,16px)]">
@@ -146,7 +147,7 @@ export default async function ProductPage({ params }: { params: any }) {
           takaSvg={<TakaSvg className="h-3 w-auto" />}
           primaryColor={brandColor} 
           siteSettings={siteSettings}
-          userId={currentUserId} // 👈 🎯 ৪. এই গুরুত্বপূর্ণ প্রপসটি পাস করা হলো!
+          userId={currentUserId}
         />
 
         {serializedProduct.rulesCondition && (
