@@ -1,0 +1,255 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  balance   Float    @default(0)
+  phone     String?  @unique // 👈 '?' যোগ করুন (গুগল ইউজারের শুরুতে ফোন নম্বর থাকে না)
+  email     String   @unique
+  password  String?  // 👈 '?' যোগ করুন (গুগল ইউজারের পাসওয়ার্ড থাকে না)
+  image     String?  
+  role      String   @default("User") 
+  orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  name      String
+  username  String   @unique
+  company   String
+  email     String   @unique
+  phone     String
+  password  String // Hashed Password
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slotNo    Int       @default(0)
+  status    Boolean   @default(true) 
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id               String      @id @default(uuid())
+  name             String
+  image            String
+  slug             String      @unique
+  status           String      @default("ON")
+  productType      String?
+  variationsDesign String?     @default("Grid")
+  resellerPercentage Float     @default(0) 
+  tutorialLink     String?
+  
+  isFreeFireAuto   Boolean     @default(false)
+  isUidNameChecker Boolean     @default(false)
+  isCoinSystem     Boolean     @default(false)
+  isPremiumUser    Boolean     @default(false)
+  isBanner         Boolean     @default(false)
+  
+  variationIcon    String?
+  bannerImage      String?
+  autoDeliveryType String?
+  description      String?     @db.Text
+  
+  isUrlProduct     Boolean     @default(false)
+  linkUrl          String?
+  productTag       String?
+  autoDeliveryWith String?
+  categoryType     String?
+  ffNameChecker    Boolean     @default(false)
+  dynamicFields    Json        @default("[\"Enter UID\"]")
+  rulesCondition   String?     @db.Text
+  itemBottomText   String?
+  footerLink       String?
+
+  isTagEnabled     Boolean     @default(true)
+  tagType          String      @default("AUTO")
+  tagColor         String?     @default("#ffffff")
+  tagBgColor       String?     @default("#2563eb")
+  tagIcon          String?
+
+  categoryId       String
+  category         Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variations       Variation[]
+  orders           Order[]     // 👈 নতুন অর্ডারের সাথে রিলেশন
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model Variation {
+  id         String   @id @default(uuid())
+  productId  String
+  title      String
+  amount     Float
+  price      Float // সিঙ্গেল সোর্স অফ ট্রুথ (যেমন: 100 Tk)
+  offerPrice Float?
+  bonus      Int      @default(0)
+  stock      Int      @default(0) 
+  image      String?
+  status     String   @default("ON")
+  sortOrder  Int      @default(0)
+
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orders     Order[]  // 👈 নতুন অর্ডারের সাথে রিলেশন
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model Order {
+  id          String    @id @default(uuid())
+  receiptNo   String    @unique 
+  userId      Int       
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variationId String
+  variation   Variation @relation(fields: [variationId], references: [id], onDelete: Cascade)
+  totalPrice  Float
+  quantity    Int       @default(1)
+  status      String    
+  inputValues Json      
+  voucherCode String?   
+  
+  paymentMethod String   @default("Wallet") // 👈 এই নতুন লাইনটি যুক্ত করুন
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+  @@index([variationId])
+}
+
+enum FloatingButton {
+  WHATSAPP
+  TELEGRAM
+  YOUTUBE
+  FACEBOOK
+  INSTAGRAM
+}
+
+// 🎯 লগইন সিস্টেমের জন্য নতুন Enum (1. OAuth, 2. Manual, 3. Manual + OAuth)
+enum LoginSystem {
+  OAUTH
+  MANUAL
+  OAUTH_MANUAL
+}
+
+model SiteSettings {
+  id                   String        @id @default("STATIC")
+  siteName             String        @default("DEMO BAZAR")
+  
+  // 🎯 SEO & Google Auth dynamic fields
+  siteTitle            String?       @default("DEMO BAZAR | Best Online Topup Store")
+  siteDescription      String?       @db.Text
+  googleClientId       String?
+  googleClientSecret   String?
+
+  logoUrl              String?
+  bannerUrl            String?
+  faviconUrl           String?
+  
+  // 🎯 Favicon এর পর নতুন ২টা ইমেজ ব্যানার ফিল্ড
+  walletPayBanner      String?
+  autoPaymentBanner    String?
+
+  // 🎯 General settings এর জন্য Login System ফিল্ড
+  loginSystem          LoginSystem    @default(OAUTH_MANUAL)
+
+  metaKeywords         String? 
+  noticeText           String?        @db.Text
+  isHeaderVisible      Boolean        @default(true)
+  isFooterVisible      Boolean        @default(true)
+  whatsappNumber       String?
+  telegramUsername     String?
+  
+  // Updated Social Links
+  youtubeLink          String?
+  facebookLink         String?
+  instagramLink        String?
+
+  activeFloatingButton FloatingButton @default(WHATSAPP)
+  adminEmail           String?
+
+  primaryColor         String         @default("#00d2ff")
+  backgroundColor      String         @default("#ffffff")
+
+  footerTopColor       String         @default("#061124")
+  footerBottomColor    String         @default("#1a3b7b")
+
+  isFooterCard1Visible Boolean        @default(true)
+  footerCard1Title1    String?        @default("Fast Delivery")
+  footerCard1Title2    String?        @default("Within 5-10 Minutes")
+  footerCard1Link      String?        @default("#")
+  footerCard1ImageUrl  String?
+
+  isFooterCard2Visible Boolean        @default(true)
+  footerCard2Title1    String?        @default("Support 24/7")
+  footerCard2Title2    String?        @default("Live Chat & WhatsApp")
+  footerCard2Link      String?        @default("#")
+  footerCard2ImageUrl  String?
+
+  paymentGateway   String? @default("Uddokotapay")
+  paymentBaseUrl   String?
+  paymentApiKey    String?
+  paymentMinAmount String? @default("1")
+  paymentMaxAmount String? @default("99999999")
+
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model Slider {
+  id        String   @id @default(cuid())
+  type      String   @default("BANNER") // BANNER, VIDEO, SOCIAL
+  imageUrl  String
+  link      String?
+  videoUrl  String?
+  title     String?
+  socialUrl String?
+  status    String   @default("ON")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum NavStatus {
+  ON
+  OFF
+}
+
+enum TargetAudience {
+  ALL      // User + Guest সবার জন্য
+  GUEST    // শুধু Guest-দের জন্য
+  USER     // শুধু Logged-in User-দের জন্য
+}
+
+model Navigation {
+  id             String         @id @default(cuid())
+  icon           String         // Lucide Icon Name অথবা Image URL
+  name           String         // Nav Button Name (যেমন: Home, Shop, Profile)
+  href           String         // Route Path (যেমন: /shop, /profile)
+  targetAudience TargetAudience @default(ALL)
+  slot           Int            @default(1) // 1, 2, 3, 4 (Position)
+  status         NavStatus      @default(ON)
+  sortOrder      Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("navigations")
+}
