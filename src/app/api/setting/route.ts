@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+// 🟢 GET Method
+export async function GET(): Promise<NextResponse> {
   try {
-    const setting = await prisma.siteSettings.findUnique({
+    const setting = await (prisma as any).siteSettings.findUnique({
       where: { id: "STATIC" },
     });
 
@@ -16,11 +17,12 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+// 🟢 POST Method
+export async function POST(req: Request): Promise<NextResponse> {
   try {
     const body = await req.json();
 
-    const updatedSetting = await prisma.siteSettings.upsert({
+    const updatedSetting = await (prisma as any).siteSettings.upsert({
       where: { id: "STATIC" },
       update: body,
       create: {
