@@ -13,11 +13,11 @@ import {
 interface HeaderProps {
   siteName?: string;
   logoUrl?: string | null;
-  logo?: string | null;   // 👈 এই লাইনটি যোগ করুন 
+  logo?: string | null; 
   primaryColor?: string;
 }
 
-export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
+export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const { data: session, status } = useSession();
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
@@ -53,14 +53,14 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
     fetchSettings();
   }, []);
 
-  // লাইভ ব্যালেন্স ফেচ করা (স্মার্ট পোলিং মেকানিজম)
+  // লাইভ ব্যালেন্স ফেচ করা
   useEffect(() => {
     if (!session?.user?.email) return;
 
     const fetchLiveBalance = async () => {
       try {
         const res = await fetch('/api/users/balance', {
-          cache: 'no-store' // ক্যাশ রিড করা বন্ধ করবে
+          cache: 'no-store'
         }); 
         if (res.ok) {
           const data = await res.json();
@@ -73,35 +73,31 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
       }
     };
 
-    // প্রথমবার সাথে সাথে কল হবে
     fetchLiveBalance();
-
-    // প্রতি ৫ সেকেন্ড পর পর ব্যাকগ্রাউন্ডে ব্যালেন্স আপডেট করবে
     const interval = setInterval(fetchLiveBalance, 5000);
-
     return () => clearInterval(interval);
   }, [session?.user?.email]); 
 
-  const handleContactClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    const whatsapp = siteSettings?.whatsappNumber;
-    const telegram = siteSettings?.telegramUsername;
+  // সঠিক লোগো URL বের করা (সব ধরণের Key চেক করা হচ্ছে)
+  const finalLogoUrl = 
+    logoUrl || 
+    logo || 
+    siteSettings?.logoUrl || 
+    siteSettings?.logo || 
+    siteSettings?.data?.logoUrl || 
+    siteSettings?.data?.logo;
 
-    if (whatsapp && whatsapp.trim() !== "" && whatsapp !== "#") {
-      window.open(`https://wa.me/${whatsapp.replace(/\+/g, '')}`, '_blank', 'noopener,noreferrer');
-    } 
-    else if (telegram && telegram.trim() !== "" && telegram !== "#") {
-      window.open(`https://t.me/${telegram.replace('@', '')}`, '_blank', 'noopener,noreferrer');
-    } 
-    else {
-      window.open('#', '_self');
-    }
-  };
+  const finalSiteName = siteSettings?.siteName || siteSettings?.data?.siteName || siteName;
+  const primaryColor = siteSettings?.primaryColor || siteSettings?.data?.primaryColor || "#00d2ff";
+
+  // লোগো URL পরিবর্তন হলে এরর স্টেট রিসেট করা
+  useEffect(() => {
+    setImageError(false);
+  }, [finalLogoUrl]);
 
   if (status === "loading") {
     return (
-      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 flex items-center ">
+      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between">
         </div>
       </header>
@@ -113,29 +109,24 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
   const currentUserEmail = session?.user?.email || "user@gmail.com";
   const firstLetter = currentUserName.trim() ? currentUserName.trim().charAt(0).toUpperCase() : "A";
 
-  const finalLogoUrl = logoUrl || siteSettings?.logoUrl;
-  const finalSiteName = siteSettings?.siteName || siteName;
-  
-  const primaryColor = siteSettings?.primaryColor || "#00d2ff";
-
   return (
     <header 
       className={`fixed top-0 w-full pt-2 z-50 transition-all duration-300 border-b border-gray-200 ${
         isScrolled 
           ? "h-16 bg-white/40 backdrop-blur-md" 
-          : "h-20 md:h-26 bg-white/30 backdrop-blur-sm"
+          : "h-20 md:h-24 bg-white/30 backdrop-blur-sm"
       } flex items-center`}
     >
       <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         
         {/* Logo Section */}
-        <Link href="/" className="flex items-center shrink-0 max-w-[180px] md:max-w-[280px] w-full">
+        <Link href="/" className="flex items-center shrink-0 max-w-[180px] md:max-w-[280px]">
           {finalLogoUrl && !imageError ? (
             <Image 
               src={finalLogoUrl} 
               alt={finalSiteName} 
-              width={500} 
-              height={240} 
+              width={280} 
+              height={80} 
               priority
               unoptimized={finalLogoUrl.startsWith('/')}
               onError={() => {
@@ -143,10 +134,8 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
                 setImageError(true);
               }} 
               className={`${
-                isScrolled 
-                  ? "h-18 md:h-24" 
-                  : "h-42 md:h-32"
-              } w-auto max-w-full transition-all duration-300 object-contain object-left pl-0`}
+                isScrolled ? "h-10 md:h-12" : "h-12 md:h-16"
+              } w-auto max-w-full transition-all duration-300 object-contain object-left`}
             />
           ) : (
             <span className={`font-black tracking-tight text-neutral-900 transition-all duration-300 ${
@@ -181,7 +170,7 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
               <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                   <div className="relative flex items-center cursor-pointer select-none">
-                    <Avatar className="w-13 h-13 border border-gray-200 shadow-md transform transition active:scale-95">
+                    <Avatar className="w-11 h-11 md:w-12 md:h-12 border border-gray-200 shadow-md transform transition active:scale-95">
                       <AvatarImage 
                         src={session.user?.image || ""} 
                         alt={currentUserName} 
@@ -189,12 +178,12 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
                       />
                       <AvatarFallback 
                         style={{ backgroundColor: primaryColor }} 
-                        className="text-white font-bold text-2xl uppercase"
+                        className="text-white font-bold text-xl uppercase"
                       >
                         {firstLetter}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white" />
+                    <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
                   </div>
                 </SheetTrigger>
 
@@ -219,14 +208,13 @@ export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {
                       </div>
                     </div>
 
-                    {/* ড্রয়ারের ভেতরের বাটনগুলোতে ক্লিক করলে ড্রয়ার ক্লোজ হবে */}
                     <div className="p-4 flex flex-col gap-1">
                       <Link 
                         href="/profile" 
                         onClick={() => setIsSheetOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition active:scale-[0.98]"
                       >
-                        <svg xmlns="http://www.w3.org/2000/xl" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         My Profile
                       </Link>
 
