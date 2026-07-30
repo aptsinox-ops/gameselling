@@ -73,7 +73,7 @@ export default function BottomNav() {
     }
   }, [authStatus, session]);
 
-  // Dynamic Icon Renderer Function (Lucide + SVG + Image URL with CSS Masking)
+  // Dynamic Icon Renderer Function
   const renderIcon = (iconStr: string, isActive: boolean) => {
     const currentColor = isActive ? primaryColor : "#64748b";
     if (!iconStr) return <LucideIcons.Circle className="w-5 h-5" style={{ color: currentColor }} />;
@@ -84,31 +84,28 @@ export default function BottomNav() {
     if (trimmed.toLowerCase().includes("<svg")) {
       return (
         <div
-          className="w-5 h-5 flex items-center justify-center [&>svg]:w-5 [&>svg]:h-5 [&>svg]:fill-current [&>svg]:stroke-current"
+          className="w-5 h-5 flex items-center justify-center [&>svg]:w-5 [&>svg]:h-5 [&_svg_*]:fill-current [&_svg_*]:stroke-current"
           style={{ color: currentColor }}
           dangerouslySetInnerHTML={{ __html: trimmed }}
         />
       );
     }
 
-    // Option B: Image URL / SVG Path (Coloring using CSS Masking)
+    // Option B: Image URL / SVG Path (Coloring using CSS Masking safely typed)
     if (trimmed.startsWith("http") || trimmed.startsWith("/")) {
-      return (
-        <div
-          className="w-5 h-5 transition-colors duration-200"
-          style={{
-            backgroundColor: currentColor,
-            WebkitMaskImage: `url(${trimmed})`,
-            maskImage: `url(${trimmed})`,
-            WebkitMaskSize: "contain",
-            maskSize: "contain",
-            WebkitMaskRepeat: "no-repeat",
-            maskRepeat: "no-repeat",
-            WebkitMaskPosition: "center",
-            maskPosition: "center",
-          }}
-        />
-      );
+      const maskStyle: React.CSSProperties = {
+        backgroundColor: currentColor,
+        WebkitMaskImage: `url("${trimmed}")`,
+        maskImage: `url("${trimmed}")`,
+        WebkitMaskSize: "contain",
+        maskSize: "contain",
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskPosition: "center",
+        maskPosition: "center",
+      };
+
+      return <div className="w-5 h-5 transition-colors duration-200" style={maskStyle} />;
     }
 
     // Option C: Lucide Icon
@@ -126,13 +123,17 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 h-14 px-1 flex items-center justify-around z-50 md:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.04)] select-none">
       {navList.map((item) => {
-        const isActive =
-          item.href === "/"
-            ? pathname === "/"
-            : pathname && item.href && pathname.startsWith(item.href);
+        // Strict Boolean Type Assignment (Fixes TS Error)
+        const isActive: boolean = Boolean(
+          pathname &&
+            item.href &&
+            (item.href === "/"
+              ? pathname === "/"
+              : item.href !== "/" && pathname.startsWith(item.href))
+        );
 
         const activeColor = isActive ? primaryColor : "#64748b";
-        const isExternal = item.href?.startsWith("http");
+        const isExternal = Boolean(item.href?.startsWith("http"));
 
         const navContent = (
           <div
@@ -153,7 +154,7 @@ export default function BottomNav() {
               {item.name}
             </span>
 
-            {/* Active Bottom Indicator Bar (Matching SS #2) */}
+            {/* Active Bottom Indicator Bar */}
             {isActive && (
               <span
                 className="absolute bottom-0.5 w-3.5 h-[2.5px] rounded-full transition-all duration-300"
