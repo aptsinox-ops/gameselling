@@ -56,7 +56,7 @@ export function AddProductForm({ onCancel }: AddProductFormProps) {
   const [dynamicFields, setDynamicFields] = useState<{ label: string }[]>([{ label: "" }]);
   const [typeOpen, setTypeOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const productTypeOptions = ["Uid Topup", "Vouchers", "Subcriptions", "Gift Card"];
+  const productTypeOptions = ["Uid Topup", "In-Game", "Vouchers", "Subcriptions", "Gift Card"];
   
   const [formData, setFormData] = useState<any>({
     name: "", 
