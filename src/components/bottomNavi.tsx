@@ -121,7 +121,7 @@ export default function BottomNav() {
   if (loading || navList.length === 0) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 h-14 px-1 flex items-center justify-around z-50 md:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.04)] select-none">
+    <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 h-17 px-1 flex items-center justify-around z-50 md:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.04)] select-none">
       {navList.map((item) => {
         // Strict Boolean Type Assignment (Fixes TS Error)
         const isActive: boolean = Boolean(
