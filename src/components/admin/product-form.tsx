@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { RichEditor } from "@/components/rich-editor"; // TipTap বা Pell এডিটর
 
-export default function AddProductForm({ categories }) {
+
+export default function AddProductForm({ categories }: { categories: any }) {
   const [isFfAuto, setIsFfAuto] = useState(false);
 
   const { register, handleSubmit, setValue, watch, control } = useForm({

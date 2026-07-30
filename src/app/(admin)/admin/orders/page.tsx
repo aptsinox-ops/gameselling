@@ -87,7 +87,7 @@ async function getDatabaseOrders(statusFilter: string) {
       return {
         id: order.id,
         receiptNo: order.receiptNo || order.id.substring(0, 8),
-        productTitle: order.product?.title || "—",
+        productTitle: order.product?.name || "—",
         productType: order.product?.productType || "—",
         variationTitle: order.variation?.title || "—",
         totalPrice: Number(order.totalPrice) || 0,

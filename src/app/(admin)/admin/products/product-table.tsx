@@ -136,6 +136,7 @@ export function ProductTable({ initialData }: ProductTableProps) {
     meta: {
       setDeleteTarget,
       setIsAlertOpen,
+      setData,
     },
   })
 

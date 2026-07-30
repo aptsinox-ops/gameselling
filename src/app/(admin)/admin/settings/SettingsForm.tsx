@@ -529,7 +529,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               <div className="flex flex-col gap-2 max-w-max ">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">CARD BAR 512x512</Label>
                 <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-                  <ImageUploader defaultValue={formData.footerCard1ImageUrl} onFileChange={(url: string) => setFormData({ ...formData, footerCard1ImageUrl: url })} />
+                  <ImageUploader defaultValue={formData.footerCard1ImageUrl} onFileChange={(url) =>  setFormData((prev) => ({ ...prev, footerCard1ImageUrl: url || "" }))}/>
                 </div>
               </div>
             </div>
@@ -556,7 +556,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               <div className="flex flex-col gap-2 max-w-max">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">CARD BAR 512x512</Label>
                 <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-                  <ImageUploader defaultValue={formData.footerCard2ImageUrl} onFileChange={(url: string) => setFormData({ ...formData, footerCard2ImageUrl: url })} />
+                  <ImageUploader defaultValue={formData.footerCard2ImageUrl} onFileChange={(url) =>  setFormData((prev) => ({ ...prev, footerCard2ImageUrl: url || "" }))} />
                 </div>
               </div>
             </div>
@@ -661,19 +661,19 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">LOGO 1280x512</Label>
-            <ImageUploader defaultValue={formData.logoUrl} onFileChange={(url: string) => setFormData({ ...formData, logoUrl: url })} />
+            <ImageUploader defaultValue={formData.logoUrl} onFileChange={(url) =>  setFormData((prev) => ({ ...prev, logoUrl: url || "" }))}/>
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">FAVICON 512x512</Label>
-            <ImageUploader defaultValue={formData.faviconUrl} onFileChange={(url: string) => setFormData({ ...formData, faviconUrl: url })} />
+            <ImageUploader defaultValue={formData.faviconUrl} onFileChange={(url) =>  setFormData((prev) => ({ ...prev, faviconUrl: url || "" }))} />
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">WALLET PAY BANNER</Label>
-            <ImageUploader defaultValue={formData.walletPayBanner} onFileChange={(url: string) => setFormData({ ...formData, walletPayBanner: url })} />
+            <ImageUploader defaultValue={formData.walletPayBanner} onFileChange={(url) =>  setFormData((prev) => ({ ...prev, walletPayBanner: url || "" }))}/>
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">AUTO PAYMENT BANNER</Label>
-            <ImageUploader defaultValue={formData.autoPaymentBanner} onFileChange={(url: string) => setFormData({ ...formData, autoPaymentBanner: url })} />
+            <ImageUploader defaultValue={formData.autoPaymentBanner} onFileChange={(url) =>  setFormData((prev) => ({ ...prev, autoPaymentBanner: url || "" }))} />
           </div>
         </div>
         <div className="pt-2">{renderSaveButton(handleSaveSettings, loading)}</div>

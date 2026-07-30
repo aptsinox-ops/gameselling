@@ -233,15 +233,15 @@ export const columns: ColumnDef<any>[] = [
               <DropdownMenuSeparator className="border-neutral-100 dark:border-neutral-800" />
               <DropdownMenuItem 
                 onClick={() => {
-                  if (meta) {
-                    meta.setDeleteTarget({
-                      isBulk: false,
-                      id: item.id,
-                      name: item.name || "This item",
-                    });
-                    meta.setIsAlertOpen(true);
-                  }
-                }} 
+                if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
+                  meta.setDeleteTarget({
+                    isBulk: false,
+                    id: item.id,
+                    name: item.name || "This item",
+                  });
+                  meta.setIsAlertOpen(true);
+                }
+              }}
                 className="gap-2 text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer font-medium"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delete

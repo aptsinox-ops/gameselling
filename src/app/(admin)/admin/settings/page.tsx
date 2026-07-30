@@ -22,7 +22,7 @@ export default async function SettingsPage() {
   const defaultData = {
     siteName: dbSettings?.siteName || "", 
     
-    // 🎯 নতুন যোগ করা SEO & Google OAuth ফিল্ডস (যা মিসিং ছিল)
+    // 🎯 নতুন যোগ করা SEO & Google OAuth ফিল্ডস
     siteTitle: dbSettings?.siteTitle || "",
     siteDescription: dbSettings?.siteDescription || "",
     googleClientId: dbSettings?.googleClientId || "",
@@ -90,8 +90,8 @@ export default async function SettingsPage() {
       <AppSidebar variant="inset" />
       
       <SidebarInset>
-        {/* হেডারে ডাইনামিক সাইট নেম পাস করা হলো */}
-        <AdminHeader siteName={dbSettings?.siteName || "Admin Panel"} />
+        {/* হেডারে অতিরিক্ত প্রোপস ছাড়া অ্যাডমিন হেডার লোড করা হলো */}
+        <AdminHeader />
         
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">

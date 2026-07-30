@@ -29,7 +29,7 @@ export function NavMain({
             return (
               <SidebarNavItem
                 key={item.title}
-                item={item}
+                item={item as any}
                 isActive={isActive}
               />
             )

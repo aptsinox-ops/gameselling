@@ -193,12 +193,10 @@ function AddNavDialog({ open, setOpen, onSuccess }: AddNavDialogProps) {
               </div>
             </div>
 
-            {iconType === "image" && (
-              <ImageUploader
-                value={icon}
-                onChange={(url: string) => setIcon(url)}
-              />
-            )}
+          <ImageUploader
+            value={icon}
+            onChange={(url: string | null) => setIcon(url ?? "")}
+          />
 
             {iconType === "url" && (
               <Input
@@ -445,12 +443,10 @@ function EditNavDialog({ open, setOpen, navData, onUpdateSuccess }: EditNavDialo
               </div>
             </div>
 
-            {iconType === "image" && (
               <ImageUploader
                 value={icon}
-                onChange={(url: string) => setIcon(url)}
+                onChange={(url: string | null) => setIcon(url ?? "")}
               />
-            )}
 
             {iconType === "url" && (
               <Input

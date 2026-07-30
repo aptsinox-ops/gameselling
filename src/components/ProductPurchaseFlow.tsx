@@ -19,6 +19,7 @@ interface ProductPurchaseFlowProps {
   takaSvg: React.ReactNode;
   primaryColor?: string;
   userId?: any; // 👈 এটি যোগ করুন
+  siteSettings?: any;
 }
 
 const SuccessIcon = React.memo(() => (

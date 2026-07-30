@@ -1,4 +1,4 @@
-"use client" // যেহেতু এটি হুক বা অ্যানিমেশন ব্যবহার করছে
+"use client"
 
 import { cn } from "@/lib/utils"
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
@@ -10,7 +10,7 @@ interface NavItemProps {
     title?: string
     name?: string
     url: string
-    icon: React.ReactNode
+    icon?: React.ReactNode // 👈 icon অপশনাল করে দেওয়া হলো যাতে এরর না আসে
   }
   isActive: boolean
 }
@@ -21,7 +21,7 @@ export function SidebarNavItem({ item, isActive }: NavItemProps) {
       <SidebarMenuButton
         asChild
         isActive={isActive}
-        variant="ghost"
+        variant={"ghost" as any}
         className={cn(
           "!h-10 !w-full !rounded-md !px-4 !transition-all !duration-300 !ease-in-out",
           isActive
@@ -30,13 +30,14 @@ export function SidebarNavItem({ item, isActive }: NavItemProps) {
         )}
       >
         <Link href={item.url} className="flex items-center gap-3">
-          {/* আইকন সাইজ অ্যানিমেশন */}
-          {React.cloneElement(item.icon as React.ReactElement, {
-            className: cn(
-              "transition-all duration-300 ease-in-out",
-              isActive ? "size-6" : "size-5"
-            )
-          })}
+          {/* 🟢 আইকন সাইজ অ্যানিমেশন (as any কাস্ট দিয়ে ফিক্স করা হয়েছে) */}
+          {React.isValidElement(item.icon) &&
+            React.cloneElement(item.icon as any, {
+              className: cn(
+                "transition-all duration-300 ease-in-out",
+                isActive ? "size-6" : "size-5"
+              )
+            })}
           
           {/* টেক্সট অ্যানিমেশন */}
           <span

@@ -92,7 +92,7 @@ export default async function VoucherCodesListPage() {
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 bg-slate-300 transform rotate-45 shrink-0" />
                       <h3 className="font-bold text-base" style={{ color: primaryColor }}>
-                        {order.variation?.title || order.product?.title || "Game Voucher Pack"}
+                        {order.variation?.title || order.product?.name || "Game Voucher Pack"}
                       </h3>
                     </div>
                     <div 

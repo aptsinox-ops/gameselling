@@ -164,7 +164,7 @@ async function getDynamicAuthOptions(): Promise<AuthOptions> {
 // 🎯 Next.js Request Handler (লগইন করার সময় ডেটাবেজ থেকে আইডি নিয়ে কাজ করবে)
 const handler = async (req: Request, ctx: any) => {
   const dynamicOptions = await getDynamicAuthOptions();
-  return NextAuth(req, ctx, dynamicOptions);
+  return NextAuth(req as any, ctx, dynamicOptions);
 };
 
 export { handler as GET, handler as POST };

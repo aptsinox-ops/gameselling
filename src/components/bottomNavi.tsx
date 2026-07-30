@@ -40,8 +40,8 @@ export default function BottomNav() {
             .filter((item) => item && item.status === "ON")
             .sort((a, b) => (a.slot || 0) - (b.slot || 0));
 
-          // 3. TargetAudience Filter (ALL, USER, GUEST)
-          const isLoggedIn = authStatus === "authenticated" || !!session?.user;
+
+            const isLoggedIn = authStatus === "authenticated" || !!(session as any)?.user;
 
           filtered = filtered.filter((item) => {
             const audience = item.targetAudience || "ALL";
@@ -101,7 +101,7 @@ export default function BottomNav() {
     }
 
     // Option C: Lucide Icon Name (e.g. "Home", "ShoppingBag", "User")
-    const IconComponent = (LucideIcons as Record<string, React.ElementType>)[trimmed];
+    const IconComponent = (LucideIcons as unknown as Record<string, React.ElementType>)[trimmed];
 
     if (IconComponent) {
       return <IconComponent className="w-5 h-5 stroke-[2]" />;

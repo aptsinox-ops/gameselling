@@ -108,7 +108,7 @@ export default async function MyOrdersPage() {
                       <div className="w-2.5 h-2.5 bg-slate-300 transform rotate-45 shrink-0" />
                       
                       <h3 className="font-bold text-base transition-colors" style={{ color: primaryColor }}>
-                        {order.variation?.title || order.product?.title || "Package Item"}
+                        {order.variation?.title || order.product?.name || "Package Item"}
                         
                         {/* ⚡ লজিক: কোয়ান্টিটি ১ এর বেশি হলেই কেবল প্রাইমারি কালারে ডানপাশে '+ X' শো করবে */}
                         {orderQuantity > 1 && (

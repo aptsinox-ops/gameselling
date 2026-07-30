@@ -21,23 +21,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button" // 🟢 Button Import
+import { Trash2 } from "lucide-react" // 🟢 Correct Lucide Icon Import
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  filterKey?: string // যে কলাম দিয়ে সার্চ করবেন (যেমন: "name" বা "header")
+  filterKey?: string
+  onDelete?: (selectedData: TData[]) => void // 🟢 অপশনাল ডিলিট ফাংশন প্রপ
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  filterKey,
+  filterKey = "name",
+  onDelete,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
   const table = useReactTable({
     data,
@@ -54,14 +67,27 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
   })
 
+  // 🟢 handleDelete ফাংশন ডিফাইন করা হয়েছে
+  const handleDelete = () => {
+    const selectedRows = table
+      .getFilteredSelectedRowModel()
+      .rows.map((row) => row.original)
+
+    if (onDelete) {
+      onDelete(selectedRows)
+    } else {
+      console.log("Selected items to delete:", selectedRows)
+    }
+  }
+
   return (
     <div className="space-y-4 bg-neutral-900 p-4 rounded-xl">
       <div className="flex items-center justify-between py-4">
         {/* Dynamic client-side filtering input mapped to product name column */}
         <Input
           placeholder="Filter by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+          value={(table.getColumn(filterKey)?.getFilterValue() as string) ?? ""}
+          onChange={(event) => table.getColumn(filterKey)?.setFilterValue(event.target.value)}
           className="max-w-sm bg-neutral-900 text-white border-neutral-800"
         />
 
@@ -69,7 +95,7 @@ export function DataTable<TData, TValue>({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="flex items-center gap-2">
-                <Trash2Icon className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" /> {/* 🟢 Fixed Trust2icon spell */}
                 Delete Selected ({table.getFilteredSelectedRowModel().rows.length})
               </Button>
             </AlertDialogTrigger>
@@ -78,16 +104,16 @@ export function DataTable<TData, TValue>({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription className="text-neutral-400">
-                  This action will permanently delete the selected products. This cannot be undone.
+                  This action will permanently delete the selected items. This cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter className="bg-neutral-900 ">
+              <AlertDialogFooter className="bg-neutral-900">
                 <AlertDialogCancel className="bg-neutral-800 text-white hover:bg-neutral-700 border-none">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction 
                   onClick={handleDelete} 
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   Delete
                 </AlertDialogAction>
@@ -111,7 +137,6 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {/* Conditional rendering based on rows visibility configuration */}
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
@@ -134,12 +159,28 @@ export function DataTable<TData, TValue>({
       </div>
 
       <div className="flex justify-between items-center text-white">
-        <span className="text-sm text-neutral-400">{table.getFilteredSelectedRowModel().rows.length} row(s) selected.</span>
+        <span className="text-sm text-neutral-400">
+          {table.getFilteredSelectedRowModel().rows.length} row(s) selected.
+        </span>
         <div className="space-x-2">
-           <Button variant="outline" className="border-neutral-800 hover:bg-neutral-800" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>Previous</Button>
-           <Button variant="outline" className="border-neutral-800 hover:bg-neutral-800" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</Button>
+          <Button 
+            variant="outline" 
+            className="border-neutral-800 hover:bg-neutral-800" 
+            onClick={() => table.previousPage()} 
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button 
+            variant="outline" 
+            className="border-neutral-800 hover:bg-neutral-800" 
+            onClick={() => table.nextPage()} 
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
         </div>
       </div>
     </div>
-  );
+  )
 }

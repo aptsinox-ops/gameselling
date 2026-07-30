@@ -20,35 +20,32 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+// 🎯 Prisma Schema এর সাথে টাইপ হুবহু মেলানো হয়েছে
 export type Variation = {
   id: string;
   productId: string;
-  productName: string;
+  productName?: string;
   title: string;
+  amount?: number;
   price: number;
   offerPrice: number | null;
   bonus: number;
   stock: number;
-  status: boolean;
+  image?: string | null;
+  status: string; // Prisma Schema তে String ("ON" / "OFF")
+  sortOrder?: number;
 };
 
-declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
-    setDeleteTarget: React.Dispatch<React.SetStateAction<{ isBulk: boolean; id?: string; name?: string }>>;
-    setIsAlertOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    products?: { id: string; name: string; resellerPercentage?: number; productType?: string | null }[]; 
-  }
-}
-
-const StatusSwitchCell = ({ row }: { row: any }) => {
+const StatusSwitchCell = ({ row }: { row: { original: Variation } }) => {
   const variation = row.original;
-  const [isActive, setIsActive] = useState<boolean>(variation.status ?? false);
+  // 🟢 Prisma String status ("ON" / "OFF") ডিটেক্ট করার ফিক্স
+  const [isActive, setIsActive] = useState<boolean>(
+    variation.status === "ON" || variation.status === "ACTIVE"
+  );
   const [isChanging, setIsChanging] = useState(false);
 
   const handleStatusChange = async (checked: boolean) => {
     setIsChanging(true);
-
-    // 🟢 লোডিং টোস্ট শুরু
     const toastId = showToast.loading("Updating status...");
 
     try {
@@ -67,12 +64,9 @@ const StatusSwitchCell = ({ row }: { row: any }) => {
       if (!response.ok) throw new Error();
 
       setIsActive(checked);
-      
-      // 🟢 লোডিং টোস্ট সরিয়ে সাকসেস টোস্ট দেখানো
       showToast.dismiss(toastId);
       showToast.success(`Status updated to ${checked ? "ON" : "OFF"}`);
     } catch {
-      // 🟢 লোডিং টোস্ট সরিয়ে এরর টোস্ট দেখানো
       showToast.dismiss(toastId);
       showToast.error("Failed to update status");
     } finally {
@@ -124,7 +118,9 @@ export const columns: ColumnDef<Variation>[] = [
     accessorKey: "productName",
     header: "Product Name",
     cell: ({ row }) => (
-      <span className="font-bold text-neutral-500 dark:text-neutral-400 text-xs tracking-wide uppercase">{row.original.productName}</span>
+      <span className="font-bold text-neutral-500 dark:text-neutral-400 text-xs tracking-wide uppercase">
+        {row.original.productName || "N/A"}
+      </span>
     ),
     size: 150,
   },
@@ -165,8 +161,8 @@ export const columns: ColumnDef<Variation>[] = [
     header: () => <div className="text-right pr-4">Actions</div>,
     cell: ({ row, table }) => {
       const variation = row.original;
-      const meta = table.options.meta;
-      const productDropdownList = meta?.products || [];
+      const meta = table.options.meta as any;
+      const productDropdownList: any[] = meta?.products || [];
       
       const [openEdit, setOpenEdit] = useState(false);
       const [loading, setLoading] = useState(false);
@@ -183,7 +179,6 @@ export const columns: ColumnDef<Variation>[] = [
         stock: ""
       });
 
-      // 🟢 ডায়ালগ ওপেন হওয়া মাত্রই ডেটা লোড করার লাইফ-সাইকেল ফিক্স
       useEffect(() => {
         if (openEdit && variation) {
           const holdsDiscount = variation.offerPrice !== undefined && variation.offerPrice !== null && variation.offerPrice > 0;
@@ -200,10 +195,9 @@ export const columns: ColumnDef<Variation>[] = [
         }
       }, [openEdit, variation]);
 
-      const selectedProduct = productDropdownList.find(p => p.id === formData.productId);
+      const selectedProduct = productDropdownList.find((p: any) => p.id === formData.productId);
       const isVoucherType = selectedProduct?.productType?.toUpperCase() === "VOUCHER";
 
-      // রেসেলার প্রাইস লাইভ ক্যালকুলেশন
       useEffect(() => {
         const percentage = selectedProduct?.resellerPercentage ?? 0;
         const currentPrice = parseFloat(formData.price);
@@ -227,8 +221,6 @@ export const columns: ColumnDef<Variation>[] = [
         }
 
         setLoading(true);
-
-        // 🟢 লোডিং টোস্ট শুরু
         const toastId = showToast.loading("Updating variation...");
 
         try {
@@ -245,20 +237,18 @@ export const columns: ColumnDef<Variation>[] = [
               offerPrice: finalOfferPrice,
               bonus: formData.bonus !== "" ? parseInt(formData.bonus) : 0,
               stock: !isVoucherType && formData.stock !== "" ? parseInt(formData.stock) : 0,
-              status: variation.status ? "ON" : "OFF"
+              status: variation.status || "ON"
             }),
           });
           
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Update failed");
           
-          // 🟢 লোডিং টোস্ট সরিয়ে সাকসেস মেসেজ ডিসপ্লে
           showToast.dismiss(toastId);
           showToast.success("Variation updated successfully!");
           setOpenEdit(false);
           window.location.reload();
         } catch (error: any) {
-          // 🟢 লোডিং টোস্ট সরিয়ে এরর মেসেজ ডিসপ্লে
           showToast.dismiss(toastId);
           showToast.error(error.message || "Something went wrong!");
         } finally {
@@ -285,9 +275,11 @@ export const columns: ColumnDef<Variation>[] = [
                 <Pencil className="h-3.5 w-3.5" /> Edit Variation
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-800" />
+              
+              {/* 🟢 Safe Delete Call */}
               <DropdownMenuItem 
                 onClick={() => {
-                  if (meta) {
+                  if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
                     meta.setDeleteTarget({ isBulk: false, id: variation.id, name: variation.title });
                     meta.setIsAlertOpen(true);
                   }
@@ -318,7 +310,7 @@ export const columns: ColumnDef<Variation>[] = [
                       <SelectValue placeholder="Choose a product" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-[#121212] border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white max-h-[200px]">
-                      {productDropdownList.map((product) => (
+                      {productDropdownList.map((product: any) => (
                         <SelectItem key={product.id} value={product.id} className="cursor-pointer focus:bg-neutral-100 dark:focus:bg-neutral-800 text-neutral-900 dark:text-white text-xs sm:text-sm">
                           {product.name}
                         </SelectItem>

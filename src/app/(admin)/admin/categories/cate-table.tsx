@@ -132,6 +132,7 @@ export function CateTable({ initialData }: CateTableProps) {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     meta: {
+      setData,
       setDeleteTarget,
       setIsAlertOpen,
     },
@@ -139,18 +140,18 @@ export function CateTable({ initialData }: CateTableProps) {
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length
 
-const getColumnWidthClass = (id: string) => {
-  switch (id) {
-    case "drag": return "w-[40px] shrink-0 justify-start"
-    case "select": return "w-[50px] shrink-0 justify-start"
-    case "id": return "w-[90px] shrink-0 justify-start text-xs font-mono"
-    case "name": return "flex-1 min-w-[180px] shrink-0 justify-start" 
-    case "status": return "w-[150px] shrink-0 justify-center text-center" // justify-center যোগ করা হয়েছে
-    case "slotNo": return "w-[120px] shrink-0 justify-center text-center" // justify-center যোগ করা হয়েছে
-    case "actions": return "w-[100px] shrink-0 justify-center text-center" // justify-center যোগ করা হয়েছে
-    default: return "w-auto"
+  const getColumnWidthClass = (id: string) => {
+    switch (id) {
+      case "drag": return "w-[40px] shrink-0 justify-start"
+      case "select": return "w-[50px] shrink-0 justify-start"
+      case "id": return "w-[90px] shrink-0 justify-start text-xs font-mono"
+      case "name": return "flex-1 min-w-[180px] shrink-0 justify-start" 
+      case "status": return "w-[150px] shrink-0 justify-center text-center"
+      case "slotNo": return "w-[120px] shrink-0 justify-center text-center"
+      case "actions": return "w-[100px] shrink-0 justify-center text-center"
+      default: return "w-auto"
+    }
   }
-}
 
   return (
     <div className="space-y-4 shadow-none w-full">
@@ -374,4 +375,3 @@ const getColumnWidthClass = (id: string) => {
     </div>
   )
 }
-

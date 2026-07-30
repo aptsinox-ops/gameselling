@@ -28,13 +28,6 @@ export type Category = {
   slotNo: number;
 };
 
-// TanStack Table Meta টাইপ ডিক্লেয়ারেশন
-declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
-    setDeleteTarget: React.Dispatch<React.SetStateAction<{ isBulk: boolean; id?: string; name?: string }>>;
-    setIsAlertOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  }
-}
 
 const StatusSwitchCell = ({ row }: { row: any }) => {
   const category = row.original;
@@ -174,11 +167,11 @@ export const columns: ColumnDef<Category>[] = [
               <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-800" />
               <DropdownMenuItem 
                 onClick={() => {
-                  if (meta) {
+                  if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
                     meta.setDeleteTarget({ isBulk: false, id: category.id, name: category.name });
                     meta.setIsAlertOpen(true);
                   }
-                }} 
+                }}
                 className="gap-2 text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 cursor-pointer font-medium hover:bg-red-50 dark:hover:bg-red-950/20"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delete Category

@@ -145,7 +145,7 @@ export function UserTable({ initialData }: UserTableProps) {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     meta: {
-      setDeleteTarget,
+      setDeleteTarget: (val: any) => setDeleteTarget(val), // 👈 এভাবে ফাংশন দিয়ে র‍্যাপ করে দিন
       setIsAlertOpen,
     }
   })

@@ -1,6 +1,13 @@
+// 📁 src/app/api/upload/route.ts
 import { NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
+import { v2 as cloudinary } from "cloudinary";
+
+// Cloudinary কনফিগারেশন
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: Request) {
   try {
@@ -15,22 +22,25 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // ইউনিক ফাইলনেম তৈরি এবং public/uploads ডিরেক্টরি সেট করা
-    const filename = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    // Cloudinary-তে বাফার আপলোড করা
+    const uploadResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "portfolio_uploads", // Cloudinary-তে এই ফোল্ডারে সেভ হবে
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result as { secure_url: string });
+        }
+      );
 
-    // uploads ফোল্ডার না থাকলে স্বয়ংক্রিয়ভাবে তৈরি করবে
-    await fs.mkdir(uploadDir, { recursive: true });
-    
-    const filePath = path.join(uploadDir, filename);
-    await fs.writeFile(filePath, buffer);
+      uploadStream.end(buffer);
+    });
 
-    // ব্রাউজারে বা ডাটাবেসে সেভ করার জন্য পাবলিক ইউআরএল পাথ
-    const fileUrl = `/uploads/${filename}`;
-
-    return NextResponse.json({ url: fileUrl });
+    // Cloudinary-র স্থায়ী HTTPS URL রিটার্ন করা হলো
+    return NextResponse.json({ url: uploadResult.secure_url });
   } catch (error) {
-    console.error("Upload API Error:", error);
+    console.error("Cloudinary Upload API Error:", error);
     return NextResponse.json({ error: "Internal server error during upload" }, { status: 500 });
   }
 }

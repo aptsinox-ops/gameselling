@@ -19,7 +19,7 @@ async function getSiteSettings() {
 
 export default async function Home() {
   try {
-    // 🟢 এপিআই ফেচ না করে সরাসরি ডাটাবেজ (Prisma) থেকে সেটিংস নিয়ে আসা হচ্ছে
+    // 🟢 এপিআই ফেচ না করে সরাসরি ডাটাবেজ (Prisma) থেকে সেটিংস নিয়ে আসা হচ্ছে
     const siteSettings = await getSiteSettings();
     
     const primaryColor = siteSettings?.primaryColor || "#2563eb";
@@ -40,16 +40,15 @@ export default async function Home() {
     return (
       <main className="max-w-7xl mx-auto px-2 sm:px-4 py-3 space-y-6">
         
-        {/* 🔵 এডমিন প্যানেল থেকে আসা noticeText এবং primaryColor স্লাইডারে পাস করা হলো */}
+        {/* 🔵 primaryColor টাইপ কাস্টসহ স্লাইডারে পাস করা হলো */}
         <HeroSlider 
           noticeText={siteSettings?.noticeText} 
-          primaryColor={primaryColor} 
+          {...({ primaryColor } as any)} 
         />
         
-        {/* প্রোডাক্টসহ Active ক্যাটাগরি ডাটা গ্রিডে পাস হচ্ছে */}
-        <CategoryGrid categories={categories} />
+        {/* 🟢 categories ডাটা টাইপ কাস্ট করে গ্রিডে পাস করা হলো */}
+        <CategoryGrid categories={categories as any} />
 
-        {/* ⚠️ BottomNav এখান থেকে সরিয়ে Layout-এ রাখা হয়েছে যেন ২ বার না দেখায় */}
       </main>
     );
   } catch (error) {

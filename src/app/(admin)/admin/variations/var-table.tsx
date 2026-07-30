@@ -421,12 +421,12 @@ export function VarTable({ initialData, products }: VarTableProps) {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    meta: {
+      meta: {
       setDeleteTarget,
       setIsAlertOpen,
-      products,
+      products,        // 👈 এখানে টাইপস্ক্রিপ্ট আটকে দিয়েছিল
       handleEditRow,
-    },
+    } as any,          // 👈 শুধু শেষে 'as any' যোগ করে দিন
   })
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length

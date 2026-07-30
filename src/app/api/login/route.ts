@@ -6,40 +6,48 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
-    // ১. ইমেইল এবং পাসওয়ার্ড ইনপুট দেওয়া হয়েছে কিনা চেক করা
+    // ১. ইনপুট চেক
     if (!email || !password) {
       return NextResponse.json(
-        { error: "ইমেইল এবং পাসওয়ার্ড দুটিই প্রয়োজন" },
+        { error: "ইমেইল এবং পাসওয়ার্ড দুটিই প্রয়োজন" },
         { status: 400 }
       );
     }
 
-    // ২. ডাটাবেসে এই ইমেইলের কোনো ইউজার আছে কিনা খোঁজা
+    // ২. ইউজার খোঁজা
     const user = await prisma.user.findUnique({
       where: { email }
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট খুঁজে পাওয়া যায়নি" },
+        { error: "এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট খুঁজে পাওয়া যায়নি" },
         { status: 404 }
       );
     }
 
-    // ৩. ইনপুট দেওয়া পাসওয়ার্ডের সাথে ডাটাবেসের হ্যাশড পাসওয়ার্ড মেলানো
+    // 🟢 ৩. পাসওয়ার্ড সেট করা আছে কিনা চেক করা (গুগল ইউজারের ক্ষেত্রে null থাকে)
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "এই অ্যাকাউন্টে কোনো পাসওয়ার্ড সেট করা নেই। গুগল দিয়ে লগইন করার চেষ্টা করুন।" },
+        { status: 400 }
+      );
+    }
+
+    // ৪. পাসওয়ার্ড ম্যাচিং (এখন user.password ১০০% string হিসেবে নিশ্চিত)
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
       return NextResponse.json(
-        { error: "ভুল পাসওয়ার্ড! আবার চেষ্টা করুন" },
+        { error: "ভুল পাসওয়ার্ড! আবার চেষ্টা করুন" },
         { status: 401 }
       );
     }
 
-    // ৪. সব ঠিক থাকলে সাকসেস রেসপন্স পাঠানো (NextAuth এটি দিয়ে সেশন হ্যান্ডেল করবে)
+    // ৫. সাকসেস রেসপন্স
     return NextResponse.json(
       { 
-        message: "লগইন সফল হয়েছে", 
+        message: "লগইন সফল হয়েছে", 
         user: { id: user.id, name: user.name, email: user.email, phone: user.phone } 
       }, 
       { status: 200 }
@@ -48,7 +56,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Login API Error:", error);
     return NextResponse.json(
-      { error: error.message || "লগইন করার সময় কোনো সমস্যা হয়েছে" },
+      { error: error.message || "লগইন করার সময় কোনো সমস্যা হয়েছে" },
       { status: 500 }
     );
   }

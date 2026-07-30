@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db" // আপনার Prisma বা DB Instance Path
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma"; // 🟢 standard prisma instance import
 
 // PATCH: Navigation Item আপডেট করার জন্য
 export async function PATCH(
@@ -7,15 +7,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const body = await req.json()
-    const { name, icon, href, targetAudience, slot, status } = body
+    const { id } = await params;
+    const body = await req.json();
+    const { name, icon, href, targetAudience, slot, status } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "Nav Item ID is required" }, { status: 400 })
+      return NextResponse.json({ error: "Nav Item ID is required" }, { status: 400 });
     }
 
-    const updatedNavItem = await db.navItem.update({
+    // 🟢 db.navItem এর পরিবর্তে prisma.navigation হবে
+    const updatedNavItem = await prisma.navigation.update({
       where: { id },
       data: {
         name,
@@ -25,14 +26,14 @@ export async function PATCH(
         slot: Number(slot),
         status: status === "ON" || status === true ? "ON" : "OFF",
       },
-    })
+    });
 
-    return NextResponse.json(updatedNavItem, { status: 200 })
+    return NextResponse.json(updatedNavItem, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Failed to update nav item" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -42,24 +43,25 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id } = await params;
 
     if (!id) {
-      return NextResponse.json({ error: "Nav Item ID is required" }, { status: 400 })
+      return NextResponse.json({ error: "Nav Item ID is required" }, { status: 400 });
     }
 
-    await db.navItem.delete({
+    // 🟢 db.navItem এর পরিবর্তে prisma.navigation হবে
+    await prisma.navigation.delete({
       where: { id },
-    })
+    });
 
     return NextResponse.json(
       { message: "Nav item deleted successfully" },
       { status: 200 }
-    )
+    );
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Failed to delete nav item" },
       { status: 500 }
-    )
+    );
   }
 }

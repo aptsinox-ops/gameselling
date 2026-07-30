@@ -68,9 +68,15 @@ export function OrderTable({ initialData }: OrderTableProps) {
   }, [initialData])
 
   const [isAlertOpen, setIsAlertOpen] = React.useState(false)
-  const [deleteTarget, setDeleteTarget] = React.useState<{ id?: string; receiptNo?: string; isBulk: boolean }>({
-    isBulk: false
-  })
+// ✅ সঠিক কোড (name এবং receiptNo দুটিই রাখা হয়েছে):
+const [deleteTarget, setDeleteTarget] = React.useState<{
+  isBulk: boolean;
+  id?: string;
+  name?: string;
+  receiptNo?: string;
+}>({
+  isBulk: false
+})
 
   const handleBulkDeleteTrigger = () => {
     setDeleteTarget({ isBulk: true })

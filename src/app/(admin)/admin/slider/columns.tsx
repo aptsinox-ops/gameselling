@@ -17,6 +17,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+import "@tanstack/react-table";
+
+
 // Status Switch Cell
 const StatusSwitchCell = ({ row }: { row: any }) => {
   const item = row.original;
@@ -159,7 +162,7 @@ export const columns: ColumnDef<any>[] = [
     header: () => <div className="text-center">Actions</div>,
     cell: ({ row, table }) => {
       const item = row.original;
-      const meta = table.options.meta as any; 
+      const meta = table.options.meta; 
 
       return (
         <div className="flex justify-center items-center">
@@ -186,7 +189,7 @@ export const columns: ColumnDef<any>[] = [
               
               <DropdownMenuItem 
                 onClick={() => {
-                  if (meta) {
+                  if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
                     meta.setDeleteTarget({
                       isBulk: false,
                       id: item.id,

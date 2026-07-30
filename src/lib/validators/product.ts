@@ -5,6 +5,7 @@ export const ProductSchema = z.object({
   name: z.string().min(2, "Product name is required"),
   slug: z.string().min(2),
   categoryId: z.string().uuid("Please select a category"),
+  image: z.string().optional(),
   
   // কাস্টম ট্যাগ হ্যান্ডেল করার নিয়ম: খালি থাকলে ডাটাবেসে null যাবে
   productTag: z.string().optional().transform(val => val === "" ? null : val),

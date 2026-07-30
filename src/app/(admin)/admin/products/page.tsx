@@ -75,9 +75,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               // 🟢 মোড ২: অ্যাড মোড (ইউআরএল-এ ?add=true থাকলে)
               : isAddMode ? (
                 <div className="bg-white dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6 shadow-sm w-full max-w-5xl">
-                  <AddProductForm 
-                    onCancel="/admin/products" // ফর্মের ভেতর ক্যানসেল করলে এই লিংকে ব্যাক করবে
-                  />
+                <AddProductForm onCancel={() => { window.location.href = "/admin/products"; }} />
                 </div>
               ) 
               
@@ -219,7 +217,7 @@ async function getSingleProductForEdit(id: string) {
       tagIcon: product.tagIcon ?? "",
       tagType: product.tagType ?? "AUTO",
       description: product.description ?? "",
-      inputFields: product.inputFields ?? [],
+      inputFields: product.dynamicFields ?? [],
     };
   } catch (error) {
     console.error("Failed to fetch single product for edit:", error);

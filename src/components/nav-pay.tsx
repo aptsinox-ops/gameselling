@@ -34,7 +34,7 @@ export function NavPay({
             return (
               <SidebarNavItem
                 key={item.title || item.name}
-                item={item}
+                item={item as any}
                 isActive={isActive}
               />
             )

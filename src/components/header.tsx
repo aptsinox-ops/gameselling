@@ -13,6 +13,8 @@ import {
 interface HeaderProps {
   siteName?: string;
   logoUrl?: string | null;
+  logo?: string | null;   // 👈 এই লাইনটি যোগ করুন 
+  primaryColor?: string;
 }
 
 export default function Header({ siteName = "Store", logoUrl }: HeaderProps) {

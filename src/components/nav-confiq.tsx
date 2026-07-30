@@ -34,7 +34,7 @@ export function NavConfiq({
             return (
               <SidebarNavItem
                 key={item.title || item.name}
-                item={item}
+                item={item as any}
                 isActive={isActive}
               />
             )

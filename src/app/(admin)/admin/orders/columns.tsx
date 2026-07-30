@@ -37,14 +37,6 @@ export type Order = {
   paymentType?: string;
 };
 
-// TanStack Table Meta
-declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
-    setDeleteTarget: React.Dispatch<React.SetStateAction<{ isBulk: boolean; id?: string; receiptNo?: string }>>;
-    setIsAlertOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    setData: React.Dispatch<React.SetStateAction<Order[]>>;
-  }
-}
 
 const formatDialogDate = (dateVal: any) => {
   if (!dateVal) return "N/A";
@@ -363,11 +355,11 @@ export const columns: ColumnDef<Order>[] = [
                         <Button
                           disabled={actionLoading}
                           onClick={() => {
-                            if (meta) {
-                              setOpenDetails(false);
-                              meta.setDeleteTarget({ isBulk: false, id: order.id, receiptNo: order.receiptNo });
-                              meta.setIsAlertOpen(true);
-                            }
+                            if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
+                            setOpenDetails(false);
+                            meta.setDeleteTarget({ isBulk: false, id: order.id, receiptNo: order.receiptNo });
+                            meta.setIsAlertOpen(true);
+                          }
                           }}
                           className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold h-10 rounded-xl shadow-none cursor-pointer text-xs sm:text-sm gap-1.5"
                         >
@@ -578,10 +570,10 @@ export const columns: ColumnDef<Order>[] = [
               <DropdownMenuItem 
                 disabled={loading}
                 onClick={() => {
-                  if (meta) {
-                    meta.setDeleteTarget({ isBulk: false, id: order.id, receiptNo: order.receiptNo });
-                    meta.setIsAlertOpen(true);
-                  }
+                  if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
+                  meta.setDeleteTarget({ isBulk: false, id: order.id, receiptNo: order.receiptNo });
+                  meta.setIsAlertOpen(true);
+                }
                 }} 
                 className="gap-2 text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 cursor-pointer font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg"
               >
