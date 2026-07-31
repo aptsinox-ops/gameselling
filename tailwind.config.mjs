@@ -13,7 +13,19 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Prompt', 'sans-serif'],
+        sans: [
+          '-apple-system', 
+          'BlinkMacSystemFont', 
+          '"SF Pro Display"', 
+          '"SF Pro Text"', 
+          '"SF Pro"', 
+          '"Helvetica Neue"', 
+          'Helvetica', 
+          'Arial', 
+          'sans-serif'
+        ],
+        // 🇧🇩 বাংলা ফন্টের জন্য Tailwind Utility Class (font-bengali)
+        bengali: ['var(--font-bengali)', 'sans-serif'],
       },
       colors: {
         // ডাইনামিক রুট থিম কালার

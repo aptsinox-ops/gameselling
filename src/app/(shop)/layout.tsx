@@ -1,9 +1,17 @@
 import Header from "@/components/header";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/bottomNavi"; // 👈 ১. BottomNav Import করা হয়েছে (ফাইলের পাথ ঠিক আছে কিনা দেখে নিন)
+import BottomNav from "@/components/bottomNavi"; 
 import { prisma } from "@/lib/prisma"; 
+import { Noto_Sans_Bengali } from "next/font/google";
 
-// 🚀 অ্যাডমিন প্যানেলে কোনো কিছু চেঞ্জ করলে রিয়েল-টাইমে আপডেট দেখানোর জন্য
+// বাংলা ফন্টের জন্য Variable তৈরি করা হয়েছে
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-bengali",
+});
+
 export const revalidate = 0; 
 
 async function getSiteSettings() {
@@ -21,7 +29,6 @@ async function getSiteSettings() {
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSiteSettings();
 
-  // 🔐 অ্যাডমিন অ্যাকাউন্ট চেক
   let adminCount = 0;
   try {
     adminCount = await prisma.admin.count();
@@ -31,11 +38,8 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
 
   if (adminCount === 0) {
     return (
-      <div className="fixed inset-0 bg-[#0c0c0e] flex items-center justify-center p-4 z-[9999]">
-        <div 
-          className="max-w-md w-full text-center border border-zinc-800/80 bg-[#16161a] p-8 rounded-2xl shadow-2xl relative overflow-hidden"
-          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif' }}
-        >
+      <div className={`fixed inset-0 bg-[#0c0c0e] flex items-center justify-center p-4 z-[9999] ${notoBengali.variable}`}>
+        <div className="max-w-md w-full text-center border border-zinc-800/80 bg-[#16161a] p-8 rounded-2xl shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-80" />
           <div className="w-14 h-14 rounded-2xl bg-zinc-950 border border-zinc-800/60 flex items-center justify-center mx-auto mb-5 text-rose-500 shadow-inner">
             <svg className="w-7 h-7 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -54,7 +58,6 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   const primaryColor = settings?.primaryColor || "#ff0055"; 
   const backgroundColor = settings?.backgroundColor || "#ffffff"; 
 
-  // ডাইনামিক লিংক হ্যান্ডলার
   const isTelegram = settings?.activeFloatingButton === "TELEGRAM";
   const isWhatsapp = settings?.activeFloatingButton === "WHATSAPP";
 
@@ -64,22 +67,28 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
     return "#";
   };
 
-  // ব্র্যান্ডিং কালার কনফিগ
   const buttonBgColor = isTelegram ? "#229ED9" : isWhatsapp ? "#25D366" : primaryColor;
   const pulseShadowColor = isTelegram ? "rgba(34, 158, 217, 0.4)" : isWhatsapp ? "rgba(37, 211, 102, 0.4)" : "rgba(255, 0, 85, 0.4)";
 
+  // SF Pro ফন্ট স্ট্যাক ডিফাইন করা হয়েছে
+  const sfProFont = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif';
+
   return (
     <div 
-      className="flex flex-col min-h-screen text-black transition-colors duration-300"
+      className={`flex flex-col min-h-screen text-black transition-colors duration-300 ${notoBengali.variable}`}
       style={{
+        fontFamily: sfProFont,
         "--primary-color": primaryColor,
         "--bg-color": backgroundColor,
         backgroundColor: backgroundColor
       } as React.CSSProperties}
     >
-      
-      {/* 🛠️ অ্যানিমেশন স্টাইল */}
       <style dangerouslySetInnerHTML={{__html: `
+        /* বাংলা ফন্টের জন্য ইউটিলিটি ক্লাস */
+        .font-bengali {
+          font-family: var(--font-bengali), ${sfProFont};
+        }
+
         @keyframes fabPulse {
           0% { box-shadow: 0 0 0 0 ${pulseShadowColor}, 0 10px 25px -5px rgba(0,0,0,0.3); transform: scale(1); }
           70% { box-shadow: 0 0 0 20px rgba(0, 0, 0, 0), 0 20px 35px -5px rgba(0,0,0,0.2); transform: scale(1.04); }
@@ -108,22 +117,20 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         .bubble-4 { width: 11px; height: 11px; top: 15px; left: -12px; animation: bubbleFloat 3.2s infinite ease-in-out 2.2s; }
       `}} />
       
-      {/* Header */}
+      {/* Header Component */}
       {settings?.isHeaderVisible !== false && (
-        <div className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm">
-          <Header logo={settings?.logoUrl} siteName={settings?.siteName} /> 
-        </div>
+        <Header logo={settings?.logoUrl} siteName={settings?.siteName} /> 
       )}
 
-      {/* Main Content (pb-20 দেওয়া হয়েছে যেন মোবাইল নেভবার কনটেন্ট ঢেকে না ফেলে) */}
-      <main className={`flex-grow pb-20 md:pb-0 ${settings?.isHeaderVisible !== false ? 'pt-20 md:pt-25' : 'pt-4'}`}>
+      {/* Main Content Section */}
+      <main className={`flex-grow pb-15 md:pb-18 ${settings?.isHeaderVisible !== false ? 'pt-17 md:pt-21' : 'pt-0'}`}>
         {children}
       </main>
 
       {/* Footer */}
       {settings?.isFooterVisible !== false && <Footer settings={settings} />}
 
-      {/* 🎯 প্রিমিয়াম ফ্লোটিং অ্যাকশন বাটন (FAB) */}
+      {/* FAB Floating Action Button */}
       {settings?.activeFloatingButton && (settings?.whatsappNumber || settings?.telegramUsername) && (
         <div className="fixed bottom-20 md:bottom-8 right-6 z-50 flex items-center justify-center">
           <div className="sms-bubble bubble-1"></div>
@@ -152,7 +159,6 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         </div>
       )}
 
-      {/* 📱 ২. ডাইনামিক বটম নেভিগেশন বার যুক্ত করা হয়েছে */}
       <BottomNav />
     </div>
   );

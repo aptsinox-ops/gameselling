@@ -111,7 +111,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
 
   return (
     <header 
-      className={`fixed top-0 w-full pt-2 z-50 transition-all duration-300 border-b border-gray-200 ${
+      className={`fixed top-0 w-full pt-2 z-50 transition-all duration-300 border-b border-gray-300 ${
         isScrolled 
           ? "h-16 bg-white/40 backdrop-blur-md" 
           : "h-20 md:h-24 bg-white/30 backdrop-blur-sm"

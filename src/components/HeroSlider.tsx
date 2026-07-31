@@ -114,10 +114,17 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
 
   return (
     <div className="w-full space-y-4 block clear-both select-none">
-      {/* 🌟 Dynamic CSS Styles */}
+      {/* 🌟 Dynamic CSS Styles & Google Fonts */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap');
+
+        .noto-sans-bengali {
+          font-family: 'Noto Sans Bengali', sans-serif;
+          font-weight: 400;
+        }
+
         @property --angle {
           syntax: '<angle>';
           initial-value: 0deg;
@@ -208,7 +215,7 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
           <h2 className="font-hind text-[14px] sm:text-base font-bold mb-1.5 text-white">
             Notice
           </h2>
-          <p className="font-hind text-[12px] sm:text-[13px] leading-relaxed font-normal text-white/95">
+          <p className="noto-sans-bengali text-[12px] sm:text-[13px] leading-relaxed text-white/95">
             {finalNoticeText}
           </p>
         </div>

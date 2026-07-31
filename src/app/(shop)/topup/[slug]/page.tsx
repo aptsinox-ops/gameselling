@@ -116,7 +116,7 @@ export default async function ProductPage({
                 } alt={serializedProduct.name} className="w-full h-full object-cover" />
               </div>
               <div className="[space-y:clamp(4px,1.2vw,8px)] flex flex-col gap-1.5 min-w-0">
-                <h1 className="[font-size:clamp(13px,3.8vw,24px)] font-black text-white uppercase tracking-wide leading-tight truncate">
+                <h1 className="[font-size:clamp(13px,3.8vw,24px)] font-bold text-white uppercase tracking-wide leading-tight truncate">
                   {serializedProduct.name}
                 </h1>
                 <div className="flex flex-wrap [gap:clamp(4px,1.5vw,8px)] items-center">

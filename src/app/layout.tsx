@@ -1,12 +1,17 @@
 import "./globals.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
+import { Noto_Sans_Bengali } from "next/font/google";
 import Providers from "@/components/Providers"; 
 import { Toaster } from "sonner"; 
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+// 🇧🇩 বাংলা নোটিশের জন্য ফন্ট
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-bengali",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const settings = await db.siteSettings.findFirst();
 
-    // 🎯 ডাটাবেজ থেকে ভ্যালুগুলো নেওয়া হচ্ছে (না থাকলে ফলব্যাক ডিফল্ট ভ্যালু)
+    // 🎯 ডাটাবেজ থেকে ভ্যালুগুলো নেওয়া হচ্ছে (না থাকলে ফলব্যাক ডিফল্ট ভ্যালু)
     const title = settings?.siteTitle || settings?.siteName || "DEMO Bazar";
     const description = settings?.siteDescription || "Premium Gaming Top-Up Platform";
     const favicon = settings?.faviconUrl || "/favicon.ico";
@@ -58,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en" className={notoBengali.variable}>
       <body className="bg-white text-black antialiased min-h-screen">
         <Providers>
           {children}

@@ -25,7 +25,7 @@ interface SiteSettings {
   adminEmail?: string | null;
   whatsappNumber?: string | null; // এটি হোয়াটসঅ্যাপ লিংকের জন্য ব্যবহার হবে (যেমন: 8801322104655)
   
-  // 🎯 সোশ্যাল লিংক ফিল্ডস (ইন্টারফেসে যোগ করা হয়েছে)
+  // 🎯 সোশ্যাল লিংক ফিল্ডস (ইন্টারফেসে যোগ করা হয়েছে)
   youtubeLink?: string | null;
   facebookLink?: string | null;
   instagramLink?: string | null;
@@ -41,7 +41,7 @@ export default function Footer({ settings }: FooterProps) {
   const bottomGradientColor = settings?.footerBottomColor || "#1a3b7b";
   const primaryColor = settings?.primaryColor || "#00d2ff";
 
-  // লিংক ভ্যালিডেশন ফাংশন: লিংক যদি না থাকে বা শুধু '#' হয়, তবে false রিটার্ন করবে
+  // লিংক ভ্যালিডেশন ফাংশন: লিংক যদি না থাকে বা শুধু '#' হয়, তবে false রিটার্ন করবে
   const isValidLink = (link: string | null | undefined): boolean => {
     if (!link) return false;
     if (link.trim() === "" || link.trim() === "#") return false;
@@ -128,7 +128,7 @@ export default function Footer({ settings }: FooterProps) {
             {/* ================= CUSTOMER SUPPORT ================= */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="text-[18px] font-normal uppercase tracking-wider text-white">
+                <h4 className="text-[18px] font-semibold uppercase tracking-wider text-white">
                   Customer Support
                 </h4>
                 <div className="w-12 h-[2.5px] rounded-full custom-bg-primary"></div>
@@ -154,10 +154,10 @@ export default function Footer({ settings }: FooterProps) {
                       </div>
                     </div>
                     <div className="leading-tight">
-                      <p className="text-[12px] text-slate-400 font-normal uppercase tracking-wider">
+                      <p className="text-[12px] text-slate-400 font-semibold uppercase tracking-wider">
                         {settings?.footerCard1Title1 || "9AM - 11PM Daily"}
                       </p>
-                      <p className="text-[16px] font-normal text-white transition-colors mt-0.5 custom-hover-text group-hover:text-[var(--primary-color)]">
+                      <p className="text-[16px] font-semibold text-white transition-colors mt-0.5 custom-hover-text group-hover:text-[var(--primary-color)]">
                         {settings?.footerCard1Title2 || "Telegram Support"}
                       </p>
                     </div>
@@ -183,10 +183,10 @@ export default function Footer({ settings }: FooterProps) {
                       </div>
                     </div>
                     <div className="leading-tight">
-                      <p className="text-[12px] text-slate-400 font-normal uppercase tracking-wider">
+                      <p className="text-[12px] text-slate-400 font-semibold uppercase tracking-wider">
                         {settings?.footerCard2Title1 || "Community Group"}
                       </p>
-                      <p className="text-[16px] font-normal text-white transition-colors mt-0.5 custom-hover-text group-hover:text-[var(--primary-color)]">
+                      <p className="text-[16px] font-semibold text-white transition-colors mt-0.5 custom-hover-text group-hover:text-[var(--primary-color)]">
                         {settings?.footerCard2Title2 || "Join Telegram Group"}
                       </p>
                     </div>
@@ -198,7 +198,7 @@ export default function Footer({ settings }: FooterProps) {
             {/* ================= INFORMATION ================= */}
             <div className="space-y-4 md:pl-8 pt-2 md:pt-0">
               <div className="space-y-2">
-                <h4 className="text-[18px] font-normal uppercase tracking-wider text-white">
+                <h4 className="text-[18px] font-semibold uppercase tracking-wider text-white">
                   Information
                 </h4>
                 <div className="w-12 h-[2.5px] rounded-full custom-bg-primary"></div>
@@ -220,7 +220,7 @@ export default function Footer({ settings }: FooterProps) {
             {/* ================= STAY CONNECTED ================= */}
             <div className="space-y-4 pt-2 md:pt-0">
               <div className="space-y-2">
-                <h4 className="text-[18px] font-normal uppercase tracking-wider text-white">
+                <h4 className="text-[18px] font-semibold uppercase tracking-wider text-white">
                   Stay Connected
                 </h4>
                 <div className="w-12 h-[2.5px] rounded-full custom-bg-primary"></div>
@@ -229,17 +229,17 @@ export default function Footer({ settings }: FooterProps) {
               {/* Liquid-Glass Stay Connected Card */}
               <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.01] backdrop-blur-xl border border-white/[0.08] p-5 rounded-2xl space-y-4">
                 <div className="space-y-1">
-                  <span className="text-[16px] font-medium text-white tracking-wide block">
+                  <span className="text-[16px] font-semibold text-white tracking-wide block">
                     {settings?.siteName || "DEMO BAZAR"}
                   </span>
-                  {/* ফোন নম্বর যদি ডাইনামিক হয় */}
+                  {/* ফোন নম্বর যদি ডাইনামিক হয় */}
                   {settings?.whatsappNumber && (
                     <div className="text-[14px] text-slate-300 flex items-center gap-2">
                       <p className="shrink-0">Phone :</p>
                       <span className="truncate">{settings.whatsappNumber}</span>
                     </div>
                   )}
-                  {/* হোয়াটসঅ্যাপ নম্বর যদি ডাইনামিক হয় */}
+                  {/* হোয়াটসঅ্যাপ নম্বর যদি ডাইনামিক হয় */}
                   {settings?.whatsappNumber && (
                     <div className="text-[14px] text-slate-300 flex items-center gap-2">
                       <p className="shrink-0">Whatsapp :</p>
@@ -252,15 +252,13 @@ export default function Footer({ settings }: FooterProps) {
                   </div>
                 </div>
                 
-                {/* ================= SOCIAL BUTTONS (Updated Logic) ================= */}
-                {/* চেক করা হচ্ছে অন্তত একটি সোশ্যাল লিংক ভ্যালিড কিনা */}
+                {/* ================= SOCIAL BUTTONS ================= */}
                 {(isValidLink(settings?.youtubeLink) || 
                   isValidLink(settings?.facebookLink) || 
                   isValidLink(settings?.instagramLink) || 
                   isValidLink(settings?.whatsappNumber)) && (
                   
                   <div className="flex items-center gap-3 pt-4 border-t border-white/[0.05]">
-                    {/* YouTube - ডাইনামিক ডাটা এবং কন্ডিশনাল রেন্ডারিং */}
                     {isValidLink(settings?.youtubeLink) && (
                       <a href={settings!.youtubeLink!} target="_blank" rel="noopener noreferrer" className="shimmer-hover w-10 h-10 bg-[#ff0000ce] hover:opacity-90 transition-opacity rounded-[10px] flex items-center justify-center text-white shrink-0 shadow-lg shadow-red-600/20">
                         <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
@@ -269,7 +267,6 @@ export default function Footer({ settings }: FooterProps) {
                       </a>
                     )}
 
-                    {/* Facebook - ডাইনামিক ডাটা এবং কন্ডিশনাল রেন্ডারিং */}
                     {isValidLink(settings?.facebookLink) && (
                       <a href={settings!.facebookLink!} target="_blank" rel="noopener noreferrer" className="shimmer-hover w-10 h-10 bg-[#1877F2] hover:opacity-90 transition-opacity rounded-[10px] flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-600/20">
                         <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -278,7 +275,6 @@ export default function Footer({ settings }: FooterProps) {
                       </a>
                     )}
 
-                    {/* Instagram - ডাইনামিক ডাটা এবং কন্ডিশনাল রেন্ডারিং */}
                     {isValidLink(settings?.instagramLink) && (
                       <a href={settings!.instagramLink!} target="_blank" rel="noopener noreferrer" className="shimmer-hover w-10 h-10 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] hover:opacity-90 transition-opacity rounded-[10px] flex items-center justify-center text-white shrink-0 shadow-lg">
                         <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -287,7 +283,6 @@ export default function Footer({ settings }: FooterProps) {
                       </a>
                     )}
 
-                    {/* WhatsApp - ডাইনামিক ডাটা এবং কন্ডিশনাল রেন্ডারিং */}
                     {isValidLink(settings?.whatsappNumber) && (
                       <a href={`https://wa.me/${settings!.whatsappNumber!.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="shimmer-hover w-10 h-10 bg-[#25D366] hover:opacity-90 transition-opacity rounded-[10px] flex items-center justify-center text-white shrink-0 shadow-lg shadow-green-500/20">
                         <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
@@ -302,16 +297,16 @@ export default function Footer({ settings }: FooterProps) {
 
           </div>
 
-          {/* ================= COPYRIGHT LOWER SECTION ================= */}
-          <div className="pt-5 border-t border-white/[0.05] flex flex-row items-center justify-between text-[11px] sm:text-[14px] text-slate-400 font-semibold overflow-x-auto no-scrollbar">
+          {/* ================= COPYRIGHT LOWER SECTION (Left-Aligned Both Texts) ================= */}
+          <div className="pt-5 border-t border-white/[0.05] flex flex-wrap items-center justify-start gap-y-2 text-[11px] sm:text-[14px] text-white/70 font-semibold">
             <div>© Copyright 2026. All Rights Reserved.</div>
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center ml-1 flex-shrink-0">
               <span>Developed by</span>
               <a
                 href="https://t.me/The_Linuxuser"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shimmer-hover text-white font-bold transition-colors cursor-pointer uppercase tracking-wider px-1 rounded custom-hover-text no-underline inline-block"
+                className="shimmer-hover text-white hover:text:white/60 font-bold transition-colors cursor-pointer uppercase tracking-wider px-1 rounded custom-hover-text no-underline inline-block"
               >
                 SINOX
               </a>
