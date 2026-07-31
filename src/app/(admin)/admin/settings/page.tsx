@@ -58,6 +58,22 @@ export default async function SettingsPage() {
     
     // ফ্লোটিং বাটন অপশন
     activeFloatingButton: (dbSettings?.activeFloatingButton as "WHATSAPP" | "TELEGRAM" | "YOUTUBE" | "FACEBOOK" | "INSTAGRAM") || "WHATSAPP",
+
+    // 🔘 Dynamic Hero Button 1
+    isHeroBtn1Visible: dbSettings?.isHeroBtn1Visible ?? true,
+    heroBtn1Subtitle: dbSettings?.heroBtn1Subtitle || "",
+    heroBtn1Title: dbSettings?.heroBtn1Title || "",
+    heroBtn1Link: dbSettings?.heroBtn1Link || "",
+    heroBtn1ImageUrl: dbSettings?.heroBtn1ImageUrl || "",
+    heroBtn1Svg: dbSettings?.heroBtn1Svg || "",
+
+    // 🔘 Dynamic Hero Button 2
+    isHeroBtn2Visible: dbSettings?.isHeroBtn2Visible ?? true,
+    heroBtn2Subtitle: dbSettings?.heroBtn2Subtitle || "",
+    heroBtn2Title: dbSettings?.heroBtn2Title || "",
+    heroBtn2Link: dbSettings?.heroBtn2Link || "",
+    heroBtn2ImageUrl: dbSettings?.heroBtn2ImageUrl || "",
+    heroBtn2Svg: dbSettings?.heroBtn2Svg || "",
     
     adminEmail: dbSettings?.adminEmail || "",
     primaryColor: dbSettings?.primaryColor || "#00d2ff",
@@ -90,7 +106,7 @@ export default async function SettingsPage() {
       <AppSidebar variant="inset" />
       
       <SidebarInset>
-        {/* হেডারে অতিরিক্ত প্রোপস ছাড়া অ্যাডমিন হেডার লোড করা হলো */}
+        {/* হেডারে অতিরিক্ত প্রোপস ছাড়া অ্যাডমিন হেডার লোড করা হলো */}
         <AdminHeader />
         
         <div className="flex flex-1 flex-col">

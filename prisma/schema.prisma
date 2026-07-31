@@ -212,9 +212,6 @@ model SiteSettings {
   paymentMinAmount String? @default("1")
   paymentMaxAmount String? @default("99999999")
 
-  heroTitle           String? 
-  heroDescription     String? 
-  heroLogoUrl         String?  
 
   isHeroBtn1Visible   Boolean  @default(true)       
   heroBtn1Subtitle    String?  @default("SUPPORT") 

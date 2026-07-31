@@ -46,11 +46,6 @@ interface SettingsFormProps {
     instagramLink?: string | null;
     activeFloatingButton?: "WHATSAPP" | "TELEGRAM" | "YOUTUBE" | "FACEBOOK" | "INSTAGRAM";
 
-    // Hero Section Data
-    heroTitle?: string | null;
-    heroDescription?: string | null;
-    heroLogoUrl?: string | null;
-
     // Hero Button 1
     isHeroBtn1Visible?: boolean;
     heroBtn1Subtitle?: string | null;
@@ -132,11 +127,6 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
     instagramLink: initialData?.instagramLink || "",
     activeFloatingButton: initialData?.activeFloatingButton || "WHATSAPP",
 
-    // 🚀 Hero Section Data
-    heroTitle: initialData?.heroTitle || "",
-    heroDescription: initialData?.heroDescription || "",
-    heroLogoUrl: initialData?.heroLogoUrl || "",
-
     // 🔘 Hero Button 1
     isHeroBtn1Visible: initialData?.isHeroBtn1Visible ?? true,
     heroBtn1Subtitle: initialData?.heroBtn1Subtitle || "",
@@ -214,11 +204,6 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         facebookLink: initialData.facebookLink || "",
         instagramLink: initialData.instagramLink || "",
         activeFloatingButton: initialData.activeFloatingButton || "WHATSAPP",
-
-        // Hero Data Update
-        heroTitle: initialData.heroTitle || "",
-        heroDescription: initialData.heroDescription || "",
-        heroLogoUrl: initialData.heroLogoUrl || "",
 
         isHeroBtn1Visible: initialData.isHeroBtn1Visible ?? true,
         heroBtn1Subtitle: initialData.heroBtn1Subtitle || "",
@@ -694,50 +679,12 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           </div>
         </div>
 
-        {/* 2. HERO SLIDER MAIN DETAILS */}
-        <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-500" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
-              2. Hero Section Header & Main Content
-            </h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Hero Title</Label>
-              <Input 
-                value={formData.heroTitle} 
-                onChange={(e) => setFormData({...formData, heroTitle: e.target.value})} 
-                placeholder="e.g. Best Game Topup Platform"
-                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-              />
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Hero Description</Label>
-              <Input 
-                value={formData.heroDescription} 
-                onChange={(e) => setFormData({...formData, heroDescription: e.target.value})} 
-                placeholder="e.g. Buy in-game items quickly with safe payment options."
-                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 max-w-max">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">HERO LOGO (512x512)</Label>
-            <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-              <ImageUploader defaultValue={formData.heroLogoUrl} onFileChange={(url) => setFormData((prev) => ({ ...prev, heroLogoUrl: url || "" }))} />
-            </div>
-          </div>
-        </div>
-
-        {/* 3. HERO DYNAMIC BUTTON 1 */}
+        {/* DYNAMIC BUTTON 1 */}
         <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
-              3. Dynamic Hero Button 1
+              Slider bottom Button 1
             </h3>
             <div className="flex items-center gap-2">
               <Label className="text-xs font-bold text-neutral-500">Enable Button 1</Label>
@@ -787,22 +734,16 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
                     className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
                   />
                 </div>
-                <div className="flex flex-col gap-2 max-w-max">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">BUTTON 1 ICON IMAGE</Label>
-                  <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-                    <ImageUploader defaultValue={formData.heroBtn1ImageUrl} onFileChange={(url) => setFormData((prev) => ({ ...prev, heroBtn1ImageUrl: url || "" }))} />
-                  </div>
-                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* 4. HERO DYNAMIC BUTTON 2 */}
+        {/* DYNAMIC BUTTON 2 */}
         <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
-              4. Dynamic Hero Button 2
+              Slider bottom Button 2
             </h3>
             <div className="flex items-center gap-2">
               <Label className="text-xs font-bold text-neutral-500">Enable Button 2</Label>
@@ -851,12 +792,6 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
                     placeholder="Paste raw <svg>...</svg> code here"
                     className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
                   />
-                </div>
-                <div className="flex flex-col gap-2 max-w-max">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">BUTTON 2 ICON IMAGE</Label>
-                  <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-                    <ImageUploader defaultValue={formData.heroBtn2ImageUrl} onFileChange={(url) => setFormData((prev) => ({ ...prev, heroBtn2ImageUrl: url || "" }))} />
-                  </div>
                 </div>
               </div>
             </div>

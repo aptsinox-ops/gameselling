@@ -146,10 +146,6 @@ export async function PUT(request: Request) {
       primaryColor: body.primaryColor ? String(body.primaryColor).trim() : "#00d2ff",
       backgroundColor: body.backgroundColor ? String(body.backgroundColor).trim() : "#0a0a0c",
 
-      // 🚀 HERO SLIDER MAIN DATA
-      heroTitle: body.heroTitle ? String(body.heroTitle).trim() : null,
-      heroDescription: body.heroDescription ? String(body.heroDescription).trim() : null,
-      heroLogoUrl: body.heroLogoUrl ? String(body.heroLogoUrl).trim() : null,
 
       // 🔘 HERO BUTTON 1 DATA
       isHeroBtn1Visible:

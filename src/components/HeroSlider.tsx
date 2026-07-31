@@ -62,7 +62,7 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
     if (slides.length <= 1) return;
     const slideInterval = setInterval(() => {
       setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 4000);
+    }, 5000);
     return () => clearInterval(slideInterval);
   }, [slides.length]);
 
@@ -114,7 +114,7 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
 
   return (
     <div className="w-full space-y-4 block clear-both select-none">
-      {/* 🌟 Pure CSS Gradient Angle Rotation & Liquid Glass Style */}
+      {/* 🌟 Dynamic CSS Styles */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -130,7 +130,6 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
           }
         }
 
-        /* 🔮 Pill Border gradient */
         .shimmer-pill-border {
           border-radius: 9999px;
           padding: 2px;
@@ -145,7 +144,6 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
           animation: rotateGradientAngle 3.5s linear infinite;
         }
 
-        /* 🧊 Liquid Glass Inner Capsule Background */
         .liquid-glass-inner {
           border-radius: 9999px;
           background: rgba(18, 16, 28, 0.75);
@@ -157,7 +155,6 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
             0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
-        /* 🚀 Smooth Slide-Up Entrance Animation */
         @keyframes slideUpBadge {
           0% {
             transform: translateY(50px);
@@ -190,7 +187,6 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
           style={{ backgroundColor: primaryColor }}
           className="relative text-white p-4 pr-9 rounded-md text-left shadow-sm"
         >
-          {/* ✕ Close Button */}
           <button
             onClick={() => setShowNotice(false)}
             aria-label="Close notice"
@@ -326,7 +322,7 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
         )}
       </div>
 
-      {/* Dynamic Telegram / Custom Buttons Section */}
+      {/* 🔘 Dynamic Buttons Section (Button 1 & Button 2) */}
       {(isBtn1Visible || isBtn2Visible) && (
         <div className="flex justify-start gap-2 sm:gap-4 mt-0">
           {/* Button 1 */}
