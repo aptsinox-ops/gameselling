@@ -212,6 +212,24 @@ model SiteSettings {
   paymentMinAmount String? @default("1")
   paymentMaxAmount String? @default("99999999")
 
+  heroTitle           String? 
+  heroDescription     String? 
+  heroLogoUrl         String?  
+
+  isHeroBtn1Visible   Boolean  @default(true)       
+  heroBtn1Subtitle    String?  @default("SUPPORT") 
+  heroBtn1Title       String?  @default("Telegram") 
+  heroBtn1Link        String?                      
+  heroBtn1ImageUrl    String?                      
+  heroBtn1Svg         String?                       
+
+  isHeroBtn2Visible   Boolean  @default(true)      
+  heroBtn2Subtitle    String?  @default("GROUP")    
+  heroBtn2Title       String?  @default("Telegram") 
+  heroBtn2Link        String?                       
+  heroBtn2ImageUrl    String?                   
+  heroBtn2Svg         String?                       
+
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 }

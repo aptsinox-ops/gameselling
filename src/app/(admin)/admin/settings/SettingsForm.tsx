@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Loader2, Plus, X, Shield, User, Globe, MessageCircle, Sliders, LayoutGrid, CreditCard } from "lucide-react";
+import { Loader2, Plus, X, Shield, User, Globe, MessageCircle, Sliders, LayoutGrid, CreditCard, Sparkles, Image as ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -37,12 +37,36 @@ interface SettingsFormProps {
     noticeText?: string | null;
     isHeaderVisible?: boolean;
     isFooterVisible?: boolean;
+
+    // Social Links
     whatsappNumber?: string | null;
     telegramUsername?: string | null;
     youtubeLink?: string | null;
     facebookLink?: string | null;
     instagramLink?: string | null;
     activeFloatingButton?: "WHATSAPP" | "TELEGRAM" | "YOUTUBE" | "FACEBOOK" | "INSTAGRAM";
+
+    // Hero Section Data
+    heroTitle?: string | null;
+    heroDescription?: string | null;
+    heroLogoUrl?: string | null;
+
+    // Hero Button 1
+    isHeroBtn1Visible?: boolean;
+    heroBtn1Subtitle?: string | null;
+    heroBtn1Title?: string | null;
+    heroBtn1Link?: string | null;
+    heroBtn1ImageUrl?: string | null;
+    heroBtn1Svg?: string | null;
+
+    // Hero Button 2
+    isHeroBtn2Visible?: boolean;
+    heroBtn2Subtitle?: string | null;
+    heroBtn2Title?: string | null;
+    heroBtn2Link?: string | null;
+    heroBtn2ImageUrl?: string | null;
+    heroBtn2Svg?: string | null;
+
     adminEmail?: string | null;
     primaryColor?: string;
     backgroundColor?: string;
@@ -99,12 +123,36 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
     noticeText: initialData?.noticeText || "",
     isHeaderVisible: initialData?.isHeaderVisible ?? true,
     isFooterVisible: initialData?.isFooterVisible ?? true,
+
+    // Social Links
     whatsappNumber: initialData?.whatsappNumber || "",
     telegramUsername: initialData?.telegramUsername || "",
     youtubeLink: initialData?.youtubeLink || "",
     facebookLink: initialData?.facebookLink || "",
     instagramLink: initialData?.instagramLink || "",
     activeFloatingButton: initialData?.activeFloatingButton || "WHATSAPP",
+
+    // 🚀 Hero Section Data
+    heroTitle: initialData?.heroTitle || "",
+    heroDescription: initialData?.heroDescription || "",
+    heroLogoUrl: initialData?.heroLogoUrl || "",
+
+    // 🔘 Hero Button 1
+    isHeroBtn1Visible: initialData?.isHeroBtn1Visible ?? true,
+    heroBtn1Subtitle: initialData?.heroBtn1Subtitle || "",
+    heroBtn1Title: initialData?.heroBtn1Title || "",
+    heroBtn1Link: initialData?.heroBtn1Link || "",
+    heroBtn1ImageUrl: initialData?.heroBtn1ImageUrl || "",
+    heroBtn1Svg: initialData?.heroBtn1Svg || "",
+
+    // 🔘 Hero Button 2
+    isHeroBtn2Visible: initialData?.isHeroBtn2Visible ?? true,
+    heroBtn2Subtitle: initialData?.heroBtn2Subtitle || "",
+    heroBtn2Title: initialData?.heroBtn2Title || "",
+    heroBtn2Link: initialData?.heroBtn2Link || "",
+    heroBtn2ImageUrl: initialData?.heroBtn2ImageUrl || "",
+    heroBtn2Svg: initialData?.heroBtn2Svg || "",
+
     adminEmail: initialData?.adminEmail || "",
     primaryColor: initialData?.primaryColor || "#00d2ff",
     backgroundColor: initialData?.backgroundColor || "#0a0a0c",
@@ -159,12 +207,33 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         noticeText: initialData.noticeText || "",
         isHeaderVisible: initialData.isHeaderVisible ?? true,
         isFooterVisible: initialData.isFooterVisible ?? true,
+
         whatsappNumber: initialData.whatsappNumber || "",
         telegramUsername: initialData.telegramUsername || "",
         youtubeLink: initialData.youtubeLink || "",
         facebookLink: initialData.facebookLink || "",
         instagramLink: initialData.instagramLink || "",
         activeFloatingButton: initialData.activeFloatingButton || "WHATSAPP",
+
+        // Hero Data Update
+        heroTitle: initialData.heroTitle || "",
+        heroDescription: initialData.heroDescription || "",
+        heroLogoUrl: initialData.heroLogoUrl || "",
+
+        isHeroBtn1Visible: initialData.isHeroBtn1Visible ?? true,
+        heroBtn1Subtitle: initialData.heroBtn1Subtitle || "",
+        heroBtn1Title: initialData.heroBtn1Title || "",
+        heroBtn1Link: initialData.heroBtn1Link || "",
+        heroBtn1ImageUrl: initialData.heroBtn1ImageUrl || "",
+        heroBtn1Svg: initialData.heroBtn1Svg || "",
+
+        isHeroBtn2Visible: initialData.isHeroBtn2Visible ?? true,
+        heroBtn2Subtitle: initialData.heroBtn2Subtitle || "",
+        heroBtn2Title: initialData.heroBtn2Title || "",
+        heroBtn2Link: initialData.heroBtn2Link || "",
+        heroBtn2ImageUrl: initialData.heroBtn2ImageUrl || "",
+        heroBtn2Svg: initialData.heroBtn2Svg || "",
+
         adminEmail: initialData.adminEmail || "",
         primaryColor: initialData.primaryColor || "#00d2ff",
         backgroundColor: initialData.backgroundColor || "#0a0a0c",
@@ -253,7 +322,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
       console.error(error);
       showToast.dismiss(toastId);
       showToast.error("Something went wrong!");
-    } finally {
+    } finally{
       setLoading(false);
     }
   };
@@ -263,37 +332,30 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
       showToast.error("New passwords do not match!");
       return;
     }
-    
+
     setAdminLoading(true);
     const toastId = showToast.loading("Updating admin profile...");
     try {
-      const res = await updateAdminProfile({
-        name: adminForm.name,
-        username: adminForm.username,
-        company: adminForm.company,
-        phone: adminForm.phone,
-        oldPassword: adminForm.oldPassword || undefined,
-        newPassword: adminForm.newPassword || undefined,
-      });
-
+      // 💡 Type Assertion যুক্ত করা হয়েছে (as { success?: boolean; error?: string })
+      const res = await updateAdminProfile(adminForm) as { success?: boolean; error?: string };
       showToast.dismiss(toastId);
 
-      if (res.success) {
-        showToast.success(res.message || "Admin profile updated successfully!");
-        setAdminForm((prev) => ({ 
-          ...prev, 
-          oldPassword: "", 
-          newPassword: "", 
-          confirmPassword: "" 
+      if (res?.success) {
+        showToast.success("Admin profile updated successfully!");
+        setAdminForm((prev) => ({
+          ...prev,
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
         }));
-        router.refresh(); 
+        router.refresh();
       } else {
-        showToast.error(res.message || "Failed to update admin profile.");
+        showToast.error(res?.error || "Failed to update admin profile");
       }
     } catch (error) {
       console.error(error);
       showToast.dismiss(toastId);
-      showToast.error("Something went wrong while saving admin information.");
+      showToast.error("Something went wrong!");
     } finally {
       setAdminLoading(false);
     }
@@ -323,13 +385,10 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           <LayoutGrid className="w-3.5 h-3.5" /> Footer Sections
         </TabsTrigger>
         <TabsTrigger value="social" className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800">
-          <MessageCircle className="w-3.5 h-3.5" /> Social & Contact
+          <MessageCircle className="w-3.5 h-3.5" /> Social & Hero Buttons
         </TabsTrigger>
         <TabsTrigger value="theme" className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800">
           <Globe className="w-3.5 h-3.5" /> Theme & Assets
-        </TabsTrigger>
-        <TabsTrigger value="informations" className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800">
-          <User className="w-3.5 h-3.5" /> Informations
         </TabsTrigger>
         <TabsTrigger value="payment" className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800">
           <CreditCard className="w-3.5 h-3.5" /> Payment
@@ -341,8 +400,6 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
 
       {/* ==================== GENERAL TAB ==================== */}
       <TabsContent value="general" className="space-y-6 animate-in fade-in duration-200">
-        
-        {/* ১. Site Name & Login System */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Site Name</Label>
@@ -368,7 +425,6 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           </div>
         </div>
 
-        {/* ২. Google OAuth Credentials */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Google Client ID</Label>
@@ -376,7 +432,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               value={formData.googleClientId} 
               onChange={(e) => setFormData({...formData, googleClientId: e.target.value})}
               placeholder="e.g. xxx-xxx.apps.googleusercontent.com"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-800 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" 
+              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" 
             />
           </div>
 
@@ -387,12 +443,11 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               value={formData.googleClientSecret} 
               onChange={(e) => setFormData({...formData, googleClientSecret: e.target.value})}
               placeholder="e.g. GOCSPX-xxxxxxxxxxxx"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-800 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" 
+              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" 
             />
           </div>
         </div>
 
-        {/* ৩. Site Title & Site Description (SEO) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Site Title</Label>
@@ -400,7 +455,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               value={formData.siteTitle} 
               onChange={(e) => setFormData({...formData, siteTitle: e.target.value})}
               placeholder="e.g. DEMO BAZAR | Best Online Topup Store"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-800 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" 
+              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" 
             />
           </div>
 
@@ -410,12 +465,11 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               value={formData.siteDescription} 
               onChange={(e) => setFormData({...formData, siteDescription: e.target.value})}
               placeholder="e.g. Best game topup store in Bangladesh with instant delivery..."
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-800 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" 
+              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" 
             />
           </div>
         </div>
 
-        {/* ৪. Meta Keywords */}
         <div className="flex flex-col gap-2.5">
           <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Meta Keywords</Label>
           <div className="flex gap-2">
@@ -423,7 +477,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
               value={tempKeyword}
               onChange={(e) => setTempKeyword(e.target.value)}
               placeholder="Type tag (e.g. topup) & press Enter" 
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70"
+              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl"
               onKeyDown={(e) => e.key === "Enter" && addKeyword(e)}
             />
             <Button onClick={addKeyword} type="button" className="h-11 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 text-neutral-900 dark:text-white px-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
@@ -446,18 +500,16 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           </div>
         </div>
 
-        {/* ৫. Notice Text */}
         <div className="flex flex-col gap-2">
           <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Notice Text</Label>
           <Textarea 
             value={formData.noticeText}
             onChange={(e) => setFormData({...formData, noticeText: e.target.value})}
-            placeholder="Enter global website notice or scrolling announcement bar text..."
-            className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[100px] rounded-xl placeholder:text-neutral-400/70"
+            placeholder="Enter global website notice..."
+            className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[100px] rounded-xl"
           />
         </div>
 
-        {/* ৬. Header / Footer Switches */}
         <div className="w-full border-t border-b border-neutral-200/60 dark:border-neutral-800/60 py-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="flex items-center justify-between w-full">
@@ -481,14 +533,14 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Top Gradient Color</Label>
             <div className="flex gap-2 items-center bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-1.5 rounded-xl">
               <input type="color" value={formData.footerTopColor} onChange={(e) => setFormData({...formData, footerTopColor: e.target.value})} className="w-10 h-8 rounded-lg cursor-pointer border-none bg-transparent" />
-              <Input value={formData.footerTopColor} onChange={(e) => setFormData({...formData, footerTopColor: e.target.value})} placeholder="#00d2ff" className="border-none bg-transparent shadow-none focus-visible:ring-0 font-mono h-8 text-xs text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400/70" />
+              <Input value={formData.footerTopColor} onChange={(e) => setFormData({...formData, footerTopColor: e.target.value})} placeholder="#00d2ff" className="border-none bg-transparent shadow-none focus-visible:ring-0 font-mono h-8 text-xs text-neutral-900 dark:text-neutral-100" />
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Bottom Gradient Color</Label>
             <div className="flex gap-2 items-center bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 p-1.5 rounded-xl">
               <input type="color" value={formData.footerBottomColor} onChange={(e) => setFormData({...formData, footerBottomColor: e.target.value})} className="w-10 h-8 rounded-lg cursor-pointer border-none bg-transparent" />
-              <Input value={formData.footerBottomColor} onChange={(e) => setFormData({...formData, footerBottomColor: e.target.value})} placeholder="#0055ff" className="border-none bg-transparent shadow-none focus-visible:ring-0 font-mono h-8 text-xs text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400/70" />
+              <Input value={formData.footerBottomColor} onChange={(e) => setFormData({...formData, footerBottomColor: e.target.value})} placeholder="#0055ff" className="border-none bg-transparent shadow-none focus-visible:ring-0 font-mono h-8 text-xs text-neutral-900 dark:text-neutral-100" />
             </div>
           </div>
         </div>
@@ -514,17 +566,17 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title 1</Label>
-                <Input value={formData.footerCard1Title1} onChange={(e) => setFormData({...formData, footerCard1Title1: e.target.value})} placeholder="e.g. Fast Delivery" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" />
+                <Input value={formData.footerCard1Title1} onChange={(e) => setFormData({...formData, footerCard1Title1: e.target.value})} placeholder="e.g. Fast Delivery" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" />
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title 2</Label>
-                <Input value={formData.footerCard1Title2} onChange={(e) => setFormData({...formData, footerCard1Title2: e.target.value})} placeholder="e.g. Within 5-10 Minutes" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" />
+                <Input value={formData.footerCard1Title2} onChange={(e) => setFormData({...formData, footerCard1Title2: e.target.value})} placeholder="e.g. Within 5-10 Minutes" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
               <div className="md:col-span-2 flex flex-col gap-2">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Redirect Link</Label>
-                <Input value={formData.footerCard1Link} onChange={(e) => setFormData({...formData, footerCard1Link: e.target.value})} placeholder="Hint Link (e.g. /orders or #)" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" />
+                <Input value={formData.footerCard1Link} onChange={(e) => setFormData({...formData, footerCard1Link: e.target.value})} placeholder="Hint Link (e.g. /orders or #)" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" />
               </div>
               <div className="flex flex-col gap-2 max-w-max ">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">CARD BAR 512x512</Label>
@@ -541,17 +593,17 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title 1</Label>
-                <Input value={formData.footerCard2Title1} onChange={(e) => setFormData({...formData, footerCard2Title1: e.target.value})} placeholder="e.g. Support 24/7" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" />
+                <Input value={formData.footerCard2Title1} onChange={(e) => setFormData({...formData, footerCard2Title1: e.target.value})} placeholder="e.g. Support 24/7" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" />
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title 2</Label>
-                <Input value={formData.footerCard2Title2} onChange={(e) => setFormData({...formData, footerCard2Title2: e.target.value})} placeholder="e.g. Live Chat & WhatsApp" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" />
+                <Input value={formData.footerCard2Title2} onChange={(e) => setFormData({...formData, footerCard2Title2: e.target.value})} placeholder="e.g. Live Chat & WhatsApp" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
               <div className="md:col-span-2 flex flex-col gap-2">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Redirect Link</Label>
-                <Input value={formData.footerCard2Link} onChange={(e) => setFormData({...formData, footerCard2Link: e.target.value})} placeholder="Hint Link (e.g. /orders or #)" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl placeholder:text-neutral-400/70" />
+                <Input value={formData.footerCard2Link} onChange={(e) => setFormData({...formData, footerCard2Link: e.target.value})} placeholder="Hint Link (e.g. /orders or #)" className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 text-sm h-11 rounded-xl" />
               </div>
               <div className="flex flex-col gap-2 max-w-max">
                 <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">CARD BAR 512x512</Label>
@@ -566,74 +618,251 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         <div className="pt-2">{renderSaveButton(handleSaveSettings, loading)}</div>
       </TabsContent>
 
-      {/* ==================== SOCIAL & CONTACT TAB ==================== */}
-      <TabsContent value="social" className="space-y-6 animate-in fade-in duration-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">WhatsApp Number</Label>
-            <Input 
-              value={formData.whatsappNumber} 
-              onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})} 
-              placeholder="e.g. 88017XXXXXXXX"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl placeholder:text-neutral-400/70" 
-            />
-          </div>
+      {/* ==================== SOCIAL & CONTACT + HERO BUTTONS TAB ==================== */}
+      <TabsContent value="social" className="space-y-8 animate-in fade-in duration-200">
+        
+        {/* 1. SOCIAL & CONTACT INFORMATION */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200 border-b border-neutral-200 dark:border-neutral-800 pb-2">
+            1. Social & Floating Button
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">WhatsApp Number</Label>
+              <Input 
+                value={formData.whatsappNumber} 
+                onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})} 
+                placeholder="e.g. 88017XXXXXXXX"
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Telegram Username</Label>
-            <Input 
-              value={formData.telegramUsername} 
-              onChange={(e) => setFormData({...formData, telegramUsername: e.target.value})} 
-              placeholder="e.g. https://t.me/onlyusername"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl placeholder:text-neutral-400/70" 
-            />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Telegram Username</Label>
+              <Input 
+                value={formData.telegramUsername} 
+                onChange={(e) => setFormData({...formData, telegramUsername: e.target.value})} 
+                placeholder="e.g. https://t.me/onlyusername"
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">YouTube Link</Label>
-            <Input 
-              value={formData.youtubeLink} 
-              onChange={(e) => setFormData({...formData, youtubeLink: e.target.value})} 
-              placeholder="https://youtube.com/c/YourChannel"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl placeholder:text-neutral-400/70" 
-            />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">YouTube Link</Label>
+              <Input 
+                value={formData.youtubeLink} 
+                onChange={(e) => setFormData({...formData, youtubeLink: e.target.value})} 
+                placeholder="https://youtube.com/c/YourChannel"
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Facebook Link</Label>
-            <Input 
-              value={formData.facebookLink} 
-              onChange={(e) => setFormData({...formData, facebookLink: e.target.value})} 
-              placeholder="https://facebook.com/YourPage"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl placeholder:text-neutral-400/70" 
-            />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Facebook Link</Label>
+              <Input 
+                value={formData.facebookLink} 
+                onChange={(e) => setFormData({...formData, facebookLink: e.target.value})} 
+                placeholder="https://facebook.com/YourPage"
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Instagram Link</Label>
-            <Input 
-              value={formData.instagramLink} 
-              onChange={(e) => setFormData({...formData, instagramLink: e.target.value})} 
-              placeholder="https://instagram.com/YourPage"
-              className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl placeholder:text-neutral-400/70" 
-            />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Instagram Link</Label>
+              <Input 
+                value={formData.instagramLink} 
+                onChange={(e) => setFormData({...formData, instagramLink: e.target.value})} 
+                placeholder="https://instagram.com/YourPage"
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Active Floating Button</Label>
-            <select 
-              value={formData.activeFloatingButton} 
-              onChange={(e) => setFormData({...formData, activeFloatingButton: e.target.value as any})} 
-              className="flex h-11 w-full rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 dark:bg-neutral-950 focus:outline-none"
-            >
-              <option value="WHATSAPP">WhatsApp</option>
-              <option value="TELEGRAM">Telegram</option>
-              <option value="YOUTUBE">YouTube</option>
-              <option value="FACEBOOK">Facebook</option>
-              <option value="INSTAGRAM">Instagram</option>
-            </select>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Active Floating Button</Label>
+              <select 
+                value={formData.activeFloatingButton} 
+                onChange={(e) => setFormData({...formData, activeFloatingButton: e.target.value as any})} 
+                className="flex h-11 w-full rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 dark:bg-neutral-950 focus:outline-none"
+              >
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="TELEGRAM">Telegram</option>
+                <option value="YOUTUBE">YouTube</option>
+                <option value="FACEBOOK">Facebook</option>
+                <option value="INSTAGRAM">Instagram</option>
+              </select>
+            </div>
           </div>
         </div>
+
+        {/* 2. HERO SLIDER MAIN DETAILS */}
+        <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-cyan-500" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
+              2. Hero Section Header & Main Content
+            </h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Hero Title</Label>
+              <Input 
+                value={formData.heroTitle} 
+                onChange={(e) => setFormData({...formData, heroTitle: e.target.value})} 
+                placeholder="e.g. Best Game Topup Platform"
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Hero Description</Label>
+              <Input 
+                value={formData.heroDescription} 
+                onChange={(e) => setFormData({...formData, heroDescription: e.target.value})} 
+                placeholder="e.g. Buy in-game items quickly with safe payment options."
+                className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 max-w-max">
+            <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">HERO LOGO (512x512)</Label>
+            <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+              <ImageUploader defaultValue={formData.heroLogoUrl} onFileChange={(url) => setFormData((prev) => ({ ...prev, heroLogoUrl: url || "" }))} />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. HERO DYNAMIC BUTTON 1 */}
+        <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
+              3. Dynamic Hero Button 1
+            </h3>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-bold text-neutral-500">Enable Button 1</Label>
+              <Switch checked={formData.isHeroBtn1Visible} onCheckedChange={(v) => setFormData({...formData, isHeroBtn1Visible: v})} />
+            </div>
+          </div>
+
+          {formData.isHeroBtn1Visible && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Subtitle</Label>
+                  <Input 
+                    value={formData.heroBtn1Subtitle} 
+                    onChange={(e) => setFormData({...formData, heroBtn1Subtitle: e.target.value})} 
+                    placeholder="e.g. SUPPORT"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title</Label>
+                  <Input 
+                    value={formData.heroBtn1Title} 
+                    onChange={(e) => setFormData({...formData, heroBtn1Title: e.target.value})} 
+                    placeholder="e.g. Telegram"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Redirect Link</Label>
+                  <Input 
+                    value={formData.heroBtn1Link} 
+                    onChange={(e) => setFormData({...formData, heroBtn1Link: e.target.value})} 
+                    placeholder="https://t.me/yourchannel"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">RAW SVG ICON (Optional)</Label>
+                  <Textarea 
+                    value={formData.heroBtn1Svg} 
+                    onChange={(e) => setFormData({...formData, heroBtn1Svg: e.target.value})} 
+                    placeholder="Paste raw <svg>...</svg> code here"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
+                  />
+                </div>
+                <div className="flex flex-col gap-2 max-w-max">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">BUTTON 1 ICON IMAGE</Label>
+                  <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+                    <ImageUploader defaultValue={formData.heroBtn1ImageUrl} onFileChange={(url) => setFormData((prev) => ({ ...prev, heroBtn1ImageUrl: url || "" }))} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 4. HERO DYNAMIC BUTTON 2 */}
+        <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
+              4. Dynamic Hero Button 2
+            </h3>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-bold text-neutral-500">Enable Button 2</Label>
+              <Switch checked={formData.isHeroBtn2Visible} onCheckedChange={(v) => setFormData({...formData, isHeroBtn2Visible: v})} />
+            </div>
+          </div>
+
+          {formData.isHeroBtn2Visible && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Subtitle</Label>
+                  <Input 
+                    value={formData.heroBtn2Subtitle} 
+                    onChange={(e) => setFormData({...formData, heroBtn2Subtitle: e.target.value})} 
+                    placeholder="e.g. GROUP"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title</Label>
+                  <Input 
+                    value={formData.heroBtn2Title} 
+                    onChange={(e) => setFormData({...formData, heroBtn2Title: e.target.value})} 
+                    placeholder="e.g. Telegram"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Redirect Link</Label>
+                  <Input 
+                    value={formData.heroBtn2Link} 
+                    onChange={(e) => setFormData({...formData, heroBtn2Link: e.target.value})} 
+                    placeholder="https://t.me/yourgroup"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">RAW SVG ICON (Optional)</Label>
+                  <Textarea 
+                    value={formData.heroBtn2Svg} 
+                    onChange={(e) => setFormData({...formData, heroBtn2Svg: e.target.value})} 
+                    placeholder="Paste raw <svg>...</svg> code here"
+                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
+                  />
+                </div>
+                <div className="flex flex-col gap-2 max-w-max">
+                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 tracking-wider">BUTTON 2 ICON IMAGE</Label>
+                  <div className="h-max overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+                    <ImageUploader defaultValue={formData.heroBtn2ImageUrl} onFileChange={(url) => setFormData((prev) => ({ ...prev, heroBtn2ImageUrl: url || "" }))} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="pt-2">{renderSaveButton(handleSaveSettings, loading)}</div>
       </TabsContent>
 

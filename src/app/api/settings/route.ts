@@ -24,8 +24,8 @@ export async function GET() {
       settings = await prisma.siteSettings.create({
         data: {
           id: "STATIC",
-          siteName: "", 
-          
+          siteName: "DEMO BAZAR",
+
           // 🎯 SEO & Google Auth Defaults
           siteTitle: "",
           siteDescription: "",
@@ -33,7 +33,7 @@ export async function GET() {
           googleClientSecret: null,
 
           loginSystem: "OAUTH_MANUAL",
-          
+
           // 💳 পেমেন্ট সেটিংস ডিফল্টস
           paymentGateway: "Uddokotapay",
           paymentBaseUrl: "",
@@ -43,16 +43,37 @@ export async function GET() {
 
           primaryColor: "#00d2ff",
           backgroundColor: "#0a0a0c",
-          
-          // ফুটার আলাদা গ্রাডিয়েন্ট ডিফল্ট কালার
+
+          // 🚀 HERO SLIDER & DYNAMIC BUTTON DEFAULTS
+          heroTitle: null,
+          heroDescription: null,
+          heroLogoUrl: null,
+
+          // 🔘 Hero Button 1
+          isHeroBtn1Visible: true,
+          heroBtn1Subtitle: "SUPPORT",
+          heroBtn1Title: "Telegram",
+          heroBtn1Link: "#",
+          heroBtn1ImageUrl: null,
+          heroBtn1Svg: null,
+
+          // 🔘 Hero Button 2
+          isHeroBtn2Visible: true,
+          heroBtn2Subtitle: "GROUP",
+          heroBtn2Title: "Telegram",
+          heroBtn2Link: "#",
+          heroBtn2ImageUrl: null,
+          heroBtn2Svg: null,
+
+          // 🦶 ফুটার আলাদা গ্রাডিয়েন্ট ডিফল্ট কালার
           footerTopColor: "#061124",
           footerBottomColor: "#1a3b7b",
-          
+
           isFooterCard1Visible: true,
           footerCard1Title1: "Fast Delivery",
           footerCard1Title2: "Within 5-10 Minutes",
           footerCard1Link: "#",
-          
+
           isFooterCard2Visible: true,
           footerCard2Title1: "Support 24/7",
           footerCard2Title2: "Live Chat & WhatsApp",
@@ -60,14 +81,17 @@ export async function GET() {
         },
       });
     }
-    
+
     return NextResponse.json(settings, {
       headers: noCacheHeaders,
     });
   } catch (error) {
     console.error("Failed to fetch settings:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error instanceof Error ? error.message : String(error) }, 
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
@@ -82,7 +106,7 @@ export async function PUT(request: Request) {
     const updateData = {
       siteName: body.siteName ? String(body.siteName).trim() : "",
 
-      // 🎯 নতুন যুক্ত হওয়া SEO & Google OAuth ফিল্ডস
+      // 🎯 SEO & Google OAuth ফিল্ডস
       siteTitle: body.siteTitle ? String(body.siteTitle).trim() : null,
       siteDescription: body.siteDescription ? String(body.siteDescription).trim() : null,
       googleClientId: body.googleClientId ? String(body.googleClientId).trim() : null,
@@ -91,8 +115,8 @@ export async function PUT(request: Request) {
       logoUrl: body.logoUrl ? String(body.logoUrl).trim() : null,
       bannerUrl: body.bannerUrl ? String(body.bannerUrl).trim() : null,
       faviconUrl: body.faviconUrl ? String(body.faviconUrl).trim() : null,
-      
-      // 🎯 নতুন যুক্ত হওয়া ব্যানার ও লগইন সিস্টেম ডাটা
+
+      // 🎯 ব্যানার ও লগইন সিস্টেম ডাটা
       walletPayBanner: body.walletPayBanner ? String(body.walletPayBanner).trim() : null,
       autoPaymentBanner: body.autoPaymentBanner ? String(body.autoPaymentBanner).trim() : null,
       loginSystem: body.loginSystem ?? "OAUTH_MANUAL",
@@ -113,28 +137,53 @@ export async function PUT(request: Request) {
       activeFloatingButton: body.activeFloatingButton ?? "WHATSAPP",
       adminEmail: body.adminEmail ? String(body.adminEmail).trim() : null,
       youtubeLink: body.youtubeLink ? String(body.youtubeLink).trim() : null,
-      
+
       // সোশ্যাল মিডিয়া লিংক
       facebookLink: body.facebookLink ? String(body.facebookLink).trim() : null,
       instagramLink: body.instagramLink ? String(body.instagramLink).trim() : null,
-      
+
       // কালার ফিল্ডগুলো
       primaryColor: body.primaryColor ? String(body.primaryColor).trim() : "#00d2ff",
       backgroundColor: body.backgroundColor ? String(body.backgroundColor).trim() : "#0a0a0c",
-      
-      // ফুটার ব্যাকগ্রাউন্ড কালার
+
+      // 🚀 HERO SLIDER MAIN DATA
+      heroTitle: body.heroTitle ? String(body.heroTitle).trim() : null,
+      heroDescription: body.heroDescription ? String(body.heroDescription).trim() : null,
+      heroLogoUrl: body.heroLogoUrl ? String(body.heroLogoUrl).trim() : null,
+
+      // 🔘 HERO BUTTON 1 DATA
+      isHeroBtn1Visible:
+        typeof body.isHeroBtn1Visible === "boolean" ? body.isHeroBtn1Visible : true,
+      heroBtn1Subtitle: body.heroBtn1Subtitle ? String(body.heroBtn1Subtitle).trim() : "SUPPORT",
+      heroBtn1Title: body.heroBtn1Title ? String(body.heroBtn1Title).trim() : "Telegram",
+      heroBtn1Link: body.heroBtn1Link ? String(body.heroBtn1Link).trim() : null,
+      heroBtn1ImageUrl: body.heroBtn1ImageUrl ? String(body.heroBtn1ImageUrl).trim() : null,
+      heroBtn1Svg: body.heroBtn1Svg ? String(body.heroBtn1Svg) : null,
+
+      // 🔘 HERO BUTTON 2 DATA
+      isHeroBtn2Visible:
+        typeof body.isHeroBtn2Visible === "boolean" ? body.isHeroBtn2Visible : true,
+      heroBtn2Subtitle: body.heroBtn2Subtitle ? String(body.heroBtn2Subtitle).trim() : "GROUP",
+      heroBtn2Title: body.heroBtn2Title ? String(body.heroBtn2Title).trim() : "Telegram",
+      heroBtn2Link: body.heroBtn2Link ? String(body.heroBtn2Link).trim() : null,
+      heroBtn2ImageUrl: body.heroBtn2ImageUrl ? String(body.heroBtn2ImageUrl).trim() : null,
+      heroBtn2Svg: body.heroBtn2Svg ? String(body.heroBtn2Svg) : null,
+
+      // 🦶 ফুটার ব্যাকগ্রাউন্ড কালার
       footerTopColor: body.footerTopColor ? String(body.footerTopColor).trim() : "#061124",
       footerBottomColor: body.footerBottomColor ? String(body.footerBottomColor).trim() : "#1a3b7b",
-      
-      // ফুটার সেকশন কার্ড ১ ডাটা
-      isFooterCard1Visible: typeof body.isFooterCard1Visible === "boolean" ? body.isFooterCard1Visible : true,
+
+      // 🦶 ফুটার সেকশন কার্ড ১ ডাটা
+      isFooterCard1Visible:
+        typeof body.isFooterCard1Visible === "boolean" ? body.isFooterCard1Visible : true,
       footerCard1Title1: body.footerCard1Title1 ? String(body.footerCard1Title1).trim() : "Fast Delivery",
       footerCard1Title2: body.footerCard1Title2 ? String(body.footerCard1Title2).trim() : "Within 5-10 Minutes",
       footerCard1Link: body.footerCard1Link ? String(body.footerCard1Link).trim() : "#",
       footerCard1ImageUrl: body.footerCard1ImageUrl ? String(body.footerCard1ImageUrl).trim() : null,
-      
-      // ফুটার সেকশন কার্ড ২ ডাটা
-      isFooterCard2Visible: typeof body.isFooterCard2Visible === "boolean" ? body.isFooterCard2Visible : true,
+
+      // 🦶 ফুটার সেকশন কার্ড ২ ডাটা
+      isFooterCard2Visible:
+        typeof body.isFooterCard2Visible === "boolean" ? body.isFooterCard2Visible : true,
       footerCard2Title1: body.footerCard2Title1 ? String(body.footerCard2Title1).trim() : "Support 24/7",
       footerCard2Title2: body.footerCard2Title2 ? String(body.footerCard2Title2).trim() : "Live Chat & WhatsApp",
       footerCard2Link: body.footerCard2Link ? String(body.footerCard2Link).trim() : "#",
@@ -157,7 +206,10 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error("Failed to update settings:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error instanceof Error ? error.message : String(error) }, 
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
