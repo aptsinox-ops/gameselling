@@ -87,6 +87,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
   const router = useRouter(); 
   const [loading, setLoading] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [activeHeroBtnTab, setActiveHeroBtnTab] = useState<'btn1' | 'btn2'>('btn1');
 
   // Footer Card active tab state
   const [activeCardBar, setActiveCardBar] = useState<"card1" | "card2">("card1");
@@ -370,7 +371,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           <LayoutGrid className="w-3.5 h-3.5" /> Footer Sections
         </TabsTrigger>
         <TabsTrigger value="social" className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800">
-          <MessageCircle className="w-3.5 h-3.5" /> Social & Hero Buttons
+          <MessageCircle className="w-3.5 h-3.5" /> Social Links 
         </TabsTrigger>
         <TabsTrigger value="theme" className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800">
           <Globe className="w-3.5 h-3.5" /> Theme & Assets
@@ -603,7 +604,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         <div className="pt-2">{renderSaveButton(handleSaveSettings, loading)}</div>
       </TabsContent>
 
-      {/* ==================== SOCIAL & CONTACT + HERO BUTTONS TAB ==================== */}
+      {/* ==================== SOCIAL & CONTACT ==================== */}
       <TabsContent value="social" className="space-y-8 animate-in fade-in duration-200">
         
         {/* 1. SOCIAL & CONTACT INFORMATION */}
@@ -679,126 +680,182 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           </div>
         </div>
 
-
-        {/* DYNAMIC BUTTON 1 */}
+        {/* 2. SLIDER BOTTOM BUTTONS */}
         <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
-              Slider bottom Button 1
-            </h3>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs font-bold text-neutral-500">Enable Button 1</Label>
-              <Switch checked={formData.isHeroBtn1Visible} onCheckedChange={(v) => setFormData({...formData, isHeroBtn1Visible: v})} />
-            </div>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
+            2. Slider Bottom Buttons
+          </h3>
+
+          {/* Sub-Tabs (Image 2 style) */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveHeroBtnTab('btn1')}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                activeHeroBtnTab === 'btn1'
+                  ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 shadow-sm"
+                  : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+              }`}
+            >
+              Slider Button 1
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveHeroBtnTab('btn2')}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                activeHeroBtnTab === 'btn2'
+                  ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 shadow-sm"
+                  : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+              }`}
+            >
+              Slider Button 2
+            </button>
           </div>
 
-          {formData.isHeroBtn1Visible && (
+          {/* BUTTON 1 CONTENT */}
+          {activeHeroBtnTab === 'btn1' && (
             <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Subtitle</Label>
-                  <Input 
-                    value={formData.heroBtn1Subtitle} 
-                    onChange={(e) => setFormData({...formData, heroBtn1Subtitle: e.target.value})} 
-                    placeholder="e.g. SUPPORT"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title</Label>
-                  <Input 
-                    value={formData.heroBtn1Title} 
-                    onChange={(e) => setFormData({...formData, heroBtn1Title: e.target.value})} 
-                    placeholder="e.g. Telegram"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Redirect Link</Label>
-                  <Input 
-                    value={formData.heroBtn1Link} 
-                    onChange={(e) => setFormData({...formData, heroBtn1Link: e.target.value})} 
-                    placeholder="https://t.me/yourchannel"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-                  />
-                </div>
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-neutral-100/80 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800">
+                <Label className="text-xs font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+                  ENABLE SLIDER BUTTON 1
+                </Label>
+                <Switch 
+                  checked={formData.isHeroBtn1Visible} 
+                  onCheckedChange={(v) => setFormData({...formData, isHeroBtn1Visible: v})} 
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">RAW SVG ICON (Optional)</Label>
-                  <Textarea 
-                    value={formData.heroBtn1Svg} 
-                    onChange={(e) => setFormData({...formData, heroBtn1Svg: e.target.value})} 
-                    placeholder="Paste raw <svg>...</svg> code here"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
-                  />
+              {formData.isHeroBtn1Visible && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        Subtitle
+                      </Label>
+                      <Input 
+                        value={formData.heroBtn1Subtitle} 
+                        onChange={(e) => setFormData({...formData, heroBtn1Subtitle: e.target.value})} 
+                        placeholder="e.g. SUPPORT"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        Title
+                      </Label>
+                      <Input 
+                        value={formData.heroBtn1Title} 
+                        onChange={(e) => setFormData({...formData, heroBtn1Title: e.target.value})} 
+                        placeholder="e.g. Telegram"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        Redirect Link
+                      </Label>
+                      <Input 
+                        value={formData.heroBtn1Link} 
+                        onChange={(e) => setFormData({...formData, heroBtn1Link: e.target.value})} 
+                        placeholder="https://t.me/yourchannel"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        RAW SVG ICON
+                      </Label>
+                      <Textarea 
+                        value={formData.heroBtn1Svg} 
+                        onChange={(e) => setFormData({...formData, heroBtn1Svg: e.target.value})} 
+                        placeholder="Paste raw <svg>...</svg> code here"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
-        </div>
 
-        {/* DYNAMIC BUTTON 2 */}
-        <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-200">
-              Slider bottom Button 2
-            </h3>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs font-bold text-neutral-500">Enable Button 2</Label>
-              <Switch checked={formData.isHeroBtn2Visible} onCheckedChange={(v) => setFormData({...formData, isHeroBtn2Visible: v})} />
-            </div>
-          </div>
-
-          {formData.isHeroBtn2Visible && (
+          {/* BUTTON 2 CONTENT */}
+          {activeHeroBtnTab === 'btn2' && (
             <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Subtitle</Label>
-                  <Input 
-                    value={formData.heroBtn2Subtitle} 
-                    onChange={(e) => setFormData({...formData, heroBtn2Subtitle: e.target.value})} 
-                    placeholder="e.g. GROUP"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title</Label>
-                  <Input 
-                    value={formData.heroBtn2Title} 
-                    onChange={(e) => setFormData({...formData, heroBtn2Title: e.target.value})} 
-                    placeholder="e.g. Telegram"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Redirect Link</Label>
-                  <Input 
-                    value={formData.heroBtn2Link} 
-                    onChange={(e) => setFormData({...formData, heroBtn2Link: e.target.value})} 
-                    placeholder="https://t.me/yourgroup"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
-                  />
-                </div>
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-neutral-100/80 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800">
+                <Label className="text-xs font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+                  ENABLE SLIDER BUTTON 2
+                </Label>
+                <Switch 
+                  checked={formData.isHeroBtn2Visible} 
+                  onCheckedChange={(v) => setFormData({...formData, isHeroBtn2Visible: v})} 
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">RAW SVG ICON (Optional)</Label>
-                  <Textarea 
-                    value={formData.heroBtn2Svg} 
-                    onChange={(e) => setFormData({...formData, heroBtn2Svg: e.target.value})} 
-                    placeholder="Paste raw <svg>...</svg> code here"
-                    className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
-                  />
+              {formData.isHeroBtn2Visible && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        Subtitle
+                      </Label>
+                      <Input 
+                        value={formData.heroBtn2Subtitle} 
+                        onChange={(e) => setFormData({...formData, heroBtn2Subtitle: e.target.value})} 
+                        placeholder="e.g. GROUP"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        Title
+                      </Label>
+                      <Input 
+                        value={formData.heroBtn2Title} 
+                        onChange={(e) => setFormData({...formData, heroBtn2Title: e.target.value})} 
+                        placeholder="e.g. Telegram"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        Redirect Link
+                      </Label>
+                      <Input 
+                        value={formData.heroBtn2Link} 
+                        onChange={(e) => setFormData({...formData, heroBtn2Link: e.target.value})} 
+                        placeholder="https://t.me/yourgroup"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl" 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                        RAW SVG ICON
+                      </Label>
+                      <Textarea 
+                        value={formData.heroBtn2Svg} 
+                        onChange={(e) => setFormData({...formData, heroBtn2Svg: e.target.value})} 
+                        placeholder="Paste raw <svg>...</svg> code here"
+                        className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 min-h-[90px] font-mono text-xs rounded-xl" 
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
-        </div>
 
-        <div className="pt-2">{renderSaveButton(handleSaveSettings, loading)}</div>
+          <div className="pt-2">{renderSaveButton(handleSaveSettings, loading)}</div>
+        </div>
       </TabsContent>
 
       {/* ==================== THEME TAB ==================== */}
