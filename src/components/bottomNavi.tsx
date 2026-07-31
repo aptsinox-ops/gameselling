@@ -91,7 +91,7 @@ export default function BottomNav() {
       );
     }
 
-    // Option B: Image URL / SVG Path (Coloring using CSS Masking safely typed)
+    // Option B: Image URL / SVG Path
     if (trimmed.startsWith("http") || trimmed.startsWith("/")) {
       const maskStyle: React.CSSProperties = {
         backgroundColor: currentColor,
@@ -123,7 +123,6 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 h-17 px-1 flex items-center justify-around z-50 md:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.04)] select-none">
       {navList.map((item) => {
-        // Strict Boolean Type Assignment (Fixes TS Error)
         const isActive: boolean = Boolean(
           pathname &&
             item.href &&
@@ -154,10 +153,10 @@ export default function BottomNav() {
               {item.name}
             </span>
 
-            {/* Active Bottom Indicator Bar */}
+            {/* Active Indicator Bar (Text er thik niche) */}
             {isActive && (
               <span
-                className="absolute bottom-0.5 w-3.5 h-[2.5px] rounded-full transition-all duration-300"
+                className="w-3.5 h-[2.5px] rounded-full mt-0.5 transition-all duration-300"
                 style={{ backgroundColor: primaryColor }}
               />
             )}
