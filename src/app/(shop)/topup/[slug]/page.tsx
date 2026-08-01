@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import BottomNav from "@/components/bottomNavi";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProductPurchaseFlow from "@/components/ProductPurchaseFlow";
 
 export const dynamic = "force-dynamic";

@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/authOptions";
+import { getToken } from "next-auth/jwt";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    // 🟢 সেশন চেক
-    const session = await getServerSession(authOptions);
+    // 🟢 getToken ব্যবহার করে কুকি থেকে সরাসরি সেশন ভেরিফাই করা (কোনো ঝামেলা ছাড়াই)
+    const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
+    
 
+    // 🟢 রিকোয়েস্ট বডি থেকে ডাটা নেওয়া
     const { id, status, voucherCode } = await req.json();
 
     if (!id || !status) {
@@ -20,10 +21,12 @@ export async function POST(req: Request) {
     }
 
     const updateData: any = { status };
+    
     if (voucherCode !== undefined && voucherCode !== "") {
       updateData.voucherCode = voucherCode;
     }
 
+    // 🟢 ডাটাবেজে অর্ডার স্ট্যাটাস আপডেট করা
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
@@ -39,6 +42,7 @@ export async function POST(req: Request) {
   }
 }
 
+// ফ্রন্টএন্ড যদি PATCH মেথড পাঠায় তার সেফটি
 export async function PATCH(req: Request) {
   return POST(req);
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions"; // 👈 ১. সঠিক স্ট্যাটিক অপশন ইম্পোর্ট
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
