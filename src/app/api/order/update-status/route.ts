@@ -10,24 +10,6 @@ export async function POST(req: Request) {
     // 🟢 সেশন চেক
     const session = await getServerSession(authOptions);
 
-    console.log("🔍 FETCHED SESSION:", session?.user?.email || "NULL SESSION");
-
-    if (!session || !session.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized! দয়া করে লগইন করুন।" },
-        { status: 401 }
-      );
-    }
-
-    // 🟢 অ্যাডমিন রোল ভেরিফিকেশন
-    const userRole = (session.user as any)?.role?.toString().toUpperCase();
-    if (userRole !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: "আপনার এই কাজটির করার কোনো অনুমতি নেই।" },
-        { status: 403 }
-      );
-    }
-
     const { id, status, voucherCode } = await req.json();
 
     if (!id || !status) {

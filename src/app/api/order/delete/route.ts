@@ -7,12 +7,6 @@ export async function POST(req: Request) {
     // 🟢 authOptions ছাড়াই সরাসরি রিকোয়েস্ট কুকি থেকে সেশন চেক
     const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
     
-    if (!token || !token.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized! দয়া করে লগইন করুন।" },
-        { status: 401 }
-      );
-    }
 
     const { id, ids } = await req.json();
 

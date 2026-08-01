@@ -136,6 +136,7 @@ export const columns: ColumnDef<Order>[] = [
           const res = await fetch("/api/order/update-status", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ 
               id: order.id, 
               status: targetStatus,
@@ -513,6 +514,7 @@ export const columns: ColumnDef<Order>[] = [
           const res = await fetch("/api/order/update-status", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ id: order.id, status: targetStatus }),
           });
 
