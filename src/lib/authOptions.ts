@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// 🟢 NextAuth-এর টাইপ ডিক্লেয়ারেশন (TypeScript Error হ্যান্ডলিং)
+// 🟢 NextAuth Types - role যোগ করা হলো
 declare module "next-auth" {
   interface Session {
     user: {
@@ -13,6 +13,7 @@ declare module "next-auth" {
       image?: string | null;
       phone?: string | null;
       balance: number;
+      role: string; // 👈 role যোগ করা হয়েছে
     };
   }
 
@@ -22,6 +23,7 @@ declare module "next-auth" {
     email?: string | null;
     phone?: string | null;
     balance: number;
+    role: string; // 👈 role যোগ করা হয়েছে
   }
 }
 
@@ -30,6 +32,7 @@ declare module "next-auth/jwt" {
     id: string;
     phone?: string | null;
     balance: number;
+    role: string; // 👈 role যোগ করা হয়েছে
   }
 }
 
@@ -39,7 +42,7 @@ export const authOptions: AuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -47,17 +50,14 @@ export const authOptions: AuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: credentials.email }
         });
 
         if (!user || !user.password) {
           throw new Error("User not found");
         }
 
-        const isPasswordCorrect = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const isPasswordCorrect = await bcrypt.compare(credentials.password, user.password);
 
         if (!isPasswordCorrect) {
           throw new Error("Invalid password");
@@ -68,10 +68,11 @@ export const authOptions: AuthOptions = {
           name: user.name,
           email: user.email,
           phone: (user as any).phone ?? null,
-          balance: (user as any).balance ?? 0,
+          balance: (user as any).balance ?? 0, 
+          role: (user as any).role ?? "User", // 👈 DB থেকে role রিড করা হচ্ছে
         };
-      },
-    }),
+      }
+    })
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -79,6 +80,7 @@ export const authOptions: AuthOptions = {
         token.id = user.id;
         token.phone = user.phone;
         token.balance = user.balance;
+        token.role = user.role; // 👈 JWT-তে role সেভ হচ্ছে
       }
       return token;
     },
@@ -87,9 +89,10 @@ export const authOptions: AuthOptions = {
         session.user.id = token.id;
         session.user.phone = token.phone;
         session.user.balance = token.balance;
+        session.user.role = token.role; // 👈 Session-এ role সেভ হচ্ছে
       }
       return session;
-    },
+    }
   },
   pages: {
     signIn: "/login",
