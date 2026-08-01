@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt"; // 🟢 getServerSession এর বদলে getToken
+import { getToken } from "next-auth/jwt";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    // 🟢 authOptions ছাড়াই সরাসরি রিকোয়েস্ট কুকি থেকে সেশন চেক
+    // 🟢 getToken ব্যবহার করে কুকি থেকে সরাসরি সেশন ভেরিফাই করা (কোনো ঝামেলা ছাড়াই)
     const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
     
     if (!token || !token.email) {
@@ -14,7 +16,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // রিকোয়েস্ট বডি থেকে ডাটা নেওয়া
+    // 🟢 অ্যাডমিন চেক (যদি রোল ভেরিফাই করতে চান)
+    const userRole = (token as any)?.role;
+    if (userRole !== "ADMIN" && userRole !== "Admin") {
+      return NextResponse.json(
+        { success: false, error: "আপনার এই কাজটির করার কোনো অনুমতি নেই।" },
+        { status: 403 }
+      );
+    }
+
+    // 🟢 রিকোয়েস্ট বডি থেকে ডাটা নেওয়া
     const { id, status, voucherCode } = await req.json();
 
     if (!id || !status) {
@@ -30,7 +41,7 @@ export async function POST(req: Request) {
       updateData.voucherCode = voucherCode;
     }
 
-    // ডাটাবেজে অর্ডার আপডেট করা
+    // 🟢 ডাটাবেজে অর্ডার স্ট্যাটাস আপডেট করা
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
@@ -44,4 +55,9 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+// ফ্রন্টএন্ড যদি PATCH মেথড পাঠায় তার সেফটি
+export async function PATCH(req: Request) {
+  return POST(req);
 }
