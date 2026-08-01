@@ -1,31 +1,33 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/authOptions";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    // 🟢 getToken ব্যবহার করে কুকি থেকে সরাসরি সেশন ভেরিফাই করা (কোনো ঝামেলা ছাড়াই)
-    const token = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
-    
-    if (!token || !token.email) {
+    // 🟢 সেশন চেক
+    const session = await getServerSession(authOptions);
+
+    console.log("🔍 FETCHED SESSION:", session?.user?.email || "NULL SESSION");
+
+    if (!session || !session.user?.email) {
       return NextResponse.json(
         { success: false, error: "Unauthorized! দয়া করে লগইন করুন।" },
         { status: 401 }
       );
     }
 
-    // 🟢 অ্যাডমিন চেক (যদি রোল ভেরিফাই করতে চান)
-    const userRole = (token as any)?.role;
-    if (userRole !== "ADMIN" && userRole !== "Admin") {
+    // 🟢 অ্যাডমিন রোল ভেরিফিকেশন
+    const userRole = (session.user as any)?.role?.toString().toUpperCase();
+    if (userRole !== "ADMIN") {
       return NextResponse.json(
         { success: false, error: "আপনার এই কাজটির করার কোনো অনুমতি নেই।" },
         { status: 403 }
       );
     }
 
-    // 🟢 রিকোয়েস্ট বডি থেকে ডাটা নেওয়া
     const { id, status, voucherCode } = await req.json();
 
     if (!id || !status) {
@@ -36,12 +38,10 @@ export async function POST(req: Request) {
     }
 
     const updateData: any = { status };
-    
     if (voucherCode !== undefined && voucherCode !== "") {
       updateData.voucherCode = voucherCode;
     }
 
-    // 🟢 ডাটাবেজে অর্ডার স্ট্যাটাস আপডেট করা
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
@@ -57,7 +57,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ফ্রন্টএন্ড যদি PATCH মেথড পাঠায় তার সেফটি
 export async function PATCH(req: Request) {
   return POST(req);
 }

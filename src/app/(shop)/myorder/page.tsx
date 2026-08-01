@@ -1,7 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // আপনার authOptions এর পাথ অনুযায়ী মিলিয়ে নিন
+import { authOptions } from "@/lib/authOptions"; // 👈 ১. সঠিক স্ট্যাটিক অপশন ইম্পোর্ট
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -15,10 +15,10 @@ export default async function MyOrdersPage() {
     redirect("/login");
   }
 
-  // 🟢 ৩. ডাটাবেজ থেকে শুধুমাত্র এই ইউজারের অর্ডারগুলো নিয়ে আসা (where কন্ডিশন দিয়ে)
+  // 🟢 ৩. ডাটাবেজ থেকে শুধুমাত্র এই ইউজারের অর্ডারগুলো নিয়ে আসা
   const allOrders = await db.order.findMany({
     where: {
-      userId: Number((session.user as any).id), // অথবা ইমেইল দিয়ে চাইলে: user: { email: session.user.email! }
+      userId: Number((session.user as any).id),
     },
     include: {
       variation: true,
@@ -29,17 +29,17 @@ export default async function MyOrdersPage() {
     },
   });
 
-  // ২. শুধুমাত্র ভাউচার বাদে বাকি সব প্রোডাক্ট ফিল্টার করা হচ্ছে (Uid Topup, Subscriptions ইত্যাদি)
+  // ২. শুধুমাত্র ভাউচার বাদে বাকি সব প্রোডাক্ট ফিল্টার করা
   const filteredOrders = allOrders.filter((order) => {
     const type = order.product?.productType?.toLowerCase();
     return type !== "vouchers" && type !== "voucher";
   });
 
-  // 🔹 ৩. ডাটাবেজের SiteSettings মডেল থেকে ডাইনামিক প্রাইমারি কালার আনা হচ্ছে
+  // 🔹 ৩. ডাটাবেজের SiteSettings মডেল থেকে ডাইনামিক প্রাইমারি কালার আনা
   const config = await db.siteSettings.findFirst();
-  const primaryColor = config?.primaryColor || "#00d2ff"; // ডাটাবেজে না থাকলে স্কিমার ডিফল্ট কালার পাবে
+  const primaryColor = config?.primaryColor || "#00d2ff";
 
-  // ফিগমা স্ক্রিনশট অনুযায়ী DD/MM/YYYY ফরম্যাটে ডেট শো করার ফাংশন
+  // ডেট ফরম্যাট ফাংশন
   const formatBDDate = (dateString: Date) => {
     const date = new Date(dateString);
     const localized = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
@@ -49,7 +49,7 @@ export default async function MyOrdersPage() {
     return `${day}/${month}/${year}`;
   };
 
-  // ফিগমার স্ট্যাটাস ডট এবং ক্যাপসুল বাটনের কালার ও টেক্সট ম্যাপিং
+  // স্ট্যাটাস মেটা ফাংশন
   const getStatusMeta = (status: string) => {
     const s = status?.toLowerCase() || "";
     if (s === "completed" || s === "complete" || s === "compelet") {
@@ -58,7 +58,7 @@ export default async function MyOrdersPage() {
     if (s === "cancelled" || s === "cancel" || s === "failed") {
       return { color: "#ef4444", text: "Cancelled" };
     }
-    return { color: "#eab308", text: "Proccesing" }; // Pending বা Processing এর জন্য
+    return { color: "#eab308", text: "Proccesing" };
   };
 
   return (
@@ -87,11 +87,7 @@ export default async function MyOrdersPage() {
           ) : (
             filteredOrders.map((order) => {
               const statusMeta = getStatusMeta(order.status);
-              
-              // ⚡ ডাটাবেজ থেকে quantity রিড করা হচ্ছে (না থাকলে ডিফল্ট ১)
               const orderQuantity = (order as any).quantity || 1; 
-
-              // ⚡ ডাটাবেজ থেকে ডাইনামিক paymentMethod রিড করা হচ্ছে
               const paymentMethod = (order as any).paymentMethod || "Wallet";
 
               return (
@@ -101,16 +97,14 @@ export default async function MyOrdersPage() {
                   style={{ height: "auto" }}
                 >
                   
-                  {/* CARD HEADER: টাইটেল এবং স্ট্যাটাস ডট */}
+                  {/* CARD HEADER */}
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      {/* ডায়মন্ড শেপ আইকন */}
                       <div className="w-2.5 h-2.5 bg-slate-300 transform rotate-45 shrink-0" />
                       
                       <h3 className="font-bold text-base transition-colors" style={{ color: primaryColor }}>
                         {order.variation?.title || order.product?.name || "Package Item"}
                         
-                        {/* ⚡ লজিক: কোয়ান্টিটি ১ এর বেশি হলেই কেবল প্রাইমারি কালারে ডানপাশে '+ X' শো করবে */}
                         {orderQuantity > 1 && (
                           <span style={{ color: primaryColor }} className="ml-1">
                             {` x ${orderQuantity}`}
@@ -118,33 +112,29 @@ export default async function MyOrdersPage() {
                         )}
                       </h3>
                     </div>
-                    {/* 🔹 রাইট সাইড স্ট্যাটাস সার্কেল ডট */}
+                    
                     <div 
                       className="w-4 h-4 rounded-full transition-transform shrink-0" 
                       style={{ backgroundColor: statusMeta.color }}
                     />
                   </div>
 
-                  {/* CARD BODY: ইনফরমেশন লিস্ট */}
+                  {/* CARD BODY */}
                   <div className="space-y-1 text-sm text-[#475569] font-medium tracking-wide">
                     <p>Product Type - {order.product?.productType || "Uid Topup"}</p>
                     
                     <p>Order ID - {order.receiptNo || order.id.substring(0, 8)}</p>
                     
-                    {/* ⚡ যদি ভ্যারিয়েশনে বোনাস থাকে এবং তা ০ থেকে বড় হয় তবেই লাইনটি শো করবে */}
                     {order.variation?.bonus && order.variation.bonus > 0 ? (
                       <p>Bonus - {order.variation.bonus}</p>
                     ) : null}
 
-                    {/* ⚡ Total Pay ডাটাবেজ থেকে ডাইনামিক মোট টাকা শো করবে */}
                     <p>Total Pay - {order.totalPrice}BDT</p>
                     
-                    {/* ⚡ ডাইনামিক পেমেন্ট টাইপ (Wallet / Instant) */}
                     <p>Payment Type - {paymentMethod}</p>
                     
                     <p>Date - {formatBDDate(order.createdAt)}</p>
                     
-                    {/* ⚡ ডাইনামিক ইনপুট ফিল্ড এরিয়া (Player UID ইত্যাদি) */}
                     {order.inputValues && typeof order.inputValues === "object" && 
                       Object.entries(order.inputValues as Record<string, any>).map(([key, value]) => (
                         <p key={key} className="break-all">
@@ -153,7 +143,7 @@ export default async function MyOrdersPage() {
                       ))}
                   </div>
 
-                  {/* CARD FOOTER: রাইট অ্যালাইনড ক্যাপসুল স্ট্যাটাস বাটন */}
+                  {/* CARD FOOTER */}
                   <div className="flex justify-end mt-4">
                     <span 
                       className="px-4 py-1.5 text-white font-semibold text-xs rounded-full shadow-xs tracking-wide select-none transition-opacity"
