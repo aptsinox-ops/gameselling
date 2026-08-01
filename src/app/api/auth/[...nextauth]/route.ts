@@ -4,12 +4,12 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// 🟢 ১. authOptions এক্সপোর্ট করা হলো (যাতে আপনার অন্যান্য সব পেজে import { authOptions } কাজ করে)
 export const authOptions: AuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID || "google-placeholder",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "google-placeholder",
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -90,7 +90,11 @@ export const authOptions: AuthOptions = {
     },
 
     // 🟢 ২. JWT Callback
-    async jwt({ token }) {
+    async jwt({ token, user }) {
+      if (user?.email) {
+        token.email = user.email;
+      }
+
       if (token?.email) {
         try {
           const dbUser = await prisma.user.findUnique({
@@ -100,6 +104,7 @@ export const authOptions: AuthOptions = {
           if (dbUser) {
             token.id = dbUser.id.toString();
             token.name = dbUser.name;
+            token.email = dbUser.email; // 👈 নিশ্চিতভাবে ইমেইল রাখা হলো
             token.phone = dbUser.phone || "";
             token.balance = Number(dbUser.balance) || 0;
             token.role = dbUser.role || "User";
@@ -117,6 +122,7 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         session.user.name = token.name;
+        session.user.email = (token.email as string) || session.user.email; // 👈 ইমেইল পাস নিশ্চিত করা হলো
         (session.user as any).phone = token.phone;
         (session.user as any).balance = token.balance;
         (session.user as any).role = token.role;
@@ -132,7 +138,6 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
 // 🎯 ডেটাবেজ থেকে ডাইনামিক গুগল আইডি ও সিক্রেট নেওয়ার লজিক
@@ -149,19 +154,25 @@ async function getDynamicAuthOptions(): Promise<AuthOptions> {
   const googleClientSecret =
     dbSettings?.googleClientSecret?.trim() || process.env.GOOGLE_CLIENT_SECRET || "";
 
-  return {
-    ...authOptions,
-    providers: [
-      GoogleProvider({
+  const updatedProviders = [...authOptions.providers];
+
+  if (googleClientId && googleClientSecret) {
+    const googleIndex = updatedProviders.findIndex((p) => p.id === "google");
+    if (googleIndex !== -1) {
+      updatedProviders[googleIndex] = GoogleProvider({
         clientId: googleClientId,
         clientSecret: googleClientSecret,
-      }),
-      ...authOptions.providers.filter((p) => p.id !== "google"),
-    ],
+      });
+    }
+  }
+
+  return {
+    ...authOptions,
+    providers: updatedProviders,
   };
 }
 
-// 🎯 Next.js Request Handler (লগইন করার সময় ডেটাবেজ থেকে আইডি নিয়ে কাজ করবে)
+// 🎯 Next.js Request Handler
 const handler = async (req: Request, ctx: any) => {
   const dynamicOptions = await getDynamicAuthOptions();
   return NextAuth(req as any, ctx, dynamicOptions);
