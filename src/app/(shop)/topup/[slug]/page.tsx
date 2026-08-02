@@ -108,7 +108,7 @@ export default async function ProductPage({
 
           <div className="absolute inset-x-0 bottom-0 top-0 z-10 flex items-center [padding:clamp(10px,3vw,16px)]">
             <div className="flex items-center [gap:clamp(8px,2.5vw,16px)]">
-              <div className="[width:clamp(48px,14vw,100px)] [height:clamp(48px,14vw,100px)] rounded-xl overflow-hidden border border-amber-400 bg-slate-900 flex-shrink-0 shadow-lg">
+              <div className="[width:clamp(48px,14vw,100px)] [height:clamp(48px,14vw,100px)] rounded-md overflow-hidden bg-slate-900 flex-shrink-0 shadow-lg">
                 <img src={
                   serializedProduct.image === "placeholder.png" || !serializedProduct.image 
                     ? "/uploads/placeholder.png"

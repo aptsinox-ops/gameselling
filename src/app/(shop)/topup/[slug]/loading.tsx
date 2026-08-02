@@ -16,7 +16,7 @@ export default function Loading() {
       </div>
 
       {/* ২. সিলেক্ট রিচার্জ (ভ্যারিয়েশন) সেকশন শিমার */}
-      <section className="bg-white rounded-xl border border-slate-100 p-5 space-y-4 shadow-sm animate-pulse">
+      <section className="bg-white rounded-xl border border-slate-100 p-5 space-y-4 animate-pulse">
         {/* হেডার টাইটেল */}
         <div className="h-5 bg-slate-200 rounded w-1/4 mb-6" />
         {/* গ্রিড আইটেম */}
@@ -27,7 +27,7 @@ export default function Loading() {
       </section>
 
       {/* ৩. অ্যাকাউন্ট ইনফো সেকশন শিমার */}
-      <section className="bg-white rounded-xl border border-slate-100 p-5 space-y-4 shadow-sm animate-pulse">
+      <section className="bg-white rounded-xl border border-slate-100 p-5 space-y-4 animate-pulse">
         {/* হেডার টাইটেল */}
         <div className="h-5 bg-slate-200 rounded w-1/5 mb-6" />
         {/* ইনপুট ফিল্ড প্লেসহোল্ডার */}
@@ -40,7 +40,7 @@ export default function Loading() {
       </section>
 
       {/* ৪. পেমেন্ট মেথড সেকশন শিমার */}
-      <section className="bg-white rounded-xl border border-slate-100 p-5 space-y-4 shadow-sm animate-pulse">
+      <section className="bg-white rounded-xl border border-slate-100 p-5 space-y-4 animate-pulse">
         {/* হেডার টাইটেল */}
         <div className="h-5 bg-slate-200 rounded w-1/3 mb-6" />
         {/* পেমেন্ট কার্ড গ্রিড */}
