@@ -1,27 +1,26 @@
-import { MetadataRoute } from "next";
+import { MetadataRoute } from 'next'
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // আপনার ডোমেইন বা লোকালহোস্ট URL
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://zebotopup.store' // এখানে পরিবর্তন করুন
 
   return [
     {
-      url: baseUrl,
+      url: `${baseUrl}`,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
       url: `${baseUrl}/login`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/register`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.5,
     },
-  ];
+  ]
 }
