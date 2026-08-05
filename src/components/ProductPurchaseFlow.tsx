@@ -18,7 +18,7 @@ interface ProductPurchaseFlowProps {
   currentBalance: number;
   takaSvg: React.ReactNode;
   primaryColor?: string;
-  userId?: any; // 👈 এটি যোগ করুন
+  userId?: any;
   siteSettings?: any;
 }
 
@@ -58,7 +58,7 @@ function ProductPurchaseFlow({
   currentBalance,
   takaSvg,
   primaryColor = "#2563eb",
-  userId, // 👈 এখানে রিসিভ করুন
+  userId,
 }: ProductPurchaseFlowProps) {
   
   const router = useRouter();
@@ -73,10 +73,9 @@ function ProductPurchaseFlow({
     totalPrice: 0,
     userBalance: currentBalance,
     isLoadingBalance: false,
-    quantity: 1, // ⚡ কোয়ান্টিটি ট্র্যাক করার জন্য স্টেট ডিফাইন করা হলো
+    quantity: 1,
   });
 
-  // Dialog System States
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [dialogStep, setDialogStep] = useState<"loading" | "insufficient" | "success">("loading");
@@ -140,16 +139,35 @@ function ProductPurchaseFlow({
   };
 
   const handleVariationChange = useCallback((price: number, variationObj?: any) => {
-    setBasePrice(price);
+    let finalUnitPrice = price;
+
+    if (variationObj) {
+      const isResellerRole = currentUserRole?.toLowerCase()?.includes("reseller");
+
+      if (isResellerRole && variationObj.resellerPrice != null && Number(variationObj.resellerPrice) > 0) {
+        finalUnitPrice = Number(variationObj.resellerPrice);
+      } else if (isResellerRole && resellerPercentage > 0) {
+        const rawPrice = Number(variationObj.price || price);
+        finalUnitPrice = rawPrice - (rawPrice * resellerPercentage / 100);
+      } else if (variationObj.discountPrice != null && Number(variationObj.discountPrice) > 0) {
+        finalUnitPrice = Number(variationObj.discountPrice);
+      } else if (variationObj.salePrice != null && Number(variationObj.salePrice) > 0) {
+        finalUnitPrice = Number(variationObj.salePrice);
+      } else if (variationObj.offerPrice != null && Number(variationObj.offerPrice) > 0) {
+        finalUnitPrice = Number(variationObj.offerPrice);
+      }
+    }
+
+    finalUnitPrice = Math.round(finalUnitPrice * 100) / 100;
+
+    setBasePrice(finalUnitPrice);
     if (variationObj) {
       setSelectedVariation(variationObj);
     }
-  }, []);
+  }, [currentUserRole, resellerPercentage]);
 
   const handlePaymentChange = useCallback((details: any) => {
     const nextMethod = details.paymentMethod === "wallet" ? "Wallet" : "Instant";
-    
-    // ⚡ টোটাল প্রাইস ও বেস প্রাইস ভাগ করে অটোমেটিক কোয়ান্টিটি বের করার সবচেয়ে নিরাপদ মেথড
     const calculatedQty = details.quantity || (basePrice > 0 ? Math.round(details.totalPrice / basePrice) : 1);
 
     setPaymentDetails((prev) => ({
@@ -160,7 +178,7 @@ function ProductPurchaseFlow({
       isLoadingBalance: details.isLoadingBalance,
       quantity: calculatedQty > 0 ? calculatedQty : 1
     }));
-  }, [basePrice]); // basePrice ডিপেন্ডেন্সি যোগ করা হলো
+  }, [basePrice]);
 
   const isVariationSelected = basePrice > 0;
 
@@ -169,123 +187,116 @@ function ProductPurchaseFlow({
     toast.success("ভাউচার কোডটি সফলভাবে কপি হয়েছে!");
   };
 
-const handleBuyNowSubmit = async () => {
-  if (isSubmitting) return;
+  const handleBuyNowSubmit = async () => {
+    if (isSubmitting) return;
 
-  if (!isLoggedIn) {
-    toast("দয়া করে ক্রয় করতে প্রথমে লগইন করুন!", { icon: <ErrorIcon /> });
-    return;
-  }
-
-  if (!isVariationSelected || !selectedVariation) {
-    toast("দয়া করে আইটেম ভ্যারিয়েশন সিলেক্ট করুন!", { icon: <ErrorIcon /> });
-    return;
-  }
-
-  for (const labelName of cleanFields) {
-    if (!inputValues[labelName] || inputValues[labelName].trim() === "") {
-      toast(`দয়া করে "${labelName}" ফিল্ডটি পূরণ করুন!`, { icon: <ErrorIcon /> });
+    if (!isLoggedIn) {
+      toast("দয়া করে ক্রয় করতে প্রথমে লগইন করুন!", { icon: <ErrorIcon /> });
       return;
     }
-  }
 
-  setIsSubmitting(true);
-  setIsDialogOpen(true);
-  setDialogStep("loading");
-  setErrorMessage("");
-  setProgress(0);
+    if (!isVariationSelected || !selectedVariation) {
+      toast("দয়া করে আইটেম ভ্যারিয়েশন সিলেক্ট করুন!", { icon: <ErrorIcon /> });
+      return;
+    }
 
-  const intervalTime = 30; 
-  const totalDuration = 2000; 
-  const step = (intervalTime / totalDuration) * 100;
-
-  const timer = setInterval(() => {
-    setProgress((prev) => {
-      if (prev >= 100) {
-        clearInterval(timer);
-        return 100;
+    for (const labelName of cleanFields) {
+      if (!inputValues[labelName] || inputValues[labelName].trim() === "") {
+        toast(`দয়া করে "${labelName}" ফিল্ডটি পূরণ করুন!`, { icon: <ErrorIcon /> });
+        return;
       }
-      return prev + step;
-    });
-  }, intervalTime);
+    }
 
-  try {
-    
-// ⚡ handleBuyNowSubmit ফাংশনের ভেতরের Instant Payment এর অংশটি:
+    setIsSubmitting(true);
+    setIsDialogOpen(true);
+    setDialogStep("loading");
+    setErrorMessage("");
+    setProgress(0);
 
-if (paymentDetails.paymentMethod === "Instant") {
-  const response = await fetch("/api/instant-payment", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      productId: product.id,
-      variationId: selectedVariation.id,
-      inputValues: inputValues,
-      quantity: paymentDetails.quantity,
-      userId: userId || null, // 👈 নিশ্চিত করা হলো ইউজার আইডি পাস হচ্ছে
-    }),
-  });
+    const intervalTime = 30; 
+    const totalDuration = 2000; 
+    const step = (intervalTime / totalDuration) * 100;
 
-  const resData = await response.json();
-
-  if (response.ok && resData.payment_url) {
-    // সরাসরি গেটওয়ে পেজে রিডাইরেক্ট
-    window.location.href = resData.payment_url;
-  } else {
-    setErrorMessage(resData.message || "পেমেন্ট গেটওয়েতে সমস্যা হয়েছে!");
-    setDialogStep("insufficient");
-    setIsSubmitting(false);
-  }
-  return;
-}
-
-    // ⚡ ২. যদি Wallet Payment সিলেক্ট করা থাকে
-    const response = await fetch("/api/order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productId: product.id,
-        variationId: selectedVariation.id,
-        inputValues: inputValues,
-        quantity: paymentDetails.quantity,
-        paymentMethod: "Wallet",
-      }),
-    });
-
-    const resData = await response.json();
-
-    setTimeout(() => {
-      const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
-      setOrderTime(bdTime);
-
-      if (response.ok && resData.success) {
-        setApiResponse(resData.data);
-        toast("অর্ডার সফলভাবে সম্পন্ন হয়েছে!", { icon: <SuccessIcon /> });
-
-        const normalizedType = product?.productType?.toLowerCase();
-
-        // 🎯 শর্ত অনুযায়ী অটোমেটিক রিডাইরেক্ট
-        if (normalizedType === "vouchers" || normalizedType === "voucher") {
-          router.push(`/code`);
-        } else {
-          router.push(`/myorder`);
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(timer);
+          return 100;
         }
-      } else {
-        setErrorMessage(resData.error || "পর্যাপ্ত ব্যালেন্স নেই!");
+        return prev + step;
+      });
+    }, intervalTime);
+
+    try {
+      if (paymentDetails.paymentMethod === "Instant") {
+        const response = await fetch("/api/instant-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId: product.id,
+            variationId: selectedVariation.id,
+            inputValues: inputValues,
+            quantity: paymentDetails.quantity,
+            userId: userId || null,
+          }),
+        });
+
+        const resData = await response.json();
+
+        if (response.ok && resData.payment_url) {
+          window.location.href = resData.payment_url;
+        } else {
+          setErrorMessage(resData.message || "পেমেন্ট গেটওয়েতে সমস্যা হয়েছে!");
+          setDialogStep("insufficient");
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
+      const response = await fetch("/api/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          variationId: selectedVariation.id,
+          inputValues: inputValues,
+          quantity: paymentDetails.quantity,
+          paymentMethod: "Wallet",
+        }),
+      });
+
+      const resData = await response.json();
+
+      setTimeout(() => {
+        const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+        setOrderTime(bdTime);
+
+        if (response.ok && resData.success) {
+          setApiResponse(resData.data);
+          toast("অর্ডার সফলভাবে সম্পন্ন হয়েছে!", { icon: <SuccessIcon /> });
+
+          const normalizedType = product?.productType?.toLowerCase();
+          if (normalizedType === "vouchers" || normalizedType === "voucher") {
+            router.push(`/code`);
+          } else {
+            router.push(`/myorder`);
+          }
+        } else {
+          setErrorMessage(resData.error || "পর্যাপ্ত ব্যালেন্স নেই!");
+          setDialogStep("insufficient");
+          setIsSubmitting(false);
+        }
+      }, 2000);
+
+    } catch (error: any) {
+      console.error(error);
+      setTimeout(() => {
+        setErrorMessage("সিস্টেম নেটওয়ার্ক কানেকশন এরর!");
         setDialogStep("insufficient");
         setIsSubmitting(false);
-      }
-    }, 2000);
-
-  } catch (error: any) {
-    console.error(error);
-    setTimeout(() => {
-      setErrorMessage("সিস্টেম নেটওয়ার্ক কানেকশন এরর!");
-      setDialogStep("insufficient");
-      setIsSubmitting(false);
-    }, 2000);
-  }
-};
+      }, 2000);
+    }
+  };
 
   const displayProductType = useMemo(() => {
     if (product?.productType === "UID" || product?.productType === "UID Topup") return "FreeFire";
@@ -302,7 +313,7 @@ if (paymentDetails.paymentMethod === "Instant") {
           <hr className="mt-3 border-slate-200 w-full" />
         </div>
         
-          <VariationSelector 
+        <VariationSelector 
           variations={dbVariations || []} 
           isListView={isListView} 
           variationIcon={product?.variationIcon} 
@@ -313,7 +324,7 @@ if (paymentDetails.paymentMethod === "Instant") {
           userBalance={paymentDetails.userBalance}
           isInstantPayment={paymentDetails.paymentMethod === "Instant"} 
           onAddBalance={handleAddBalance}
-          nextStepId="step-2" // 👈 ক্লিক করলে অটো ২য় ধাপে স্ক্রোল করবে
+          nextStepId="step-2"
         />
       </section>
 
@@ -396,8 +407,8 @@ if (paymentDetails.paymentMethod === "Instant") {
         />
       </section>
 
-      {/* 💻 ডেস্কটপ (Large Screens) BUY NOW বাটন */}
-      <div className=" lg:block space-y-3 pt-2">
+      {/* 💻 BUY NOW বাটন */}
+      <div className="lg:block space-y-3 pt-2">
         <button
           onClick={handleBuyNowSubmit}
           disabled={isSubmitting}
@@ -421,181 +432,203 @@ if (paymentDetails.paymentMethod === "Instant") {
       {/* Rules & Conditions সেকশন */}
       {product?.description && (
         <section className="bg-white border border-slate-200 rounded-md pt-5 pb-5 shadow-none transition-all">
-        <div className="w-full pb-3 ">
-          <div className="flex items-stretch pl-3 ">
-            <svg fill="red" width="20px" height="20px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg"><path d="M116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm124.23242,77.979a27.71154,27.71154,0,0,1-24.25586,14.01319H40.02344A28.00034,28.00034,0,0,1,15.79,185.96582L103.7666,33.97314v.00049a27.99988,27.99988,0,0,1,48.4668,0L240.21,185.96533A27.71359,27.71359,0,0,1,240.23242,213.979Zm-20.79394-15.99072L131.46191,45.99609a4.00012,4.00012,0,0,0-6.92382,0h0L36.56152,197.98828a4.0004,4.0004,0,0,0,3.46192,6.00391H215.97656a4.0004,4.0004,0,0,0,3.46192-6.00391ZM128,160a16,16,0,1,0,16,16A16.00016,16.00016,0,0,0,128,160Z"/></svg>
-            
-            <h2 className="font-bold text-red-500 [font-size:clamp(15px,4vw,20px)] pl-2 ">
-              Rules & Conditions:
-            </h2>
-          </div>
+          <div className="w-full pb-3">
+            <div className="flex items-stretch pl-3">
+              <svg fill="red" width="20px" height="20px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg"><path d="M116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm124.23242,77.979a27.71154,27.71154,0,0,1-24.25586,14.01319H40.02344A28.00034,28.00034,0,0,1,15.79,185.96582L103.7666,33.97314v.00049a27.99988,27.99988,0,0,1,48.4668,0L240.21,185.96533A27.71359,27.71359,0,0,1,240.23242,213.979Zm-20.79394-15.99072L131.46191,45.99609a4.00012,4.00012,0,0,0-6.92382,0h0L36.56152,197.98828a4.0004,4.0004,0,0,0,3.46192,6.00391H215.97656a4.0004,4.0004,0,0,0,3.46192-6.00391ZM128,160a16,16,0,1,0,16,16A16.00016,16.00016,0,0,0,128,160Z"/></svg>
+              
+              <h2 className="font-bold text-red-500 [font-size:clamp(15px,4vw,20px)] pl-2">
+                Rules & Conditions:
+              </h2>
+            </div>
             <hr className="mt-3 border-slate-200 w-full" />
-         </div>
-          
-<div 
-  className="text-slate-600 leading-relaxed font-medium prose prose-slate max-w-none px-5 [font-size:clamp(13px,3.2vw,16px)] product-description"
-  dangerouslySetInnerHTML={{ __html: product.description }}
-/>
+          </div>
+            
+          <div 
+            className="text-slate-600 leading-relaxed font-medium prose prose-slate max-w-none px-5 [font-size:clamp(13px,3.2vw,16px)] product-description"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
         </section>
       )}
 
-      {/* ========================================================== */}
-      {/* 🟢 WALLET DIALOG/MODAL COMPONENT (CLEAN SHADOW-LESS DESIGN) 🟢 */}
-      {/* ========================================================== */}
+{/* 🟢 MODERN & PROFESSIONAL WALLET DIALOG/MODAL COMPONENT 🟢 */}
       {isDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 animate-fade-in backdrop-blur-xs">
-          <div className="relative w-full max-w-md bg-white rounded-md p-4 sm:p-6 shadow-none border border-slate-100 transition-all duration-300 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto">
             
+            {/* ক্লোজ বাটন */}
             <button 
               onClick={() => { if (!isSubmitting) setIsDialogOpen(false); }}
               disabled={isSubmitting}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition disabled:opacity-30 z-10"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-30 z-10"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
-            {/* ১. ৩-স্টেপ প্রোগ্রেসবার */}
+            {/* ১. প্রোগ্রেস ও লোডিং স্ক্রিন */}
             {dialogStep === "loading" && (
               <div className="py-6 flex flex-col items-center justify-center text-center">
-                <h3 className="[font-size:clamp(16px,4.5vw,20px)] font-black text-slate-800 uppercase tracking-wide mb-2">Processing Order</h3>
-                <p className="text-xs text-slate-400 font-medium max-w-xs mb-10">Please hold on while we safely route your wallet checkout request.</p>
                 
-                <div className="w-full px-2 sm:px-4 relative flex items-center justify-between mb-12 shadow-none">
-                  <div className="absolute left-5 sm:left-6 right-5 sm:right-6 top-3.5 h-[3px] bg-slate-100 rounded-full z-0" />
-                  <div 
-                    style={{ width: `calc(${progress}% - 12px)` }}
-                    className="absolute left-5 sm:left-6 top-3.5 h-[3px] bg-green-500 rounded-full z-0 transition-all duration-300 ease-out origin-left"
-                  />
-
-                  {/* Step Node 1 */}
-                  <div className="flex flex-col items-center relative z-10 shadow-none">
-                    <div className={`[width:clamp(28px,7.5vw,32px)] [height:clamp(28px,7.5vw,32px)] rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-none ${
-                      progress >= 0 ? "bg-green-500 border-green-500 text-white" : "bg-white border-slate-200 text-slate-400"
-                    }`}>
-                      {progress > 15 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      ) : (
-                        <span className="text-xs font-bold font-mono">1</span>
-                      )}
-                    </div>
-                    <span className={`text-[9px] sm:text-[10px] font-extrabold tracking-wider uppercase mt-2.5 ${progress >= 0 ? "text-green-600" : "text-slate-400"}`}>Select</span>
-                  </div>
-
-                  {/* Step Node 2 */}
-                  <div className="flex flex-col items-center relative z-10 shadow-none">
-                    <div className={`[width:clamp(28px,7.5vw,32px)] [height:clamp(28px,7.5vw,32px)] rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-none ${
-                      progress >= 50 ? "bg-green-500 border-green-500 text-white" : "bg-white border-slate-200 text-slate-400"
-                    }`}>
-                      {progress > 65 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      ) : (
-                        <span className="text-xs font-bold font-mono">2</span>
-                      )}
-                    </div>
-                    <span className={`text-[9px] sm:text-[10px] font-extrabold tracking-wider uppercase mt-2.5 ${progress >= 50 ? "text-green-600" : "text-slate-400"}`}>Review</span>
-                  </div>
-
-                  {/* Step Node 3 */}
-                  <div className="flex flex-col items-center relative z-10 shadow-none">
-                    <div className={`[width:clamp(28px,7.5vw,32px)] [height:clamp(28px,7.5vw,32px)] rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-none ${
-                      progress >= 95 ? "bg-green-500 border-green-500 text-white" : "bg-white border-slate-200 text-slate-400"
-                    }`}>
-                      <span className="text-xs font-bold font-mono">3</span>
-                    </div>
-                    <span className={`text-[9px] sm:text-[10px] font-extrabold tracking-wider uppercase mt-2.5 ${progress >= 95 ? "text-green-600" : "text-slate-400"}`}>Payment</span>
+                {/* অ্যানিমেটেড আইকন */}
+                <div className="relative mb-5 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500/10 to-emerald-500/10 flex items-center justify-center ring-1 ring-slate-200/60">
+                    <svg className="animate-spin w-8 h-8 text-slate-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3.5"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                   </div>
                 </div>
 
-                <span className="text-[11px] sm:text-xs font-bold font-mono px-3 sm:px-4 py-1.5 bg-slate-50 text-slate-500 rounded-full border border-slate-100 animate-pulse text-center">
-                  {progress < 45 && "Checking balance info..."}
-                  {progress >= 45 && progress < 90 && "Verifying system variation details..."}
-                  {progress >= 90 && "Finalizing database records..."}
-                </span>
-                <span className="text-xs font-bold text-slate-400 mt-4 tracking-wider">1 --- 2 --- 3</span>
+                <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Processing Order</h3>
+                <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-8 leading-relaxed">
+                  Please wait a moment while we process your request securely.
+                </p>
+                
+                {/* প্রোগ্রেস নোডসমূহ */}
+                <div className="w-full px-2 relative flex items-center justify-between mb-8">
+                  <div className="absolute left-6 right-6 top-3.5 h-1 bg-slate-100 rounded-full z-0" />
+                  <div 
+                    style={{ width: `calc(${progress}% - 24px)` }}
+                    className="absolute left-6 top-3.5 h-1 bg-emerald-500 rounded-full z-0 transition-all duration-300 ease-out origin-left"
+                  />
+
+                  {/* Step 1 */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ring-4 ring-white ${
+                      progress >= 0 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
+                    }`}>
+                      {progress > 15 ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      ) : "1"}
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 ${progress >= 0 ? "text-emerald-600" : "text-slate-400"}`}>Select</span>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ring-4 ring-white ${
+                      progress >= 50 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
+                    }`}>
+                      {progress > 65 ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      ) : "2"}
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 ${progress >= 50 ? "text-emerald-600" : "text-slate-400"}`}>Review</span>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ring-4 ring-white ${
+                      progress >= 95 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
+                    }`}>
+                      3
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 ${progress >= 95 ? "text-emerald-600" : "text-slate-400"}`}>Payment</span>
+                  </div>
+                </div>
+
+                {/* বর্তমান স্টেটাস টেক্সট */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[11px] font-semibold text-slate-600">
+                    {progress < 45 && "Checking balance info..."}
+                    {progress >= 45 && progress < 90 && "Verifying item variation details..."}
+                    {progress >= 90 && "Finalizing database records..."}
+                  </span>
+                </div>
               </div>
             )}
 
-            {/* ২. ডাইনামিক রিয়েল-টাইম এরর হ্যান্ডেল স্ক্রিন */}
+            {/* ২. এরর হ্যান্ডেল স্ক্রিন */}
             {dialogStep === "insufficient" && (
-              <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="[width:clamp(52px,14vw,64px)] [height:clamp(52px,14vw,64px)] bg-red-100 rounded-full flex items-center justify-center text-red-500 shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              <div className="py-4 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 ring-8 ring-rose-50/50 shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                 </div>
+                
                 <div>
-                  <h3 className="[font-size:clamp(16px,4.5vw,20px)] font-bold text-red-600">
-                    {errorMessage === "This Method are not allow This Time" ? "Action Blocked" : "Order Cancelled"}
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                    {errorMessage === "This Method are not allow This Time" ? "Action Blocked" : "Order Failed"}
                   </h3>
-                  <p className="text-[13px] sm:text-sm font-semibold text-slate-600 mt-1 bg-red-50 px-3 py-1 rounded-full border border-red-100 inline-block">
-                    Reason: {errorMessage === "Insufficient Balance" ? "Insufficient Wallet Balance" : errorMessage === "Out of Stock" ? "Product Out of Stock (Stock 0)" : errorMessage}
-                  </p>
+                  <div className="mt-1.5 inline-block bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold px-3 py-1 rounded-full">
+                    {errorMessage === "Insufficient Balance" ? "Insufficient Wallet Balance" : errorMessage === "Out of Stock" ? "Product Out of Stock" : errorMessage}
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+
+                <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                   {errorMessage === "Insufficient Balance" 
                     ? "আপনার ওয়ালেট ব্যালেন্স পর্যাপ্ত নয়। দয়া করে অ্যাকাউন্টে ব্যালেন্স রিচার্জ করে পুনরায় চেষ্টা করুন।" 
                     : errorMessage === "Out of Stock" 
                     ? "দুঃখিত, এই ভ্যারিয়েশনটি বর্তমানে স্টকআউট! অ্যাডমিন প্যানেল থেকে এর স্টক বাড়িয়ে পুনরায় চেষ্টা করুন।" 
                     : errorMessage === "This Method are not allow This Time"
                     ? "This Method are not allow This Time"
-                    : "ইউজার ওয়ালেট ব্যালেন্স কম অথবা প্রোডাক্টটি আউট অব স্টক। দয়া করে ব্যালেন্স রিচার্জ করে পুনরায় চেষ্টা করুন।"}
+                    : "অর্ডারটি সম্পন্ন করা সম্ভব হয়নি। দয়া করে ব্যালেন্স রিচার্জ অথবা পুনরায় চেষ্টা করুন।"}
                 </p>
+
                 <button 
                   onClick={() => setIsDialogOpen(false)}
-                  className="mt-2 px-6 py-2 bg-slate-800 text-white font-semibold rounded-full text-sm hover:bg-slate-700 transition"
+                  className="w-full mt-2 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs tracking-wide transition shadow-sm active:scale-[0.98]"
                 >
                   Close & Retry
                 </button>
               </div>
             )}
 
-            {/* ৩. সফল পারচেজ ও ডাইনামিক ডেটা প্রদর্শন স্ক্রিন (ফিক্সড ও কমপ্লিট) */}
+            {/* ৩. সফল পারচেজ ও ইনভয়েস সামারি স্ক্রিন */}
             {dialogStep === "success" && (
-              <div className="flex flex-col items-center text-center shadow-none">
-                <div className="relative my-4 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-green-200/40 rounded-full blur-xl scale-150 animate-pulse" />
-                  <div className="relative [width:clamp(64px,17vw,80px)] [height:clamp(64px,17vw,80px)] rounded-full bg-gradient-to-br from-green-400 to-green-500 flex items-center justify-center text-white border-4 border-white shadow-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+              <div className="flex flex-col items-center text-center">
+                
+                {/* সাকসেস ব্যাজ */}
+                <div className="my-2 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white ring-8 ring-emerald-50 shadow-lg shadow-emerald-500/20 animate-in zoom-in-75 duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
                 </div>
 
-                <h2 className="[font-size:clamp(16px,4.5vw,20px)] font-extrabold text-slate-800 tracking-wide uppercase mt-2">
-                  PAYMENT SUCCESSFUL!
+                <h2 className="text-lg font-extrabold text-slate-900 tracking-tight mt-3">
+                  Payment Successful!
                 </h2>
-                <p className="text-xs text-slate-400 font-medium px-4 mt-1 leading-relaxed">
-                  Thank you for your purchase. Your order has been successfully placed.
+                <p className="text-xs text-slate-500 font-medium px-2 mt-0.5">
+                  Thank you for your purchase. Your order is confirmed.
                 </p>
 
-                <div className="w-full bg-slate-50 border border-slate-100 rounded-md p-3 sm:p-4 my-5 text-left text-xs space-y-3 shadow-none">
-                  <h4 className="text-sm font-bold text-slate-700 mb-1">Order Summary</h4>
+                {/* ইনভয়েস ক্যাটাগরি বক্স */}
+                <div className="w-full bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 my-5 text-left text-xs space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                    <span className="font-bold text-slate-900 text-xs tracking-wide uppercase">Order Summary</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase">
+                      • {apiResponse?.status || "Complete"}
+                    </span>
+                  </div>
                   
-                  <div className="flex justify-between items-center gap-2 border-b border-dashed border-slate-200 pb-1.5">
-                    <span className="text-slate-400 font-medium shrink-0">Order ID</span>
-                    <span className="font-mono font-bold text-slate-700 truncate">#{apiResponse?.orderId ? apiResponse.orderId.substring(0, 12).toUpperCase() : "ROOTS-ORDER"}</span>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-slate-500 font-medium shrink-0">Order ID</span>
+                    <span className="font-mono font-bold text-slate-800 truncate">#{apiResponse?.orderId ? apiResponse.orderId.substring(0, 12).toUpperCase() : "ROOTS-ORDER"}</span>
                   </div>
 
-                  <div className="flex justify-between items-center gap-2 border-b border-dashed border-slate-200 pb-1.5">
-                    <span className="text-slate-400 font-medium shrink-0">Product Type</span>
-                    <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md truncate">{displayProductType}</span>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-slate-500 font-medium shrink-0">Product Type</span>
+                    <span className="font-bold text-slate-800 bg-slate-200/60 px-2 py-0.5 rounded-md truncate">{displayProductType}</span>
                   </div>
 
-                  {/* লজিক ১: UID টাইপ */}
+                  {/* UID টাইপ */}
                   {(product?.productType === "UID" || product?.productType === "UID Topup") && (
-                    <div className="flex justify-between items-center gap-2 border-b border-dashed border-slate-200 pb-1.5 bg-green-50/40 p-2 rounded-xl">
-                      <span className="text-slate-500 font-semibold shrink-0">Player UID</span>
-                      <span className="font-bold text-green-700 text-sm truncate">{inputValues[cleanFields[0]] || "N/A"}</span>
+                    <div className="flex justify-between items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 p-2.5 rounded-xl">
+                      <span className="text-slate-600 font-semibold shrink-0">Player UID</span>
+                      <span className="font-bold text-emerald-800 text-xs truncate">{inputValues[cleanFields[0]] || "N/A"}</span>
                     </div>
                   )}
 
-                  {/* লজিক ২: Voucher টাইপ */}
+                  {/* Voucher টাইপ */}
                   {product?.productType === "Voucher" && apiResponse?.voucherCode && (
-                    <div className="border-b border-dashed border-slate-200 pb-2 bg-amber-50/50 p-2.5 rounded-md space-y-1.5">
-                      <span className="text-slate-500 font-bold block">Voucher Code</span>
-                      <div className="flex items-center justify-between gap-2 bg-white border border-amber-200 px-2 py-1.5 rounded-md">
-                        <span className="font-mono text-xs font-extrabold text-amber-800 tracking-wide select-all truncate">{apiResponse.voucherCode}</span>
+                    <div className="bg-amber-50/70 border border-amber-200/60 p-2.5 rounded-xl space-y-1.5">
+                      <span className="text-slate-500 font-semibold block text-[11px]">Voucher Code</span>
+                      <div className="flex items-center justify-between gap-2 bg-white border border-amber-200 px-2.5 py-1.5 rounded-lg shadow-2xs">
+                        <span className="font-mono text-xs font-extrabold text-amber-900 tracking-wide select-all truncate">{apiResponse.voucherCode}</span>
                         <button 
                           onClick={() => copyToClipboard(apiResponse.voucherCode)}
-                          className="text-amber-600 hover:text-amber-800 p-1 bg-amber-100 rounded transition shrink-0"
+                          className="text-amber-700 hover:text-amber-900 p-1 bg-amber-100/80 rounded-md transition shrink-0"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
@@ -603,43 +636,36 @@ if (paymentDetails.paymentMethod === "Instant") {
                     </div>
                   )}
 
-                  {/* লজিক ৩: অন্যান্য ডাইনামিক ফিল্ডস */}
+                  {/* অন্যান্য ডাইনামিক ফিল্ডস */}
                   {product?.productType !== "UID" && product?.productType !== "UID Topup" && product?.productType !== "Voucher" && (
-                    <div className="bg-slate-100/80 p-2.5 rounded-md space-y-1.5">
+                    <div className="bg-slate-100/80 p-2.5 rounded-xl space-y-1.5">
                       {cleanFields.map((label, idx) => (
                         <div key={idx} className="flex justify-between items-center gap-2 text-[11px]">
                           <span className="text-slate-500 font-medium shrink-0">{label}</span>
-                          <span className="font-bold text-slate-700 truncate max-w-[55%]">{inputValues[label] || "N/A"}</span>
+                          <span className="font-bold text-slate-800 truncate max-w-[55%]">{inputValues[label] || "N/A"}</span>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center gap-2 border-b border-dashed border-slate-200 pb-1.5">
-                    <span className="text-slate-400 font-medium shrink-0">Order Place Time</span>
-                    <span className="font-medium text-slate-600 text-[11px] truncate">{orderTime}</span>
+                  <div className="flex justify-between items-center gap-2 pt-1 border-t border-dashed border-slate-200">
+                    <span className="text-slate-500 font-medium shrink-0">Time</span>
+                    <span className="font-medium text-slate-700 text-[11px] truncate">{orderTime}</span>
                   </div>
 
-                  <div className="flex justify-between items-center border-b border-dashed border-slate-200 pb-1.5">
-                    <span className="text-slate-400 font-medium">Order Status</span>
-                    <span className="font-bold uppercase tracking-wider text-[11px] text-green-600">
-                      • {apiResponse?.status || "Complete"}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-1">
-                    <span className="text-slate-700 font-bold text-sm">TOTAL Paid</span>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                    <span className="text-slate-900 font-bold text-xs uppercase tracking-wide">Total Paid</span>
                     <span style={{ color: primaryColor }} className="font-extrabold text-base">
-                      ৳{apiResponse?.totalPrice || basePrice}
+                      ৳{apiResponse?.totalPrice || paymentDetails.totalPrice || (basePrice * paymentDetails.quantity)}
                     </span>
                   </div>
                 </div>
 
-                {/* ডায়ালগ ফুটার বাটনসমূহ */}
-                <div className="w-full grid grid-cols-2 gap-3 mt-1 shadow-none">
+                {/* বাটনসমূহ */}
+                <div className="w-full grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setIsDialogOpen(false)}
-                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs sm:text-sm transition-colors duration-200"
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold rounded-xl text-xs transition active:scale-[0.98]"
                   >
                     Close
                   </button>
@@ -650,7 +676,7 @@ if (paymentDetails.paymentMethod === "Instant") {
                         : "/myorder"
                     }
                     style={{ backgroundColor: primaryColor }}
-                    className="w-full py-2.5 text-white font-semibold rounded-md text-xs sm:text-sm text-center flex items-center justify-center hover:opacity-95 transition-opacity"
+                    className="w-full py-2.5 text-white font-semibold rounded-xl text-xs text-center flex items-center justify-center hover:opacity-90 transition shadow-sm active:scale-[0.98]"
                   >
                     View Order
                   </Link>
