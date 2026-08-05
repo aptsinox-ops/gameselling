@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const settings = await db.siteSettings.findFirst();
 
     // 🎯 ডাটাবেজ থেকে ভ্যালুগুলো নেওয়া হচ্ছে (না থাকলে ফলব্যাক ডিফল্ট ভ্যালু)
-    const title = settings?.siteTitle || settings?.siteName || "DEMO Bazar";
+    const title = settings?.siteTitle || settings?.siteName || "Zebo Topup";
     const description = settings?.siteDescription || "Premium Gaming Top-Up Platform";
     const favicon = settings?.faviconUrl || "/favicon.ico";
     const keywords = settings?.metaKeywords 
@@ -31,6 +31,12 @@ export async function generateMetadata(): Promise<Metadata> {
       title: title,
       description: description,
       keywords: keywords.length > 0 ? keywords : undefined,
+      
+      // 🎯 Google Search Console Verification Tag
+      verification: {
+        google: "L3H4jnfIz3abChAr1u3-cu7jvZ77kCzLnaboR6wI148",
+      },
+
       icons: {
         icon: favicon,
         shortcut: favicon,
@@ -51,8 +57,11 @@ export async function generateMetadata(): Promise<Metadata> {
   } catch (error) {
     console.error("Error loading metadata settings:", error);
     return {
-      title: "DEMO Bazar",
+      title: "Zebo Topup",
       description: "Premium Gaming Top-Up Platform",
+      verification: {
+        google: "L3H4jnfIz3abChAr1u3-cu7jvZ77kCzLnaboR6wI148",
+      },
     };
   }
 }
@@ -64,6 +73,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={notoBengali.variable}>
+      <head>
+        {/* 🎯 Extra Google Verification Backup */}
+        <meta
+          name="google-site-verification"
+          content="L3H4jnfIz3abChAr1u3-cu7jvZ77kCzLnaboR6wI148"
+        />
+      </head>
       <body className="bg-white text-black antialiased min-h-screen">
         <Providers>
           {children}
