@@ -4,8 +4,63 @@ import BottomNav from "@/components/bottomNavi";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ProductPurchaseFlow from "@/components/ProductPurchaseFlow";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+// 🎯 ডাইনামিক প্রোডাক্ট SEO মেটাডাটা
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  
+  if (!slug) return { title: "Product Not Found" };
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      select: {
+        name: true,
+        rulesCondition: true,
+        image: true,
+        bannerImage: true,
+      },
+    });
+
+    if (!product) return { title: "Product Not Found" };
+
+    const siteTitle = `${product.name} Top Up | Zebo Topup`;
+    const description = product.rulesCondition
+      ? product.rulesCondition.slice(0, 160)
+      : `Buy ${product.name} instantly at cheap price in Bangladesh via bKash, Nagad. Fast delivery on Zebo Topup.`;
+    const ogImage = product.bannerImage || product.image || "/uploads/placeholder.png";
+
+    return {
+      title: siteTitle,
+      description: description,
+      openGraph: {
+        title: siteTitle,
+        description: description,
+        url: `https://zebotopup.store/product/${slug}`,
+        siteName: "Zebo Topup",
+        images: [{ url: ogImage }],
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: siteTitle,
+        description: description,
+        images: [ogImage],
+      },
+    };
+  } catch (error) {
+    return {
+      title: "Buy Game Top Up | Zebo Topup",
+    };
+  }
+}
 
 export const TakaSvg = ({ className = "h-3.5 w-auto" }: { className?: string }) => {
   return (
