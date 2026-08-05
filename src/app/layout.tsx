@@ -5,7 +5,6 @@ import { Toaster } from "sonner";
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
 
-// 🇧🇩 বাংলা নোটিশের জন্য ফন্ট
 const notoBengali = Noto_Sans_Bengali({
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"],
@@ -19,7 +18,6 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const settings = await db.siteSettings.findFirst();
 
-    // 🎯 ডাটাবেজ থেকে ভ্যালুগুলো নেওয়া হচ্ছে (না থাকলে ফলব্যাক ডিফল্ট ভ্যালু)
     const title = settings?.siteTitle || settings?.siteName || "Zebo Topup";
     const description = settings?.siteDescription || "Premium Gaming Top-Up Platform";
     const favicon = settings?.faviconUrl || "/favicon.ico";
@@ -28,11 +26,11 @@ export async function generateMetadata(): Promise<Metadata> {
       : [];
 
     return {
+      metadataBase: new URL("https://zebotopup.store"),
       title: title,
       description: description,
       keywords: keywords.length > 0 ? keywords : undefined,
       
-      // 🎯 Google Search Console Verification Tag
       verification: {
         google: "L3H4jnfIz3abChAr1u3-cu7jvZ77kCzLnaboR6wI148",
       },
@@ -45,6 +43,8 @@ export async function generateMetadata(): Promise<Metadata> {
       openGraph: {
         title: title,
         description: description,
+        url: "https://zebotopup.store",
+        siteName: "Zebo Topup",
         images: settings?.logoUrl ? [{ url: settings.logoUrl }] : undefined,
       },
       twitter: {
@@ -57,6 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
   } catch (error) {
     console.error("Error loading metadata settings:", error);
     return {
+      metadataBase: new URL("https://zebotopup.store"),
       title: "Zebo Topup",
       description: "Premium Gaming Top-Up Platform",
       verification: {
@@ -73,13 +74,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={notoBengali.variable}>
-      <head>
-        {/* 🎯 Extra Google Verification Backup */}
-        <meta
-          name="google-site-verification"
-          content="L3H4jnfIz3abChAr1u3-cu7jvZ77kCzLnaboR6wI148"
-        />
-      </head>
       <body className="bg-white text-black antialiased min-h-screen">
         <Providers>
           {children}
