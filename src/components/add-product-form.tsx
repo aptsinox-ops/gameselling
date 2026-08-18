@@ -111,103 +111,109 @@ export function AddProductForm({ onCancel }: AddProductFormProps) {
   const selectedCategory = categories.find((cat) => cat.id === formData.categoryId);
 
   // 🟢 সাবমিট ও ইমেজ আপলোড লজিক (লোডিং ও টোস্ট সহ)
-  const handleCreate = async (createAnother: boolean) => {
-    const toastId = showToast.loading("Creating product...");
-    try {
-      if (createAnother) setLoadingCreateOthers(true); else setLoadingCreate(true);
+const handleCreate = async (createAnother: boolean) => {
+  const toastId = showToast.loading("Creating product...");
+  try {
+    if (createAnother) setLoadingCreateOthers(true); else setLoadingCreate(true);
 
-      let productImageUrl = "";
-      let variationIconUrl = "";
-      let bannerImageUrl = "";
-      let tagIconUrl = "";
+    let productImageUrl = "";
+    let variationIconUrl = "";
+    let bannerImageUrl = "";
+    let tagIconUrl = "";
 
-      // ১. মেইন প্রোডাক্ট ইমেজ আপলোড
-      if (formData.productImage instanceof File) {
-        const data = new FormData();
-        data.append("file", formData.productImage); 
-        const res = await fetch("/api/upload", { method: "POST", body: data });
-        const resData = await res.json();
-        if (resData.url) productImageUrl = resData.url;
-      } else if (typeof formData.productImage === "string") {
-        productImageUrl = formData.productImage;
-      }
-
-      // ২. ভ্যারিয়েশন আইকন আপলোড
-      if (formData.variationIcon instanceof File) {
-        const data = new FormData();
-        data.append("file", formData.variationIcon);
-        const res = await fetch("/api/upload", { method: "POST", body: data });
-        const resData = await res.json();
-        if (resData.url) variationIconUrl = resData.url;
-      } else if (typeof formData.variationIcon === "string") {
-        variationIconUrl = formData.variationIcon;
-      }
-
-      // ৩. ব্যানার ইমেজ আপলোড
-      if (formData.bannerImage instanceof File) {
-        const data = new FormData();
-        data.append("file", formData.bannerImage);
-        const res = await fetch("/api/upload", { method: "POST", body: data });
-        const resData = await res.json();
-        if (resData.url) bannerImageUrl = resData.url;
-      } else if (typeof formData.bannerImage === "string") {
-        bannerImageUrl = formData.bannerImage;
-      }
-
-      // ৪. ট্যাগ আইকন আপলোড
-      if (isTagEnabled && formData.tagIcon instanceof File) {
-        const data = new FormData();
-        data.append("file", formData.tagIcon);
-        const res = await fetch("/api/upload", { method: "POST", body: data });
-        const resData = await res.json();
-        if (resData.url) tagIconUrl = resData.url;
-      }
-
-      // 🟢 Requirement 5: Create Button Logic (isFreeFireAuto)
-      const isUidTopup = formData.productType === "Uid Topup";
-      
-      // 🟢 ফাইনাল পেলোড জেনারেশন
-      const payload = {
-        ...formData,
-        isFreeFireAuto: isUidTopup ? true : false, // Automatic logic as per req 5
-        isBanner: bannerImageUrl ? true : formData.isBanner,
-        image: productImageUrl || "/uploads/placeholder.png", 
-        productImage: productImageUrl, 
-        variationIcon: variationIconUrl,
-        bannerImage: bannerImageUrl || null,
-        tagIcon: tagIconUrl,
-        dynamicFields: dynamicFields,
-        description: editor?.getHTML() || formData.description
-      };
-
-      const response = await fetch("/api/products/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      
-      showToast.dismiss(toastId);
-
-      if (result.success) {
-        showToast.success("Product created successfully!");
-        if (!createAnother && onCancel) {
-          onCancel();
-        }
-      } else {
-        showToast.error(result.error || "Failed to create product");
-      }
-
-    } catch (error) {
-      showToast.dismiss(toastId);
-      console.error(error);
-      showToast.error("Something went wrong!");
-    } finally {
-      setLoadingCreate(false);
-      setLoadingCreateOthers(false);
+    // ১. মেইন প্রোডাক্ট ইমেজ আপলোড
+    if (formData.productImage instanceof File) {
+      const data = new FormData();
+      data.append("file", formData.productImage); 
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      const resData = await res.json();
+      if (resData.url) productImageUrl = resData.url;
+    } else if (typeof formData.productImage === "string") {
+      productImageUrl = formData.productImage;
     }
-  };
+
+    // ২. ভ্যারিয়েশন আইকন আপলোড
+    if (formData.variationIcon instanceof File) {
+      const data = new FormData();
+      data.append("file", formData.variationIcon);
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      const resData = await res.json();
+      if (resData.url) variationIconUrl = resData.url;
+    } else if (typeof formData.variationIcon === "string") {
+      variationIconUrl = formData.variationIcon;
+    }
+
+    // ৩. ব্যানার ইমেজ আপলোড
+    if (formData.bannerImage instanceof File) {
+      const data = new FormData();
+      data.append("file", formData.bannerImage);
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      const resData = await res.json();
+      if (resData.url) bannerImageUrl = resData.url;
+    } else if (typeof formData.bannerImage === "string") {
+      bannerImageUrl = formData.bannerImage;
+    }
+
+    // ৪. ট্যাগ আইকন আপলোড
+    if (isTagEnabled && formData.tagIcon instanceof File) {
+      const data = new FormData();
+      data.append("file", formData.tagIcon);
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      const resData = await res.json();
+      if (resData.url) tagIconUrl = resData.url;
+    }
+
+    // 🎯 ProductType Safe Check (VOUCHER, Uid Topup বা Manual)
+    const normalizedProductType = (formData.productType || "").toUpperCase();
+    const isUidTopup = normalizedProductType === "UID TOPUP" || formData.productType === "Uid Topup";
+    const isVoucher = normalizedProductType === "VOUCHER";
+    
+    // Auto delivery logic
+    const isFreeFireAuto = isUidTopup ? true : Boolean(formData.isFreeFireAuto);
+
+    // 🟢 ফাইনাল পেলোড জেনারেট
+    const payload = {
+      ...formData,
+      productType: formData.productType,
+      isFreeFireAuto: isFreeFireAuto, 
+      isBanner: bannerImageUrl ? true : formData.isBanner,
+      image: productImageUrl || "/uploads/placeholder.png", 
+      productImage: productImageUrl, 
+      variationIcon: variationIconUrl,
+      bannerImage: bannerImageUrl || null,
+      tagIcon: isTagEnabled ? tagIconUrl : null,
+      dynamicFields: dynamicFields,
+      description: editor?.getHTML() || formData.description
+    };
+
+    const response = await fetch("/api/products/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    
+    showToast.dismiss(toastId);
+
+    if (result.success) {
+      showToast.success("Product created successfully!");
+      if (!createAnother && onCancel) {
+        onCancel();
+      }
+    } else {
+      showToast.error(result.error || "Failed to create product");
+    }
+
+  } catch (error) {
+    showToast.dismiss(toastId);
+    console.error(error);
+    showToast.error("Something went wrong!");
+  } finally {
+    setLoadingCreate(false);
+    setLoadingCreateOthers(false);
+  }
+};
 
   const editor = useEditor({
     extensions: [

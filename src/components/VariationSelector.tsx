@@ -70,8 +70,10 @@ export default function VariationSelector({
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [variations]);
 
+  /* 🎯 রিসেলার ও ডিসকাউন্ট প্রাইস হিসেব করার নির্ভুল লজিক */
   const calculateFinalPrice = (basePrice: number) => {
-    if (userRole === "Reseller" && resellerPercentage > 0) {
+    const isReseller = userRole?.toLowerCase()?.includes("reseller");
+    if (isReseller && resellerPercentage > 0) {
       return basePrice - (basePrice * resellerPercentage) / 100;
     }
     return basePrice;
@@ -83,9 +85,9 @@ export default function VariationSelector({
 
   const currentSelectedPrice = useMemo(() => {
     if (!selectedVar) return 0;
-    const basePriceToUse =
-      selectedVar.offerPrice !== null ? selectedVar.offerPrice : selectedVar.price;
-    return calculateFinalPrice(basePriceToUse);
+    const hasOffer = selectedVar.offerPrice != null && Number(selectedVar.offerPrice) > 0;
+    const basePriceToUse = hasOffer ? Number(selectedVar.offerPrice) : Number(selectedVar.price);
+    return Math.round(calculateFinalPrice(basePriceToUse) * 100) / 100;
   }, [selectedVar, resellerPercentage, userRole]);
 
   const isInstant = isInstantPayment || paymentMethod === "instant";
@@ -122,7 +124,7 @@ export default function VariationSelector({
     if (onChange) {
       onChange(currentSelectedPrice, selectedVar);
     }
-  }, [selectedId, activeVariations, resellerPercentage, userRole, onChange, selectedVar, currentSelectedPrice]);
+  }, [selectedId, activeVariations, resellerPercentage, userRole, selectedVar, currentSelectedPrice]);
 
   if (activeVariations.length === 0) {
     return <div className="px-2.5 pb-5 text-slate-400 text-xs font-sans">No variations available.</div>;
@@ -140,9 +142,9 @@ export default function VariationSelector({
           const isSelected = selectedId === item.id;
           const isStockOut = item.stock <= 0;
 
-          const hasDiscount = item.offerPrice !== null && item.offerPrice > 0;
-          const originalPrice = calculateFinalPrice(item.price);
-          const currentPrice = hasDiscount ? calculateFinalPrice(item.offerPrice!) : originalPrice;
+          const hasDiscount = item.offerPrice != null && Number(item.offerPrice) > 0;
+          const originalPrice = Math.round(calculateFinalPrice(item.price) * 100) / 100;
+          const currentPrice = hasDiscount ? Math.round(calculateFinalPrice(Number(item.offerPrice)) * 100) / 100 : originalPrice;
 
           return (
             <button
@@ -172,7 +174,7 @@ export default function VariationSelector({
                 </svg>
               )}
 
-              {/* 🔴 "STOCK OUT" ব্যাজ (মাঝখানে সেন্টার পজিশন করা হয়েছে) */}
+              {/* 🔴 "STOCK OUT" ব্যাজ */}
               {isStockOut && (
                 <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
                   <span className="bg-[#ff8a8a] text-white [font-size:clamp(8px,1.8vw,10px)] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm">
@@ -220,7 +222,7 @@ export default function VariationSelector({
                 </div>
               </div>
 
-              {/* ⚡ প্রাইস কন্টেনার (Vertically Centered & Discount on Left) */}
+              {/* ⚡ প্রাইস কন্টেনার */}
               <div
                 className={`flex items-center justify-end flex-shrink-0 select-none transition-all duration-200 ease-out z-10 whitespace-nowrap ${
                   isSelected && !isStockOut ? "[margin-right:clamp(16px,4.5vw,20px)]" : "mr-0"

@@ -1,0 +1,14 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Playwright Browser (Chromium) এবং প্রয়োজনীয় System Dependencies ইন্সটল করা
+RUN playwright install --with-deps chromium
+
+COPY . .
+
+# FastAPI অ্যাপ রান করা
+CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT

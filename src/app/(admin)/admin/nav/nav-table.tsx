@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { getColumns, type NavItem } from "./columns"
-import { showToast } from "@/lib/toast" // 🟢 Updated toast import path
+import { showToast } from "@/lib/toast"
 import { ImageUploader } from "@/components/ui/image-uploader"
 import { 
   Trash2, 

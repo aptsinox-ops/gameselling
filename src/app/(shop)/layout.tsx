@@ -4,7 +4,7 @@ import BottomNav from "@/components/bottomNavi";
 import { prisma } from "@/lib/prisma"; 
 import { Noto_Sans_Bengali } from "next/font/google";
 
-// বাংলা ফন্টের জন্য Variable তৈরি করা হয়েছে
+// বাংলা ফন্টের জন্য Variable
 const notoBengali = Noto_Sans_Bengali({
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"],
@@ -14,20 +14,81 @@ const notoBengali = Noto_Sans_Bengali({
 
 export const revalidate = 0; 
 
-async function getSiteSettings() {
+// 🕒 ডায়ালগ একটিভ আছে কিনা চেক করার লজিক (অন করার পর থেকে end time পর্যন্ত)
+function isScheduleActive(
+  isEnabled?: boolean,
+  endTimeStr?: string | null,
+  updatedAt?: Date | string | null
+): boolean {
+  if (!isEnabled) return false;
+  
+  // End time দেওয়া না থাকলে সবসময় একটিভ থাকবে যতক্ষণ না ম্যানুয়ালি বন্ধ করা হয়
+  if (!endTimeStr || !endTimeStr.trim()) return true;
+
   try {
-    const settings = await prisma.siteSettings.findUnique({
-      where: { id: "STATIC" },
-    });
-    return settings;
+    let hours = 0;
+    let minutes = 0;
+    const cleanStr = endTimeStr.trim();
+    const hasAMPM = /am|pm/i.test(cleanStr);
+
+    if (hasAMPM) {
+      const parts = cleanStr.split(/\s+/);
+      const timeParts = parts[0].split(":");
+      hours = parseInt(timeParts[0], 10);
+      minutes = parseInt(timeParts[1] || "0", 10);
+      const modifier = (parts[1] || "").toUpperCase();
+
+      if (modifier === "PM" && hours < 12) hours += 12;
+      if (modifier === "AM" && hours === 12) hours = 0;
+    } else {
+      const timeParts = cleanStr.split(":");
+      hours = parseInt(timeParts[0], 10);
+      minutes = parseInt(timeParts[1] || "0", 10);
+    }
+
+    if (isNaN(hours) || isNaN(minutes)) return true;
+
+    const now = new Date();
+    const updatedDate = updatedAt ? new Date(updatedAt) : new Date();
+
+    // Reopening/End target time হিসাব করা
+    const targetDate = new Date(updatedDate);
+    targetDate.setHours(hours, minutes, 0, 0);
+
+    // যদি updated time-এর আগেই target time থাকে, তার মানে পরবর্তী দিন খুলবে
+    if (targetDate.getTime() <= updatedDate.getTime()) {
+      targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    // বর্তমান সময় যদি Target time এর আগে হয়, তবে ডায়ালগ দেখাবে
+    return now.getTime() < targetDate.getTime();
+  } catch (err) {
+    console.error("Error calculating schedule active state:", err);
+    return true;
+  }
+}
+
+// 🌐 টেক্সটে বাংলা আছে কিনা চেক করার ফাংশন
+function isBanglaText(text?: string | null): boolean {
+  if (!text) return false;
+  return /[\u0980-\u09FF]/.test(text);
+}
+
+async function getLayoutData() {
+  try {
+    const [settings, storeControl] = await Promise.all([
+      prisma.siteSettings.findUnique({ where: { id: "STATIC" } }),
+      prisma.storeControl.findUnique({ where: { id: "STATIC" } }),
+    ]);
+    return { settings, storeControl };
   } catch (error) {
-    console.error("Failed to fetch settings in layout:", error);
-    return null;
+    console.error("Failed to fetch layout data:", error);
+    return { settings: null, storeControl: null };
   }
 }
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSiteSettings();
+  const { settings, storeControl } = await getLayoutData();
 
   let adminCount = 0;
   try {
@@ -55,6 +116,20 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
     );
   }
 
+  // 🔴 ১. Site Closed modal শর্ত চেক (এখনই শুরু হবে, openTime এ বন্ধ হবে)
+  const showSiteClosedModal = isScheduleActive(
+    storeControl?.isSiteClosed,
+    storeControl?.openTime,
+    storeControl?.updatedAt
+  );
+
+  // 🟡 ২. Maintenance modal শর্ত চেক (এখনই শুরু হবে, maintEndTime এ বন্ধ হবে)
+  const showMaintenanceModal = !showSiteClosedModal && isScheduleActive(
+    storeControl?.isMaintenance,
+    storeControl?.maintEndTime,
+    storeControl?.updatedAt
+  );
+
   const primaryColor = settings?.primaryColor || "#ff0055"; 
   const backgroundColor = settings?.backgroundColor || "#ffffff"; 
 
@@ -70,23 +145,21 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   const buttonBgColor = isTelegram ? "#229ED9" : isWhatsapp ? "#25D366" : primaryColor;
   const pulseShadowColor = isTelegram ? "rgba(34, 158, 217, 0.4)" : isWhatsapp ? "rgba(37, 211, 102, 0.4)" : "rgba(255, 0, 85, 0.4)";
 
-  // SF Pro ফন্ট স্ট্যাক ডিফাইন করা হয়েছে
-  const sfProFont = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif';
+  const urbanistFont = '"Urbanist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
   return (
     <div 
       className={`flex flex-col min-h-screen text-black transition-colors duration-300 ${notoBengali.variable}`}
       style={{
-        fontFamily: sfProFont,
+        fontFamily: urbanistFont,
         "--primary-color": primaryColor,
         "--bg-color": backgroundColor,
         backgroundColor: backgroundColor
       } as React.CSSProperties}
     >
       <style dangerouslySetInnerHTML={{__html: `
-        /* বাংলা ফন্টের জন্য ইউটিলিটি ক্লাস */
         .font-bengali {
-          font-family: var(--font-bengali), ${sfProFont};
+          font-family: var(--font-bengali), ${urbanistFont};
         }
 
         @keyframes fabPulse {
@@ -116,7 +189,55 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         .bubble-3 { width: 8px; height: 8px; bottom: 2px; right: -10px; animation: bubbleFloat 2.8s infinite ease-in-out 1.5s; }
         .bubble-4 { width: 11px; height: 11px; top: 15px; left: -12px; animation: bubbleFloat 3.2s infinite ease-in-out 2.2s; }
       `}} />
-      
+
+      {/* 🔴 SITE CLOSED DIALOG */}
+      {showSiteClosedModal && (
+        <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 select-none pointer-events-auto">
+          <div className="w-full max-w-md rounded-md bg-red-600 overflow-hidden shadow-none">
+            <div className="bg-red-950 px-5 py-2 flex items-center gap-3">
+              <div className="flex items-center justify-center shrink-0">
+                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-md font-bold text-white tracking-wide">
+                Site Is Closed
+              </h3>
+            </div>
+
+            <div className="p-4">
+              <p className={`text-white text-base leading-relaxed ${isBanglaText(storeControl?.closeReason) ? "font-bengali" : ""}`}>
+                {storeControl?.closeReason || "The site is currently closed. Please check back later during operating hours."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🟡 MAINTENANCE MODE DIALOG */}
+      {showMaintenanceModal && (
+        <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 select-none pointer-events-auto">
+          <div className="w-full max-w-md rounded-md bg-white overflow-hidden shadow-none">
+            <div className="bg-neutral-900 px-5 py-2 flex items-center gap-3">
+              <div className="flex items-center justify-center shrink-0 text-white">
+                <svg className="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+              </div>
+              <h3 className="text-md font-bold text-white">
+                Maintenance
+              </h3>
+            </div>
+
+            <div className="p-4">
+              <p className={`text-gray-800 text-base leading-relaxed ${isBanglaText(storeControl?.maintNotice) ? "font-bengali" : ""}`}>
+                {storeControl?.maintNotice || "We are currently performing scheduled maintenance. We will be back online shortly!"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Component */}
       {settings?.isHeaderVisible !== false && (
         <Header logo={settings?.logoUrl} siteName={settings?.siteName} /> 

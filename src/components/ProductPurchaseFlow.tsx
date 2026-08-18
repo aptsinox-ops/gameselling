@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -84,6 +84,38 @@ function ProductPurchaseFlow({
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [orderTime, setOrderTime] = useState<string>("");
 
+  /* 🎯 offerPrice ক্যালকুলেশন লজিক */
+  const calculateEffectivePrice = useCallback((varObj: any) => {
+    if (!varObj) return 0;
+
+    const regularPrice = Number(varObj.price) || 0;
+    const offerPrice = varObj.offerPrice != null && Number(varObj.offerPrice) > 0 ? Number(varObj.offerPrice) : null;
+    const resellerPrice = varObj.resellerPrice != null && Number(varObj.resellerPrice) > 0 ? Number(varObj.resellerPrice) : null;
+
+    let unitPrice = (offerPrice !== null) ? offerPrice : regularPrice;
+
+    const isReseller = currentUserRole?.toLowerCase()?.includes("reseller");
+    if (isReseller) {
+      if (resellerPrice !== null) {
+        unitPrice = resellerPrice;
+      } else if (resellerPercentage > 0) {
+        unitPrice = unitPrice - (unitPrice * resellerPercentage / 100);
+      }
+    }
+
+    return Math.round(unitPrice * 100) / 100;
+  }, [currentUserRole, resellerPercentage]);
+
+  /* 🔄 basePrice বা quantity পাল্টালে totalPrice অটো আপডেট */
+  useEffect(() => {
+    if (basePrice > 0) {
+      setPaymentDetails((prev) => ({
+        ...prev,
+        totalPrice: Math.round(basePrice * prev.quantity * 100) / 100,
+      }));
+    }
+  }, [basePrice]);
+
   const showNameChecker = useMemo(() => {
     return product?.productType === "UID" || product?.isUidNameChecker === true;
   }, [product]);
@@ -139,44 +171,27 @@ function ProductPurchaseFlow({
   };
 
   const handleVariationChange = useCallback((price: number, variationObj?: any) => {
-    let finalUnitPrice = price;
-
     if (variationObj) {
-      const isResellerRole = currentUserRole?.toLowerCase()?.includes("reseller");
-
-      if (isResellerRole && variationObj.resellerPrice != null && Number(variationObj.resellerPrice) > 0) {
-        finalUnitPrice = Number(variationObj.resellerPrice);
-      } else if (isResellerRole && resellerPercentage > 0) {
-        const rawPrice = Number(variationObj.price || price);
-        finalUnitPrice = rawPrice - (rawPrice * resellerPercentage / 100);
-      } else if (variationObj.discountPrice != null && Number(variationObj.discountPrice) > 0) {
-        finalUnitPrice = Number(variationObj.discountPrice);
-      } else if (variationObj.salePrice != null && Number(variationObj.salePrice) > 0) {
-        finalUnitPrice = Number(variationObj.salePrice);
-      } else if (variationObj.offerPrice != null && Number(variationObj.offerPrice) > 0) {
-        finalUnitPrice = Number(variationObj.offerPrice);
-      }
-    }
-
-    finalUnitPrice = Math.round(finalUnitPrice * 100) / 100;
-
-    setBasePrice(finalUnitPrice);
-    if (variationObj) {
+      const finalUnitPrice = calculateEffectivePrice(variationObj);
+      setBasePrice(finalUnitPrice);
       setSelectedVariation(variationObj);
+    } else {
+      setBasePrice(price);
     }
-  }, [currentUserRole, resellerPercentage]);
+  }, [calculateEffectivePrice]);
 
   const handlePaymentChange = useCallback((details: any) => {
     const nextMethod = details.paymentMethod === "wallet" ? "Wallet" : "Instant";
     const calculatedQty = details.quantity || (basePrice > 0 ? Math.round(details.totalPrice / basePrice) : 1);
+    const finalCalculatedQty = calculatedQty > 0 ? calculatedQty : 1;
 
     setPaymentDetails((prev) => ({
       ...prev,
       paymentMethod: nextMethod,
-      totalPrice: details.totalPrice,
+      quantity: finalCalculatedQty,
+      totalPrice: Math.round(basePrice * finalCalculatedQty * 100) / 100,
       userBalance: details.userBalance,
       isLoadingBalance: details.isLoadingBalance,
-      quantity: calculatedQty > 0 ? calculatedQty : 1
     }));
   }, [basePrice]);
 
@@ -187,116 +202,110 @@ function ProductPurchaseFlow({
     toast.success("ভাউচার কোডটি সফলভাবে কপি হয়েছে!");
   };
 
-  const handleBuyNowSubmit = async () => {
-    if (isSubmitting) return;
+const handleBuyNowSubmit = async () => {
+  if (isSubmitting) return;
 
-    if (!isLoggedIn) {
-      toast("দয়া করে ক্রয় করতে প্রথমে লগইন করুন!", { icon: <ErrorIcon /> });
+  if (!isLoggedIn) {
+    toast("দয়া করে ক্রয় করতে প্রথমে লগইন করুন!", { icon: <ErrorIcon /> });
+    return;
+  }
+
+  if (!isVariationSelected || !selectedVariation) {
+    toast("দয়া করে আইটেম ভ্যারিয়েশন সিলেক্ট করুন!", { icon: <ErrorIcon /> });
+    return;
+  }
+
+  for (const labelName of cleanFields) {
+    if (!inputValues[labelName] || inputValues[labelName].trim() === "") {
+      toast(`দয়া করে "${labelName}" ফিল্ডটি পূরণ করুন!`, { icon: <ErrorIcon /> });
       return;
     }
+  }
 
-    if (!isVariationSelected || !selectedVariation) {
-      toast("দয়া করে আইটেম ভ্যারিয়েশন সিলেক্ট করুন!", { icon: <ErrorIcon /> });
-      return;
-    }
+  setIsSubmitting(true);
+  setIsDialogOpen(true);
+  setDialogStep("loading");
+  setProgress(0);
 
-    for (const labelName of cleanFields) {
-      if (!inputValues[labelName] || inputValues[labelName].trim() === "") {
-        toast(`দয়া করে "${labelName}" ফিল্ডটি পূরণ করুন!`, { icon: <ErrorIcon /> });
-        return;
-      }
-    }
+  const calculatedTotalPrice = Math.round(basePrice * paymentDetails.quantity * 100) / 100;
+  const validUserId = userId ? Number(userId) : null;
 
-    setIsSubmitting(true);
-    setIsDialogOpen(true);
-    setDialogStep("loading");
-    setErrorMessage("");
-    setProgress(0);
-
-    const intervalTime = 30; 
-    const totalDuration = 2000; 
-    const step = (intervalTime / totalDuration) * 100;
-
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          return 100;
-        }
-        return prev + step;
-      });
-    }, intervalTime);
-
+  // Instant payment এখনো gateway URL এর জন্য wait করবে — এটা real redirect dependency
+  if (paymentDetails.paymentMethod === "Instant") {
     try {
-      if (paymentDetails.paymentMethod === "Instant") {
-        const response = await fetch("/api/instant-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productId: product.id,
-            variationId: selectedVariation.id,
-            inputValues: inputValues,
-            quantity: paymentDetails.quantity,
-            userId: userId || null,
-          }),
-        });
-
-        const resData = await response.json();
-
-        if (response.ok && resData.payment_url) {
-          window.location.href = resData.payment_url;
-        } else {
-          setErrorMessage(resData.message || "পেমেন্ট গেটওয়েতে সমস্যা হয়েছে!");
-          setDialogStep("insufficient");
-          setIsSubmitting(false);
-        }
-        return;
-      }
-
-      const response = await fetch("/api/order", {
+      const response = await fetch("/api/instant-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: product.id,
           variationId: selectedVariation.id,
-          inputValues: inputValues,
+          unitPrice: basePrice,
+          totalPrice: calculatedTotalPrice,
+          inputValues,
           quantity: paymentDetails.quantity,
-          paymentMethod: "Wallet",
+          userId: validUserId,
         }),
       });
-
       const resData = await response.json();
+      if (response.ok && resData.payment_url) {
+        window.location.href = resData.payment_url;
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    // Instant e সমস্যা হলেও silently myorder এ পাঠিয়ে দেই, কোনো error dialog না
+    setIsDialogOpen(false);
+    setIsSubmitting(false);
+    router.push("/myorder");
+    return;
+  }
+
+  // ---- Wallet Payment: fire-and-forget ----
+  // API call ব্যাকগ্রাউন্ডে পাঠানো হলো, রেসপন্সের জন্য UI block হবে না
+  fetch("/api/order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      productId: product.id,
+      variationId: selectedVariation.id,
+      unitPrice: basePrice,
+      totalPrice: calculatedTotalPrice,
+      inputValues,
+      quantity: paymentDetails.quantity,
+      userId: validUserId,
+      paymentMethod: "Wallet",
+    }),
+  }).catch((err) => console.error("Background order error:", err));
+
+  // Progress animation দ্রুত শেষ করে দিচ্ছি (UX এর জন্য রাখলাম, কিন্তু কোনো API wait নাই)
+  const quickSteps = [30, 65, 100];
+  let i = 0;
+  const quickTimer = setInterval(() => {
+    setProgress(quickSteps[i]);
+    i++;
+    if (i >= quickSteps.length) {
+      clearInterval(quickTimer);
 
       setTimeout(() => {
         const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
         setOrderTime(bdTime);
+        toast("Order Are Placed!", { icon: <SuccessIcon /> });
 
-        if (response.ok && resData.success) {
-          setApiResponse(resData.data);
-          toast("অর্ডার সফলভাবে সম্পন্ন হয়েছে!", { icon: <SuccessIcon /> });
-
-          const normalizedType = product?.productType?.toLowerCase();
-          if (normalizedType === "vouchers" || normalizedType === "voucher") {
-            router.push(`/code`);
-          } else {
-            router.push(`/myorder`);
-          }
-        } else {
-          setErrorMessage(resData.error || "পর্যাপ্ত ব্যালেন্স নেই!");
-          setDialogStep("insufficient");
-          setIsSubmitting(false);
-        }
-      }, 2000);
-
-    } catch (error: any) {
-      console.error(error);
-      setTimeout(() => {
-        setErrorMessage("সিস্টেম নেটওয়ার্ক কানেকশন এরর!");
-        setDialogStep("insufficient");
+        setIsDialogOpen(false);
         setIsSubmitting(false);
-      }, 2000);
+
+        const redirectPath =
+          product?.productType?.toLowerCase() === "voucher" ||
+          product?.productType?.toLowerCase() === "vouchers"
+            ? "/code"
+            : "/myorder";
+
+        router.push(redirectPath);
+      }, 400);
     }
-  };
+  }, 250);
+};
 
   const displayProductType = useMemo(() => {
     if (product?.productType === "UID" || product?.productType === "UID Topup") return "FreeFire";
@@ -307,7 +316,7 @@ function ProductPurchaseFlow({
     <div className="space-y-8 pt-4 pb-24 lg:pb-8">
       {/* ১. ভ্যারিয়েশন সেকশন */}
       <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-        <div style={{ backgroundColor: primaryColor }} className="absolute -top-5 left-3 z-10 flex items-center justify-center [width:clamp(42px,11vw,52px)] [height:clamp(34px,9vw,40px)] text-white rounded-full [font-size:clamp(15px,4vw,20px)] font-bold border-2 border-white ">1</div>
+        <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">1</div>
         <div className="w-full pb-3">
           <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Select Recharge</h2>
           <hr className="mt-3 border-slate-200 w-full" />
@@ -330,7 +339,7 @@ function ProductPurchaseFlow({
 
       {/* ২. অ্যাকাউন্ট সেকশন */}
       <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-        <div style={{ backgroundColor: primaryColor }} className="absolute -top-5 left-3 z-10 flex items-center justify-center [width:clamp(42px,11vw,52px)] [height:clamp(34px,9vw,40px)] text-white rounded-full [font-size:clamp(15px,4vw,20px)] font-bold border-2 border-white">2</div>
+        <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">2</div>
         <div className="w-full pb-3">
           <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Account Info</h2>
           <hr className="mt-3 border-slate-200 w-full" />
@@ -393,7 +402,7 @@ function ProductPurchaseFlow({
 
       {/* ৩. পেমেন্ট সেকশন */}
       <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-        <div style={{ backgroundColor: primaryColor }} className="absolute -top-5 left-3 z-10 flex items-center justify-center [width:clamp(42px,11vw,52px)] [height:clamp(34px,9vw,40px)] text-white rounded-full [font-size:clamp(15px,4vw,20px)] font-bold border-2 border-white">3</div>
+        <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">3</div>
         <div className="w-full pb-3">
           <h2 style={{ color: primaryColor }} className="[font-size:clamp(14px,3.5vw,18px)] font-bold mt-1 px-5">Select Payment</h2>
           <hr className="mt-3 border-slate-200 w-full" />
@@ -407,7 +416,7 @@ function ProductPurchaseFlow({
         />
       </section>
 
-      {/* 💻 BUY NOW বাটন */}
+      {/* BUY NOW বাটন */}
       <div className="lg:block space-y-3 pt-2">
         <button
           onClick={handleBuyNowSubmit}
@@ -421,21 +430,20 @@ function ProductPurchaseFlow({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>Processing...</span>
+              <span>Processing</span>
             </>
           ) : (
-            <span>BUY NOW</span>
+            <span>Buy Now</span>
           )}
         </button>
       </div>
 
-      {/* Rules & Conditions সেকশন */}
+      {/* Rules & Conditions */}
       {product?.description && (
         <section className="bg-white border border-slate-200 rounded-md pt-5 pb-5 shadow-none transition-all">
           <div className="w-full pb-3">
             <div className="flex items-stretch pl-3">
               <svg fill="red" width="20px" height="20px" viewBox="0 0 256 256" id="Flat" xmlns="http://www.w3.org/2000/svg"><path d="M116,136V104a12,12,0,0,1,24,0v32a12,12,0,0,1-24,0Zm124.23242,77.979a27.71154,27.71154,0,0,1-24.25586,14.01319H40.02344A28.00034,28.00034,0,0,1,15.79,185.96582L103.7666,33.97314v.00049a27.99988,27.99988,0,0,1,48.4668,0L240.21,185.96533A27.71359,27.71359,0,0,1,240.23242,213.979Zm-20.79394-15.99072L131.46191,45.99609a4.00012,4.00012,0,0,0-6.92382,0h0L36.56152,197.98828a4.0004,4.0004,0,0,0,3.46192,6.00391H215.97656a4.0004,4.0004,0,0,0,3.46192-6.00391ZM128,160a16,16,0,1,0,16,16A16.00016,16.00016,0,0,0,128,160Z"/></svg>
-              
               <h2 className="font-bold text-red-500 [font-size:clamp(15px,4vw,20px)] pl-2">
                 Rules & Conditions:
               </h2>
@@ -450,12 +458,11 @@ function ProductPurchaseFlow({
         </section>
       )}
 
-{/* 🟢 MODERN & PROFESSIONAL WALLET DIALOG/MODAL COMPONENT 🟢 */}
+      {/* 🟢 ULTRA-SMOOTH DIALOG COMPONENT 🟢 */}
       {isDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="relative w-full max-w-md bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto">
             
-            {/* ক্লোজ বাটন */}
             <button 
               onClick={() => { if (!isSubmitting) setIsDialogOpen(false); }}
               disabled={isSubmitting}
@@ -464,18 +471,35 @@ function ProductPurchaseFlow({
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
-            {/* ১. প্রোগ্রেস ও লোডিং স্ক্রিন */}
+            {/* ১. প্রোগ্রেস ও অ্যানিমেটেড টপ আইকন স্ক্রিন */}
             {dialogStep === "loading" && (
               <div className="py-6 flex flex-col items-center justify-center text-center">
                 
-                {/* অ্যানিমেটেড আইকন */}
-                <div className="relative mb-5 flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500/10 to-emerald-500/10 flex items-center justify-center ring-1 ring-slate-200/60">
-                    <svg className="animate-spin w-8 h-8 text-slate-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3.5"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </div>
+                {/* 🌀 টপের ডায়নামিক অ্যানিমেটেড স্ট্রোকড আইকন */}
+                <div className="relative mb-5 flex items-center justify-center min-h-[64px]">
+                  {progress < 40 && (
+                    <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
+                      <svg className="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {progress >= 40 && progress < 80 && (
+                    <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
+                      <svg className="w-8 h-8 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {progress >= 80 && (
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
+                      <svg className="w-8 h-8 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
 
                 <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Processing Order</h3>
@@ -483,17 +507,18 @@ function ProductPurchaseFlow({
                   Please wait a moment while we process your request securely.
                 </p>
                 
-                {/* প্রোগ্রেস নোডসমূহ */}
+                {/* 🚀 Smooth Progress Bar */}
                 <div className="w-full px-2 relative flex items-center justify-between mb-8">
                   <div className="absolute left-6 right-6 top-3.5 h-1 bg-slate-100 rounded-full z-0" />
+                  
                   <div 
-                    style={{ width: `calc(${progress}% - 24px)` }}
-                    className="absolute left-6 top-3.5 h-1 bg-emerald-500 rounded-full z-0 transition-all duration-300 ease-out origin-left"
+                    style={{ width: `calc(${Math.min(progress, 100)}% - 24px)` }}
+                    className="absolute left-6 top-3.5 h-1 bg-emerald-500 rounded-full z-0 transition-[width] duration-150 ease-linear origin-left"
                   />
 
                   {/* Step 1 */}
                   <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ring-4 ring-white ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ring-4 ring-white ${
                       progress >= 0 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
                     }`}>
                       {progress > 15 ? (
@@ -505,7 +530,7 @@ function ProductPurchaseFlow({
 
                   {/* Step 2 */}
                   <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ring-4 ring-white ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ring-4 ring-white ${
                       progress >= 50 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
                     }`}>
                       {progress > 65 ? (
@@ -517,7 +542,7 @@ function ProductPurchaseFlow({
 
                   {/* Step 3 */}
                   <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ring-4 ring-white ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ring-4 ring-white ${
                       progress >= 95 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
                     }`}>
                       3
@@ -526,19 +551,18 @@ function ProductPurchaseFlow({
                   </div>
                 </div>
 
-                {/* বর্তমান স্টেটাস টেক্সট */}
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[11px] font-semibold text-slate-600">
-                    {progress < 45 && "Checking balance info..."}
-                    {progress >= 45 && progress < 90 && "Verifying item variation details..."}
-                    {progress >= 90 && "Finalizing database records..."}
+                    {progress < 40 && "Processing account info..."}
+                    {progress >= 40 && progress < 80 && "Packaging variation items..."}
+                    {progress >= 80 && "Finalizing wallet payment..."}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* ২. এরর হ্যান্ডেল স্ক্রিন */}
+            {/* ২. এরর স্ক্রিন */}
             {dialogStep === "insufficient" && (
               <div className="py-4 flex flex-col items-center justify-center text-center space-y-4">
                 <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 ring-8 ring-rose-50/50 shrink-0">
@@ -573,11 +597,9 @@ function ProductPurchaseFlow({
               </div>
             )}
 
-            {/* ৩. সফল পারচেজ ও ইনভয়েস সামারি স্ক্রিন */}
+            {/* ৩. সফল পারচেজ ও ইনভয়েস স্ক্রিন */}
             {dialogStep === "success" && (
               <div className="flex flex-col items-center text-center">
-                
-                {/* সাকসেস ব্যাজ */}
                 <div className="my-2 flex items-center justify-center">
                   <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white ring-8 ring-emerald-50 shadow-lg shadow-emerald-500/20 animate-in zoom-in-75 duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -593,7 +615,6 @@ function ProductPurchaseFlow({
                   Thank you for your purchase. Your order is confirmed.
                 </p>
 
-                {/* ইনভয়েস ক্যাটাগরি বক্স */}
                 <div className="w-full bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 my-5 text-left text-xs space-y-3 shadow-xs">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                     <span className="font-bold text-slate-900 text-xs tracking-wide uppercase">Order Summary</span>
@@ -612,7 +633,6 @@ function ProductPurchaseFlow({
                     <span className="font-bold text-slate-800 bg-slate-200/60 px-2 py-0.5 rounded-md truncate">{displayProductType}</span>
                   </div>
 
-                  {/* UID টাইপ */}
                   {(product?.productType === "UID" || product?.productType === "UID Topup") && (
                     <div className="flex justify-between items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 p-2.5 rounded-xl">
                       <span className="text-slate-600 font-semibold shrink-0">Player UID</span>
@@ -620,7 +640,6 @@ function ProductPurchaseFlow({
                     </div>
                   )}
 
-                  {/* Voucher টাইপ */}
                   {product?.productType === "Voucher" && apiResponse?.voucherCode && (
                     <div className="bg-amber-50/70 border border-amber-200/60 p-2.5 rounded-xl space-y-1.5">
                       <span className="text-slate-500 font-semibold block text-[11px]">Voucher Code</span>
@@ -636,7 +655,6 @@ function ProductPurchaseFlow({
                     </div>
                   )}
 
-                  {/* অন্যান্য ডাইনামিক ফিল্ডস */}
                   {product?.productType !== "UID" && product?.productType !== "UID Topup" && product?.productType !== "Voucher" && (
                     <div className="bg-slate-100/80 p-2.5 rounded-xl space-y-1.5">
                       {cleanFields.map((label, idx) => (
@@ -661,7 +679,6 @@ function ProductPurchaseFlow({
                   </div>
                 </div>
 
-                {/* বাটনসমূহ */}
                 <div className="w-full grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setIsDialogOpen(false)}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// 🟢 ১. ভেরিয়েশন তৈরি (Create) এবং আপডেট (Update) করার জন্য সমন্বিত POST মেথড
+// 🟢 ১. ভেরিয়েশন তৈরি (Create) এবং আপডেট (Update) করার জন্য পোস্ট মেথড
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { productType: true }
+      select: { productType: true, isFreeFireAuto: true }
     });
 
     if (!product) {
@@ -21,16 +21,20 @@ export async function POST(req: Request) {
     }
 
     const isVoucherType = product.productType?.toUpperCase() === "VOUCHER";
-    if (!isVoucherType && (stock === undefined || stock === null)) {
-      return NextResponse.json({ error: "Stock field is required for this product type!" }, { status: 400 });
+    const isFreeFireAuto = Boolean(product.isFreeFireAuto);
+
+    // অটো ডেলিভারি (Voucher অথবা FreeFire Auto) হলে ম্যানুয়াল স্টক লাগবে না
+    const isAutoDelivery = isVoucherType || isFreeFireAuto;
+
+    if (!isAutoDelivery && (stock === undefined || stock === null || stock === "")) {
+      return NextResponse.json({ error: "Stock field is required for manually-fulfilled products!" }, { status: 400 });
     }
 
     const parsedPrice = parseFloat(price);
     const parsedOfferPrice = offerPrice ? parseFloat(offerPrice) : null;
     const parsedBonus = bonus ? parseInt(bonus) : 0;
-    const parsedStock = !isVoucherType ? parseInt(stock) : 0;
+    const parsedStock = !isAutoDelivery ? parseInt(stock) : 0;
 
-    // 🟢 ফ্রন্টএন্ড থেকে আসা বোলোয়ান (true/false) বা স্ট্রিং চেক করে সঠিক "ON"/"OFF" সেট করা (BUG FIX)
     const finalStatus = (status === true || status === "ON") ? "ON" : "OFF";
 
     // ✨ EDIT রিকোয়েস্ট (UPDATE)
@@ -72,13 +76,32 @@ export async function POST(req: Request) {
   }
 }
 
-// 🟢 ২. ভেরিয়েশন লিস্ট বের করার জন্য (GET)
+// 🟢 ২. ভেরিয়েশন লিস্ট বের করার জন্য (GET) - Voucher থাকলে dynamic stock গণনা করা হচ্ছে
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get("productId");
 
-    const removeBonusText = (v: any) => {
+    const includeOptions = {
+      product: { 
+        select: { 
+          name: true, 
+          productType: true, 
+          isFreeFireAuto: true 
+        } 
+      },
+      vouchers: {
+        where: { status: "ACTIVE" }, // কেবল ACTIVE ভাউচারগুলো গুনে নেওয়ার জন্য
+        select: { id: true }
+      }
+    };
+
+    const processVariation = (v: any) => {
+      const isVoucherType = v.product?.productType?.toUpperCase() === "VOUCHER";
+      
+      // যদি Product Type VOUCHER হয়, তাহলে Active Vouchers সংখ্যাই হবে আসল Stock
+      const finalStock = isVoucherType ? v.vouchers?.length || 0 : v.stock;
+
       return {
         id: v.id,
         productId: v.productId,
@@ -87,7 +110,7 @@ export async function GET(req: Request) {
         price: v.price,
         offerPrice: v.offerPrice,
         bonus: v.bonus, 
-        stock: v.stock, 
+        stock: finalStock, 
         status: v.status === "ON" ? true : false, 
         sortOrder: v.sortOrder
       };
@@ -96,23 +119,19 @@ export async function GET(req: Request) {
     if (productId) {
       const variations = await prisma.variation.findMany({
         where: { productId },
-        include: {
-          product: { select: { name: true } }
-        },
+        include: includeOptions,
         orderBy: { sortOrder: "asc" },
       });
 
-      return NextResponse.json(variations.map(removeBonusText), { status: 200 });
+      return NextResponse.json(variations.map(processVariation), { status: 200 });
     }
 
     const allVariations = await prisma.variation.findMany({
-      include: {
-        product: { select: { name: true } }
-      },
+      include: includeOptions,
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(allVariations.map(removeBonusText), { status: 200 });
+    return NextResponse.json(allVariations.map(processVariation), { status: 200 });
 
   } catch (error: any) {
     console.error("VARIATION_GET_ERROR:", error);

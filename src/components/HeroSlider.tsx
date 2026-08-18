@@ -222,112 +222,117 @@ export default function HeroSlider({ noticeText: propNoticeText }: HeroSliderPro
       )}
 
       {/* Hero Slider Container */}
-      <div className="w-full [height:clamp(200px,46vw,600px)] rounded-md relative overflow-hidden bg-slate-900">
-        {slides.map((slide, index) => {
-          const isActive = index === currentSlide;
+<div className="w-full aspect-[1080/512] sm:aspect-[2.4/1] rounded-xl sm:rounded-2xl relative overflow-hidden bg-slate-900 shadow-sm">
+  {slides.map((slide, index) => {
+    const isActive = index === currentSlide;
 
-          return (
-            <div
-              key={slide.id || index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-              }`}
-            >
-              {/* BANNER */}
-              {slide.type === "BANNER" && (
-                slide.link ? (
-                  <a href={slide.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                    <img
-                      src={slide.imageUrl}
-                      alt="Banner Slide"
-                      draggable="false"
-                      className="w-full h-full object-cover select-none cursor-pointer"
-                    />
-                  </a>
-                ) : (
-                  <img
-                    src={slide.imageUrl}
-                    alt="Banner Slide"
-                    draggable="false"
-                    className="w-full h-full object-cover select-none"
-                  />
-                )
-              )}
-
-              {/* VIDEO */}
-              {slide.type === "VIDEO" && (
-                <a
-                  href={slide.videoUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative block w-full h-full group"
-                >
-                  <img
-                    src={slide.imageUrl}
-                    alt="Video Slide"
-                    draggable="false"
-                    className="w-full h-full object-cover select-none"
-                  />
-                  <div
-                    style={{ backgroundColor: primaryColor }}
-                    className="absolute top-1/2 left-1/2 play-btn-animate px-3.5 py-2 sm:px-6 sm:py-3.5 rounded-lg flex items-center justify-center gap-2 text-white shadow-2xl border border-white/30 cursor-pointer"
-                  >
-                    <svg className="w-5 h-5 sm:w-8 sm:h-8 fill-current" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </a>
-              )}
-
-              {/* SOCIAL */}
-              {slide.type === "SOCIAL" && (
-                <a
-                  href={slide.socialUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative block w-full h-full group"
-                >
-                  <img
-                    src={slide.imageUrl}
-                    alt={slide.title || "Social Slide"}
-                    draggable="false"
-                    className="w-full h-full object-cover select-none"
-                  />
-
-                  {isActive && (
-                    <div className="absolute bottom-4 sm:bottom-6 right-3 sm:right-6 flex justify-end items-center z-20 pointer-events-none">
-                      <div className="badge-slide-up pointer-events-auto">
-                        <div className="shimmer-pill-border shadow-2xl">
-                          <div className="liquid-glass-inner text-white px-3.5 py-1.5 sm:px-6 sm:py-2.5 flex items-center justify-center">
-                            <span className="text-[10px] sm:text-sm font-bold tracking-wide whitespace-nowrap drop-shadow-md">
-                              {slide.title}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </a>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Slider Dots */}
-        {slides.length > 0 && (
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-30">
-            {slides.map((_, index) => (
-              <div
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`h-2 rounded-full cursor-pointer transition-all duration-300 ${
-                  currentSlide === index ? "w-6 bg-white" : "w-2 bg-white/50"
-                }`}
+    return (
+      <div
+        key={slide.id || index}
+        className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+          isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+        }`}
+      >
+        {/* BANNER */}
+        {slide.type === "BANNER" && (
+          slide.link ? (
+            <a href={slide.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+              <img
+                src={slide.imageUrl}
+                alt="Banner Slide"
+                draggable="false"
+                className="w-full h-full object-cover select-none cursor-pointer"
               />
-            ))}
-          </div>
+            </a>
+          ) : (
+            <img
+              src={slide.imageUrl}
+              alt="Banner Slide"
+              draggable="false"
+              className="w-full h-full object-cover select-none"
+            />
+          )
+        )}
+
+        {/* VIDEO */}
+        {slide.type === "VIDEO" && (
+          <a
+            href={slide.videoUrl || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative block w-full h-full group"
+          >
+            <img
+              src={slide.imageUrl}
+              alt="Video Slide"
+              draggable="false"
+              className="w-full h-full object-cover select-none"
+            />
+            <div
+              style={{ backgroundColor: primaryColor }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn-animate px-3.5 py-2 sm:px-6 sm:py-3.5 rounded-lg flex items-center justify-center gap-2 text-white shadow-md border border-white/30 cursor-pointer"
+            >
+              <svg className="w-5 h-5 sm:w-8 sm:h-8 fill-current" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </a>
+        )}
+
+        {/* SOCIAL */}
+        {slide.type === "SOCIAL" && (
+          <a
+            href={slide.socialUrl || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative block w-full h-full group"
+          >
+            <img
+              src={slide.imageUrl}
+              alt={slide.title || "Social Slide"}
+              draggable="false"
+              className="w-full h-full object-cover select-none"
+            />
+
+            {isActive && (
+              <div className="absolute bottom-4 sm:bottom-6 right-3 sm:right-6 flex justify-end items-center z-20 pointer-events-none">
+                <div className="badge-slide-up pointer-events-auto">
+                  <div className="shimmer-pill-border shadow-md">
+                    <div className="liquid-glass-inner text-white px-3.5 py-1.5 sm:px-6 sm:py-2.5 flex items-center justify-center">
+                      <span className="text-[10px] sm:text-sm font-bold tracking-wide whitespace-nowrap drop-shadow-md">
+                        {slide.title}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </a>
         )}
       </div>
+    );
+  })}
+
+  {/* Modern Glassmorphic Slider Dots */}
+  {slides.length > 0 && (
+    <div className="absolute bottom-2.5 sm:bottom-3.5 left-0 right-0 flex justify-center z-30 pointer-events-none">
+      <div className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            aria-label={`Go to slide ${index + 1}`}
+            className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+              currentSlide === index
+                ? "w-5 sm:w-6 bg-white"
+                : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/70"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )}
+</div>
 
       {/* 🔘 Dynamic Buttons Section (Button 1 & Button 2) */}
       {(isBtn1Visible || isBtn2Visible) && (

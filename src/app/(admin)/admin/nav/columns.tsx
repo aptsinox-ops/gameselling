@@ -9,20 +9,18 @@ import { Edit2, Trash2, Image as ImageIcon } from "lucide-react"
 export type NavItem = {
   id: string
   name: string
-  icon: string // URL, Upload Path, or SVG Code
+  icon: string 
   href: string
   targetAudience: "ALL" | "GUEST" | "USER"
   slot: number
   status: "ON" | "OFF" | boolean
 }
 
-// 🟢 SVG কোড অথবা Image URL ডাইনামিকালি রেন্ডার করার জন্য হেলপার
 const IconRenderer = ({ icon, name }: { icon: string; name: string }) => {
   if (!icon) {
     return <ImageIcon className="h-4 w-4 text-neutral-400" />
   }
 
-  // 🟢 যদি SVG কোড হয় (<svg... দিয়ে শুরু হয়)
   if (icon.trim().toLowerCase().includes("<svg")) {
     return (
       <div
@@ -32,7 +30,6 @@ const IconRenderer = ({ icon, name }: { icon: string; name: string }) => {
     )
   }
 
-  // 🟢 যদি Image URL বা Upload Path হয়
   return (
     <div className="relative h-6 w-6 flex items-center justify-center overflow-hidden rounded">
       <img
@@ -53,7 +50,6 @@ interface ColumnProps {
 }
 
 export const getColumns = ({ onEdit, onDelete }: ColumnProps): ColumnDef<NavItem>[] => [
-  // 🟢 ১. CHECKBOX COLUMN
   {
     id: "select",
     header: ({ table }) => (

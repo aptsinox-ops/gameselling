@@ -30,7 +30,7 @@ export default async function CategoryPage({ searchParams }: PageProps) {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               
-              {/* টাইটেল এবং ডেসক্রিপশন */}
+            
               <div className="space-y-1">
                 <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
                   Category Management
@@ -38,7 +38,7 @@ export default async function CategoryPage({ searchParams }: PageProps) {
                 <p className="text-sm text-neutral-400">Manage your store main home page categories and products grid</p>
               </div>
 
-              {/* ফিল্টার ট্যাব */}
+            
               <div className="flex items-center gap-2 bg-neutral-100/60 dark:bg-neutral-900/40 p-1 rounded-xl w-fit border border-neutral-200/50 dark:border-neutral-800/50 select-none">
                 <Link
                   href="/admin/categories"
@@ -74,7 +74,7 @@ export default async function CategoryPage({ searchParams }: PageProps) {
                 </Link>
               </div>
 
-              {/* সরাসরি টেবিল কম্পোনেন্ট */}
+            
               <CateTable initialData={categories} />
 
             </div>

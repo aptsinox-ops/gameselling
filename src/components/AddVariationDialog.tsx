@@ -10,13 +10,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { showToast } from "@/lib/toast";
 
+interface ProductItem {
+  id: string | number;
+  name: string;
+  resellerPercentage?: number;
+  productType?: string | null;
+  isFreeFireAuto?: boolean | string | number | null;
+}
+
 interface AddVariationDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  products: { id: string; name: string; resellerPercentage?: number; productType?: string | null }[];
+  products: ProductItem[];
 }
 
-export function AddVariationDialog({ open, setOpen, products }: AddVariationDialogProps) {
+export function AddVariationDialog({ open, setOpen, products = [] }: AddVariationDialogProps) {
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [loadingCreateOthers, setLoadingCreateOthers] = useState(false);
   
@@ -32,9 +40,16 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
     stock: ""
   });
 
-  // সিলেক্টেড প্রোডাক্টের টাইপ চেক করা
-  const selectedProduct = products.find(p => p.id === formData.productId);
-  const isVoucherType = selectedProduct?.productType?.toUpperCase() === "VOUCHER";
+  // ১. সিলেক্টেড প্রোডাক্ট বের করা
+  const selectedProduct = products.find(
+    (p) => String(p.id).trim() === String(formData.productId).trim()
+  );
+
+  // ২. isFreeFireAuto চেক (Boolean/String/Number সেফলি চেক)
+  const isFreeFireAuto = 
+    selectedProduct?.isFreeFireAuto === true ||
+    String(selectedProduct?.isFreeFireAuto).toLowerCase() === "true" ||
+    Number(selectedProduct?.isFreeFireAuto) === 1;
 
   useEffect(() => {
     const percentage = selectedProduct?.resellerPercentage ?? 0;
@@ -55,15 +70,15 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
       return;
     }
 
-    if (!isVoucherType && (formData.stock === "" || isNaN(parseInt(formData.stock)))) {
-      showToast.error("Stock field is required for this product type!");
+    // isFreeFireAuto OFF থাকলে স্টক ইনপুট ভ্যালিডেশন
+    if (!isFreeFireAuto && (formData.stock === "" || isNaN(parseInt(formData.stock)))) {
+      showToast.error("Stock field is required when FreeFire Auto is OFF!");
       return;
     }
 
     if (keepOpen) setLoadingCreateOthers(true);
     else setLoadingCreate(true);
 
-    // 🟢 লোডিং টোস্ট শুরু এবং ID নিয়ে রাখা
     const toastId = showToast.loading("Creating variation...");
 
     try {
@@ -79,7 +94,8 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
           price: parseFloat(formData.price),
           offerPrice: finalOfferPrice,
           bonus: formData.bonus ? parseInt(formData.bonus) : 0, 
-          stock: !isVoucherType ? parseInt(formData.stock) : 0,
+          // isFreeFireAuto ON থাকলে স্টক default 0 পাঠানো হচ্ছে
+          stock: !isFreeFireAuto ? parseInt(formData.stock) : 0,
           sortOrder: 0, 
           status: "ON"
         }),
@@ -88,7 +104,6 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create variation");
 
-      // 🟢 লোডিং টোস্ট রিমুভ করে সাকসেস মেসেজ দেখানো
       showToast.dismiss(toastId);
       showToast.success(data.message || "Variation created successfully!");
       
@@ -107,7 +122,6 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
         window.location.reload();
       }
     } catch (error: any) {
-      // 🟢 কোনো এরর হলে লোডিং টোস্ট রিমুভ করে এরর মেসেজ দেখানো
       showToast.dismiss(toastId);
       showToast.error(error.message || "Something went wrong!");
     } finally {
@@ -126,7 +140,9 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="bg-white dark:bg-[#121212] border-neutral-200 dark:border-neutral-950 text-neutral-900 dark:text-white max-w-[92%] sm:max-w-[450px] p-5 sm:p-6 rounded-2xl shadow-2xl transition-colors duration-200">
         <DialogHeader>
-          <DialogTitle className="mt-1 mb-2 sm:mb-4 text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-white">Add New Variation</DialogTitle>
+          <DialogTitle className="mt-1 mb-2 sm:mb-4 text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-white">
+            Add New Variation
+          </DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-3 sm:gap-4 py-1">
@@ -142,7 +158,7 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-[#121212] border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white max-h-[200px]">
                 {products.map((product) => (
-                  <SelectItem key={product.id} value={product.id} className="cursor-pointer focus:bg-neutral-100 dark:focus:bg-neutral-800 text-neutral-900 dark:text-white text-xs sm:text-sm">
+                  <SelectItem key={product.id} value={String(product.id)} className="cursor-pointer focus:bg-neutral-100 dark:focus:bg-neutral-800 text-neutral-900 dark:text-white text-xs sm:text-sm">
                     {product.name}
                   </SelectItem>
                 ))}
@@ -197,8 +213,8 @@ export function AddVariationDialog({ open, setOpen, products }: AddVariationDial
             />
           </div>
 
-          {/* ৫. স্টক ইনপুট ফিল্ড */}
-          {formData.productId && !isVoucherType && (
+          {/* ৫. স্টক ফিল্ড: কেবল প্রোডাক্ট নির্বাচন করা হলে এবং isFreeFireAuto = OFF (false) থাকলে দেখাবে */}
+          {Boolean(formData.productId) && !isFreeFireAuto && (
             <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
               <Label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-200 flex items-center gap-1">
                 Stock <span className="text-red-500">*</span>

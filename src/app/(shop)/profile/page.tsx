@@ -2,57 +2,58 @@ import React from "react";
 import { db } from "@/lib/db";
 import ProfileClient from "./profile-client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth"; // আপনার Auth Options ফাইলের সঠিক পাথ দিন
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  // ⚡ ১. সাইট সেটিংস লোড (Footer Gradient & Primary Color)
-  const siteSettings = await db.siteSettings.findFirst();
-  const primaryColor = siteSettings?.primaryColor || "#00d2ff";
-
-  // ⚡ ২. বর্তমান লগইন ইউজার সেশন
-  const session = await getServerSession(authOptions);
+  // ১. সাইট সেটিংস এবং সেশন ফেচ
+  const [session, siteSettings] = await Promise.all([
+    getServerSession(authOptions),
+    db.siteSettings.findFirst().catch(() => null),
+  ]);
 
   if (!session || !session.user?.email) {
     redirect("/login");
   }
 
-  // ⚡ ৩. ডাটাবেজ থেকে লগইন থাকা ইউজারের ডাটা ফেস
+  // ২. ইউজার ডাটা এবং অর্ডার ডাটা ফেচ
   const user = await db.user.findUnique({
-    where: {
-      email: session.user.email,
-    },
-    include: {
-      orders: true,
-    },
+    where: { email: session.user.email },
+    include: { orders: true },
   });
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-neutral-500 font-bold">
-        ডাটাবেজে কোনো ইউজার পাওয়া যায়নি!
+      <div className="min-h-screen flex items-center justify-center text-gray-500 font-bold bg-gray-50">
+        ডাটাবেজে কোনো ইউজার পাওয়া যায়নি!
       </div>
     );
   }
 
-  // ৪. রিয়েল হিসাব
-  const totalOrders = user.orders.length;
-  const totalSpent = user.orders
-    .filter((o) => o.status?.toLowerCase() !== "cancelled" && o.status?.toLowerCase() !== "cancel")
+  // ৩. রিয়েল হিসাব (ক্যান্সেলড অর্ডার বাদ দিয়ে)
+  const CANCELLED_STATUSES = new Set(["cancelled", "cancel", "failed", "rejected"]);
+  const totalOrders = user.orders?.length || 0;
+  const totalSpent = (user.orders || [])
+    .filter((o) => !CANCELLED_STATUSES.has((o.status || "").toLowerCase()))
     .reduce((sum, order) => sum + (order.totalPrice || 0), 0);
 
+  const primaryColor = siteSettings?.primaryColor || "#00d2ff";
+
+  // ৪. সিরিয়ালাইজড ডাটা (Next.js Props Issue ফিক্স)
   const userData = {
     id: user.id,
-    name: user.name,
+    name: user.name || "User",
     email: user.email,
     phone: user.phone || "",
     balance: user.balance || 0,
-    image: user.image || session.user.image || null,
+    image: user.image || session.user?.image || null,
     role: user.role || "User",
-    createdAt: user.createdAt.toISOString(),
+    createdAt: user.createdAt ? user.createdAt.toISOString() : new Date().toISOString(),
   };
+
+  const safeSettings = siteSettings ? JSON.parse(JSON.stringify(siteSettings)) : null;
 
   return (
     <ProfileClient 
@@ -60,7 +61,7 @@ export default async function ProfilePage() {
       totalSpent={totalSpent} 
       totalOrders={totalOrders} 
       primaryColor={primaryColor}
-      settings={siteSettings} // 👈 ⚡ এই settings প্রপসটি নিশ্চিত করবে ফুটারের গ্রাডিয়েন্ট কালার লোড হওয়া
+      settings={safeSettings}
     />
   );
 }

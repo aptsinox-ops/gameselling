@@ -1,20 +1,18 @@
 "use client";
 import React from 'react';
 
-// কাস্টম টাইপ ইন্টারফেস যা আপনার ডাটাবেজ স্ট্রাকচারের সাথে সম্পূর্ণ ফিক্সড
 interface SiteSettings {
   // 🎯 ফুটারের নিজস্ব স্পেশাল গ্রেডিয়েন্ট ফিল্ডস
   footerTopColor?: string | null;
   footerBottomColor?: string | null;
 
-  // ফুটার সেকশন কার্ড ১
+
   isFooterCard1Visible: boolean;
   footerCard1Title1?: string | null;
   footerCard1Title2?: string | null;
   footerCard1Link?: string | null;
   footerCard1ImageUrl?: string | null;
 
-  // ফুটার সেকশন কার্ড ২
   isFooterCard2Visible: boolean;
   footerCard2Title1?: string | null;
   footerCard2Title2?: string | null;
@@ -23,9 +21,8 @@ interface SiteSettings {
   primaryColor?: string | null;
   siteName?: string | null;
   adminEmail?: string | null;
-  whatsappNumber?: string | null; // এটি হোয়াটসঅ্যাপ লিংকের জন্য ব্যবহার হবে (যেমন: 8801322104655)
+  whatsappNumber?: string | null; 
   
-  // 🎯 সোশ্যাল লিংক ফিল্ডস (ইন্টারফেসে যোগ করা হয়েছে)
   youtubeLink?: string | null;
   facebookLink?: string | null;
   instagramLink?: string | null;
@@ -36,12 +33,11 @@ interface FooterProps {
 }
 
 export default function Footer({ settings }: FooterProps) {
-  // ফুটারের ব্যাকগ্রাউন্ড গ্রেডিয়েন্ট এবং প্রাইমারি কালার অ্যাসাইনমেন্ট
+
   const topGradientColor = settings?.footerTopColor || "#061124";
   const bottomGradientColor = settings?.footerBottomColor || "#1a3b7b";
   const primaryColor = settings?.primaryColor || "#00d2ff";
 
-  // লিংক ভ্যালিডেশন ফাংশন: লিংক যদি না থাকে বা শুধু '#' হয়, তবে false রিটার্ন করবে
   const isValidLink = (link: string | null | undefined): boolean => {
     if (!link) return false;
     if (link.trim() === "" || link.trim() === "#") return false;
@@ -84,7 +80,7 @@ export default function Footer({ settings }: FooterProps) {
           animation: shimmerEffect 1s ease-in-out forwards;
         }
         
-        /* কাস্টম ডাইনামিক হোভার ও বর্ডার ক্লাস */
+      
         .custom-hover-text:hover {
           color: var(--primary-color) !important;
         }
@@ -109,7 +105,7 @@ export default function Footer({ settings }: FooterProps) {
         }
       `}</style>
 
-      {/* Footer with updated gradient: ডাটাবেজের আলাদা ফুটার টপ এবং বটম কালার */}
+    
       <footer 
         className="relative text-slate-100 pt-14 pb-24 md:pb-12 select-none font-sans overflow-hidden border-t border-white/[0.06]"
         style={{
@@ -135,7 +131,7 @@ export default function Footer({ settings }: FooterProps) {
               </div>
 
               <div className="space-y-5">
-                {/* Card 1 - সুইচ অন থাকলেই শুধু শো করবে */}
+              
                 {settings?.isFooterCard1Visible !== false && (
                   <a href={settings?.footerCard1Link || "#"} className="shimmer-hover group flex items-center gap-4 bg-gradient-to-br from-white/[0.07] to-white/[0.01] backdrop-blur-xl border border-white/[0.08] p-1 rounded-xl transition-all duration-300 custom-hover-border">
                     <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center shrink-0 border border-white/[0.06]">
@@ -164,7 +160,7 @@ export default function Footer({ settings }: FooterProps) {
                   </a>
                 )}
 
-                {/* Card 2 - সুইচ অন থাকলেই শুধু শো করবে */}
+              
                 {settings?.isFooterCard2Visible !== false && (
                   <a href={settings?.footerCard2Link || "#"} className="shimmer-hover group flex items-center gap-4 bg-gradient-to-br from-white/[0.07] to-white/[0.01] backdrop-blur-xl border border-white/[0.08] p-1 rounded-xl transition-all duration-300 custom-hover-border">
                     <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center shrink-0 border border-white/[0.06]">
@@ -217,7 +213,7 @@ export default function Footer({ settings }: FooterProps) {
               </div>
             </div>
 
-            {/* ================= STAY CONNECTED ================= */}
+          
             <div className="space-y-4 pt-2 md:pt-0">
               <div className="space-y-2">
                 <h4 className="text-[18px] font-semibold uppercase tracking-wider text-white">
@@ -226,20 +222,18 @@ export default function Footer({ settings }: FooterProps) {
                 <div className="w-12 h-[2.5px] rounded-full custom-bg-primary"></div>
               </div>
               
-              {/* Liquid-Glass Stay Connected Card */}
+             
               <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.01] backdrop-blur-xl border border-white/[0.08] p-5 rounded-2xl space-y-4">
                 <div className="space-y-1">
                   <span className="text-[16px] font-semibold text-white tracking-wide block">
                     {settings?.siteName || "DEMO BAZAR"}
                   </span>
-                  {/* ফোন নম্বর যদি ডাইনামিক হয় */}
                   {settings?.whatsappNumber && (
                     <div className="text-[14px] text-slate-300 flex items-center gap-2">
                       <p className="shrink-0">Phone :</p>
                       <span className="truncate">{settings.whatsappNumber}</span>
                     </div>
                   )}
-                  {/* হোয়াটসঅ্যাপ নম্বর যদি ডাইনামিক হয় */}
                   {settings?.whatsappNumber && (
                     <div className="text-[14px] text-slate-300 flex items-center gap-2">
                       <p className="shrink-0">Whatsapp :</p>

@@ -1,5 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
 
@@ -12,10 +12,10 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String
   balance   Float    @default(0)
-  phone     String?  @unique // 👈 '?' যোগ করুন (গুগল ইউজারের শুরুতে ফোন নম্বর থাকে না)
+  phone     String?  @unique
   email     String   @unique
-  password  String?  // 👈 '?' যোগ করুন (গুগল ইউজারের পাসওয়ার্ড থাকে না)
-  image     String?  
+  password  String? 
+  image     String? 
   role      String   @default("User") 
   orders    Order[]
   createdAt DateTime @default(now())
@@ -43,73 +43,88 @@ model Category {
 }
 
 model Product {
-  id               String      @id @default(uuid())
-  name             String
-  image            String
-  slug             String      @unique
-  status           String      @default("ON")
-  productType      String?
-  variationsDesign String?     @default("Grid")
-  resellerPercentage Float     @default(0) 
-  tutorialLink     String?
+  id                 String      @id @default(uuid())
+  name               String
+  image              String
+  slug               String      @unique
+  status             String      @default("ON")
+  productType        String?
+  variationsDesign   String?     @default("Grid")
+  resellerPercentage Float       @default(0) 
+  tutorialLink       String?
   
-  isFreeFireAuto   Boolean     @default(false)
-  isUidNameChecker Boolean     @default(false)
-  isCoinSystem     Boolean     @default(false)
-  isPremiumUser    Boolean     @default(false)
-  isBanner         Boolean     @default(false)
+  isFreeFireAuto     Boolean     @default(false)
+  isUidNameChecker   Boolean     @default(false)
+  isCoinSystem       Boolean     @default(false)
+  isPremiumUser      Boolean     @default(false)
+  isBanner           Boolean     @default(false)
   
-  variationIcon    String?
-  bannerImage      String?
-  autoDeliveryType String?
-  description      String?     @db.Text
+  variationIcon      String?
+  bannerImage        String?
+  autoDeliveryType   String?
+  description        String?     @db.Text
   
-  isUrlProduct     Boolean     @default(false)
-  linkUrl          String?
-  productTag       String?
-  autoDeliveryWith String?
-  categoryType     String?
-  ffNameChecker    Boolean     @default(false)
-  dynamicFields    Json        @default("[\"Enter UID\"]")
-  rulesCondition   String?     @db.Text
-  itemBottomText   String?
-  footerLink       String?
+  isUrlProduct       Boolean     @default(false)
+  linkUrl            String?
+  productTag         String?
+  autoDeliveryWith   String?
+  categoryType       String?
+  ffNameChecker      Boolean     @default(false)
+  dynamicFields      Json        @default("[\"Enter UID\"]")
+  rulesCondition     String?     @db.Text
+  itemBottomText     String?
+  footerLink         String?
 
-  isTagEnabled     Boolean     @default(true)
-  tagType          String      @default("AUTO")
-  tagColor         String?     @default("#ffffff")
-  tagBgColor       String?     @default("#2563eb")
-  tagIcon          String?
+  isTagEnabled       Boolean     @default(true)
+  tagType            String      @default("AUTO")
+  tagColor           String?     @default("#ffffff")
+  tagBgColor         String?     @default("#2563eb")
+  tagIcon            String?
 
-  categoryId       String
-  category         Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  variations       Variation[]
-  orders           Order[]     // 👈 নতুন অর্ডারের সাথে রিলেশন
+  categoryId         String
+  category           Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variations         Variation[]
+  orders             Order[]     
 
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
 model Variation {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   productId  String
   title      String
-  amount     Float
-  price      Float // সিঙ্গেল সোর্স অফ ট্রুথ (যেমন: 100 Tk)
+  amount     Float     @default(0)
+  price      Float 
   offerPrice Float?
-  bonus      Int      @default(0)
-  stock      Int      @default(0) 
+  bonus      Int       @default(0)
+  stock      Int       @default(0) 
   image      String?
-  status     String   @default("ON")
-  sortOrder  Int      @default(0)
+  status     String    @default("ON")
+  sortOrder  Int       @default(0)
 
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orders     Order[]  // 👈 নতুন অর্ডারের সাথে রিলেশন
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vouchers   Voucher[]
+  orders     Order[] 
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([productId])
+}
+
+model Voucher {
+  id            String    @id @default(uuid())
+  variationId   String
+  variation     Variation @relation(fields: [variationId], references: [id], onDelete: Cascade)
+  code          String
+  status        String    @default("ACTIVE") // ACTIVE | USED
+  usedInOrderId String?
+  createdAt     DateTime  @default(now())
+  usedAt        DateTime?
+
+  @@index([variationId])
+  @@index([status])
 }
 
 model Order {
@@ -127,7 +142,7 @@ model Order {
   inputValues Json      
   voucherCode String?   
   
-  paymentMethod String   @default("Wallet") // 👈 এই নতুন লাইনটি যুক্ত করুন
+  paymentMethod String  @default("Wallet") 
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -145,7 +160,6 @@ enum FloatingButton {
   INSTAGRAM
 }
 
-// 🎯 লগইন সিস্টেমের জন্য নতুন Enum (1. OAuth, 2. Manual, 3. Manual + OAuth)
 enum LoginSystem {
   OAUTH
   MANUAL
@@ -153,12 +167,11 @@ enum LoginSystem {
 }
 
 model SiteSettings {
-  id                   String        @id @default("STATIC")
-  siteName             String        @default("DEMO BAZAR")
+  id                   String         @id @default("STATIC")
+  siteName             String         @default("DEMO BAZAR")
   
-  // 🎯 SEO & Google Auth dynamic fields
-  siteTitle            String?       @default("DEMO BAZAR | Best Online Topup Store")
-  siteDescription      String?       @db.Text
+  siteTitle            String?        @default("DEMO BAZAR | Best Online Topup Store")
+  siteDescription      String?        @db.Text
   googleClientId       String?
   googleClientSecret   String?
 
@@ -166,11 +179,9 @@ model SiteSettings {
   bannerUrl            String?
   faviconUrl           String?
   
-  // 🎯 Favicon এর পর নতুন ২টা ইমেজ ব্যানার ফিল্ড
   walletPayBanner      String?
   autoPaymentBanner    String?
 
-  // 🎯 General settings এর জন্য Login System ফিল্ড
   loginSystem          LoginSystem    @default(OAUTH_MANUAL)
 
   metaKeywords         String? 
@@ -180,7 +191,6 @@ model SiteSettings {
   whatsappNumber       String?
   telegramUsername     String?
   
-  // Updated Social Links
   youtubeLink          String?
   facebookLink         String?
   instagramLink        String?
@@ -212,23 +222,39 @@ model SiteSettings {
   paymentMinAmount String? @default("1")
   paymentMaxAmount String? @default("99999999")
 
-
   isHeroBtn1Visible   Boolean  @default(true)       
   heroBtn1Subtitle    String?  @default("SUPPORT") 
   heroBtn1Title       String?  @default("Telegram") 
-  heroBtn1Link        String?                      
-  heroBtn1ImageUrl    String?                      
-  heroBtn1Svg         String?                       
+  heroBtn1Link        String?                     
+  heroBtn1ImageUrl    String?                     
+  heroBtn1Svg         String?                     
 
   isHeroBtn2Visible   Boolean  @default(true)      
   heroBtn2Subtitle    String?  @default("GROUP")    
   heroBtn2Title       String?  @default("Telegram") 
-  heroBtn2Link        String?                       
-  heroBtn2ImageUrl    String?                   
-  heroBtn2Svg         String?                       
+  heroBtn2Link        String?                     
+  heroBtn2ImageUrl    String?                     
+  heroBtn2Svg         String?                     
 
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
+}
+
+model StoreControl {
+  id             String   @id @default("STATIC")
+  
+  // Close Site Settings
+  isSiteClosed   Boolean  @default(false)
+  closeReason    String?  @db.Text
+  openTime       String?  // e.g. "08:00 AM"
+
+  // Maintenance Settings
+  isMaintenance  Boolean  @default(false)
+  maintNotice    String?  @db.Text
+  maintEndTime   String?  // e.g. "06:00 AM"
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Slider {
@@ -250,18 +276,18 @@ enum NavStatus {
 }
 
 enum TargetAudience {
-  ALL      // User + Guest সবার জন্য
-  GUEST    // শুধু Guest-দের জন্য
-  USER     // শুধু Logged-in User-দের জন্য
+  ALL    
+  GUEST   
+  USER    
 }
 
 model Navigation {
   id             String         @id @default(cuid())
-  icon           String         // Lucide Icon Name অথবা Image URL
-  name           String         // Nav Button Name (যেমন: Home, Shop, Profile)
-  href           String         // Route Path (যেমন: /shop, /profile)
+  icon           String    
+  name           String    
+  href           String    
   targetAudience TargetAudience @default(ALL)
-  slot           Int            @default(1) // 1, 2, 3, 4 (Position)
+  slot           Int            @default(1)
   status         NavStatus      @default(ON)
   sortOrder      Int            @default(0)
   createdAt      DateTime       @default(now())

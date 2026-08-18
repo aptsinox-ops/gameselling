@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import OrderDataTable from "@/components/data-table" // 👈 আপনার বিদ্যমান data-table ফাইলটি ইম্পোর্ট করা হলো
+import OrderDataTable from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 import AdminHeader from "@/components/admin/Header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -33,7 +33,7 @@ export default async function Page() {
                 <ChartAreaInteractive chartData={chartData} />
               </div>
 
-              {/* ডাটাবেজ টেবিল */}
+            
               <OrderDataTable />
             </div>
           </div>

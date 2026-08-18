@@ -5,11 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // 💡 টেবিলে category.name রিড করার জন্য অবশ্যই category ইনক্লুড করতে হবে
     const products = await prisma.product.findMany({
       include: {
-        category: true,   // এটিই মেইন মিসিং পার্ট ভাই!
-        variations: true, // ভ্যারিয়েশন কাউন্ট দেখানোর জন্য (যদি মডেল রিলেশন থাকে)
+        category: true,   
+        variations: true, 
       },
       orderBy: {
         createdAt: 'desc',

@@ -103,7 +103,13 @@ async function getDatabaseVariations(statusFilter: string) {
         product: {
           select: {
             name: true,
+            productType: true,
+            isFreeFireAuto: true,
           }
+        },
+        vouchers: {
+          where: { status: "ACTIVE" }, // Active Voucher গুনে dynamic stock বের করার জন্য
+          select: { id: true }
         }
       },
       orderBy: {
@@ -111,35 +117,41 @@ async function getDatabaseVariations(statusFilter: string) {
       },
     })
 
-    return variations.map((v) => ({
-      id: v.id,
-      productId: v.productId,
-      productName: v.product?.name ?? "—",
-      title: v.title ?? "—",
-      amount: v.amount ?? 0,
-      price: v.price ?? 0,
-      offerPrice: v.offerPrice,
-      bonus: (v as any).bonus ?? 0,   // 👈 ডায়ালগের জন্য বোনাস প্রপার্টি ম্যাপ করা হলো
-      stock: (v as any).stock ?? 0,   // 👈 ডায়ালগের জন্য স্টক প্রপার্টি ম্যাপ করা হলো
-      status: v.status === "ON",
-      sortOrder: v.sortOrder ?? 0,
-      createdAt: v.createdAt ? v.createdAt.toISOString() : "",
-    }))
+    return variations.map((v) => {
+      const isVoucherType = v.product?.productType?.toUpperCase() === "VOUCHER";
+      const calculatedStock = isVoucherType ? v.vouchers.length : ((v as any).stock ?? 0);
+
+      return {
+        id: v.id,
+        productId: v.productId,
+        productName: v.product?.name ?? "—",
+        title: v.title ?? "—",
+        amount: v.amount ?? 0,
+        price: v.price ?? 0,
+        offerPrice: v.offerPrice,
+        bonus: (v as any).bonus ?? 0,
+        stock: calculatedStock,
+        status: v.status === "ON",
+        sortOrder: v.sortOrder ?? 0,
+        createdAt: v.createdAt ? v.createdAt.toISOString() : "",
+      };
+    })
   } catch (error) {
     console.error("Failed to fetch database variations:", error)
     return []
   }
 }
 
-// 🟢 এডমিন ডায়ালগে ড্রপডাউনের জন্য সব প্রোডাক্টের লিস্ট আনার ফাংশন (Fixed Fields)
+// 🟢 এডমিন ডায়ালগে ড্রপডাউনের জন্য সব প্রোডাক্টের লিস্ট আনার ফাংশন
 async function getDatabaseProducts() {
   try {
     const products = await prisma.product.findMany({
       select: {
         id: true,
         name: true,
-        productType: true,        // 👈 ভাউচার কন্ডিশন চেক করার জন্য টাইপ যুক্ত করা হলো
-        resellerPercentage: true, // 👈 ডাইনামিক রেসেলার প্রাইস ক্যালকুলেট করার জন্য যুক্ত করা হলো
+        productType: true,
+        resellerPercentage: true,
+        isFreeFireAuto: true, // 👈 FF Auto চেক ডায়ালগে পাঠানোর জন্য যুক্ত করা হলো
       },
       orderBy: {
         name: "asc",
@@ -149,7 +161,8 @@ async function getDatabaseProducts() {
       id: p.id,
       name: p.name,
       productType: p.productType ?? null,
-      resellerPercentage: p.resellerPercentage ?? 0
+      resellerPercentage: p.resellerPercentage ?? 0,
+      isFreeFireAuto: Boolean(p.isFreeFireAuto) // 👈 Boolean হিসেবে পাস করা হচ্ছে
     }))
   } catch (error) {
     console.error("Failed to fetch products for dropdown:", error)

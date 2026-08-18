@@ -8,4 +8,120 @@
       ETA SWITCH ER COLOR ETA PRIMARY THEKE ASBE!!
 
       nexy letter
+
+      accha akhon ui er kaj gelo
+
+ebar proppter robot mechin dea ame kono VPS sara free te Unipin dea auto topup korte chay moloto emon hobe
+
+Admin -> admin/autorobot ekhane List thakbe Unipin vouchers er ekhane list er upore Add Vouchers ekhane click korle Dialog open hobe okhabe Dropdown Input fild thakbe okhane sob Auto Topup/Auto Delivary jai jai product e on ase segular variations gula show korbe doro 25 diamond diamond er variation select kore pore niche arkta filed Title Unipin Voucher hint o tai, okhane 25 diamond er code copy paste korle sob alada alada line e hobe aber likhle enter caple alada line hobe bg-primary/20 hobe , dhoro 5ta code copy kore paste korlam pore 5ta code e line by line thaklo pore niche akta output message thakbe 
+okhane kono button sara akuy out putshow korbe kon kon code Expair kon code avalibe nai kon code used hoea gase kon code akhono Active ase status soho dot desing kore diba ar dark light degins hobe
+
+Importent : Add button ( jai porjonto na out put e active code asbe mane sob active hole Add button ta Enible hobe ar 1 taw used expair ba not avalibe hoy tahole Button Ti Disable hobe!)
+
+pore sob code add button e click kore add kore falbe page e list ew tabel e prothom e Variation er name dekhabe pore Price pore Koyta Code ekhane deya hoyse pore ON OFF status ekhane code ses hoea gele automatic OFF hoea jabe ba stock out hoea jabe ar erpore Actoin e click korle Edit Delete , edit e oy crate er motoy dialog kinto okhane sob show korbe ar sob logic o create er moto hobe okh
+
+User -> User product er page theke akta variations select kore Uid dea ba input filed 1 eta te tar uid dea Buy now te click kore wallet ba instant pay te select kore order korlo pore Order list e to prossecing asbe kinto 5s er bitore poppiter robot oy beckend theke code nea frontend e user er tothho nea unipin theke order kore dibe jodi susses hoy tahole Frontend e Compelet message asbe ar jodi nahoy doro code expair ba used ba code avalibe nai airokom hoa order robot dore fale je order cencel tahole user er tk refund hobe ar order list e order cencel hobe okh
+
+korar jonno prostot? ame admin e page.tsx banaise abong ame tomake robot-table.tsx ar columns.tsx er code dibo agula kore diba okh?
+
+ar eta amer schma
+
+model Product {
+  id               String      @id @default(uuid())
+  name             String
+  image            String
+  slug             String      @unique
+  status           String      @default("ON")
+  productType      String?
+  variationsDesign String?     @default("Grid")
+  resellerPercentage Float     @default(0) 
+  tutorialLink     String?
+  
+  isFreeFireAuto   Boolean     @default(false)
+  isUidNameChecker Boolean     @default(false)
+  isCoinSystem     Boolean     @default(false)
+  isPremiumUser    Boolean     @default(false)
+  isBanner         Boolean     @default(false)
+  
+  variationIcon    String?
+  bannerImage      String?
+  autoDeliveryType String?
+  description      String?     @db.Text
+  
+  isUrlProduct     Boolean     @default(false)
+  linkUrl          String?
+  productTag       String?
+  autoDeliveryWith String?
+  categoryType     String?
+  ffNameChecker    Boolean     @default(false)
+  dynamicFields    Json        @default("[\"Enter UID\"]")
+  rulesCondition   String?     @db.Text
+  itemBottomText   String?
+  footerLink       String?
+
+  isTagEnabled     Boolean     @default(true)
+  tagType          String      @default("AUTO")
+  tagColor         String?     @default("#ffffff")
+  tagBgColor       String?     @default("#2563eb")
+  tagIcon          String?
+
+  categoryId       String
+  category         Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variations       Variation[]
+  orders           Order[]     
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model Variation {
+  id         String   @id @default(uuid())
+  productId  String
+  title      String
+  amount     Float
+  price      Float 
+  offerPrice Float?
+  bonus      Int      @default(0)
+  stock      Int      @default(0) 
+  image      String?
+  status     String   @default("ON")
+  sortOrder  Int      @default(0)
+
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orders     Order[] 
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model Order {
+  id          String    @id @default(uuid())
+  receiptNo   String    @unique 
+  userId      Int       
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variationId String
+  variation   Variation @relation(fields: [variationId], references: [id], onDelete: Cascade)
+  totalPrice  Float
+  quantity    Int       @default(1)
+  status      String    
+  inputValues Json      
+  voucherCode String?   
+  
+  paymentMethod String   @default("Wallet") 
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+  @@index([variationId])
+}
       
+ame oy sob code gula dea dissi
+tome amake fix kore diba ba file dea deo
+
+

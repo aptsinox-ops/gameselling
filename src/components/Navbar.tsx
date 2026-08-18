@@ -10,7 +10,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <span className="text-xl font-black tracking-tighter flex items-center gap-1 text-[#0f172a]">
-              <span className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-2 py-0.5 rounded italic">RRR</span>
+              <span className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-2 py-0.5 rounded italic">DEMO</span>
               TOPUP
             </span>
           </div>

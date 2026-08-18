@@ -14,18 +14,16 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          'Urbanist',
           '-apple-system', 
           'BlinkMacSystemFont', 
-          '"SF Pro Display"', 
-          '"SF Pro Text"', 
-          '"SF Pro"', 
           '"Helvetica Neue"', 
           'Helvetica', 
           'Arial', 
           'sans-serif'
         ],
         // 🇧🇩 বাংলা ফন্টের জন্য Tailwind Utility Class (font-bengali)
-        bengali: ['var(--font-bengali)', 'sans-serif'],
+        bengali: ['var(--font-bengali)', 'Urbanist', 'sans-serif'],
       },
       colors: {
         // ডাইনামিক রুট থিম কালার

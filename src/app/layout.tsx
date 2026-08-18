@@ -1,15 +1,24 @@
 import "./globals.css";
-import { Noto_Sans_Bengali } from "next/font/google";
+import { Noto_Sans_Bengali, Urbanist } from "next/font/google";
 import Providers from "@/components/Providers"; 
 import { Toaster } from "sonner"; 
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
 
+// বাংলা ফন্ট কনফিগারেশন
 const notoBengali = Noto_Sans_Bengali({
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-bengali",
+});
+
+// Urbanist ফন্ট কনফিগারেশন
+const urbanist = Urbanist({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-urbanist",
 });
 
 export const dynamic = "force-dynamic";
@@ -73,8 +82,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={notoBengali.variable}>
-      <body className="bg-white text-black antialiased min-h-screen">
+    <html lang="en" className={`${notoBengali.variable} ${urbanist.variable}`}>
+      <body className="bg-white text-black antialiased min-h-screen font-sans" style={{ fontFamily: 'var(--font-urbanist), sans-serif' }}>
         <Providers>
           {children}
         </Providers>

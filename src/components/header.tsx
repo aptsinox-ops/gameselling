@@ -18,7 +18,6 @@ interface HeaderProps {
 }
 
 export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
   const { data: session, status } = useSession();
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
   const [siteSettings, setSiteSettings] = useState<any>(null);
@@ -28,14 +27,6 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
   
   // ইমেজ এরর ট্র্যাকিং স্টেট
   const [imageError, setImageError] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // সাইট সেটিংস ফেচ করা
   useEffect(() => {
@@ -97,7 +88,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
 
   if (status === "loading") {
     return (
-      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/90 backdrop-blur-sm border-b border-gray-200 flex items-center">
+      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 flex items-center">
         <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between">
         </div>
       </header>
@@ -110,13 +101,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
   const firstLetter = currentUserName.trim() ? currentUserName.trim().charAt(0).toUpperCase() : "A";
 
   return (
-    <header 
-      className={`fixed top-0 w-full pt-2 z-50 transition-all duration-300 border-b border-gray-300 ${
-        isScrolled 
-          ? "h-16 bg-white/40 backdrop-blur-md" 
-          : "h-20 md:h-24 bg-white/30 backdrop-blur-sm"
-      } flex items-center`}
-    >
+    <header className="fixed top-0 w-full z-50 border-b border-gray-200 h-16 md:h-20 bg-white/90 backdrop-blur-sm flex items-center">
       <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         
         {/* Logo Section */}
@@ -133,14 +118,10 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                 console.log("Image loading failed for URL:", finalLogoUrl);
                 setImageError(true);
               }} 
-              className={`${
-                isScrolled ? "h-10 md:h-12" : "h-12 md:h-16"
-              } w-auto max-w-full transition-all duration-300 object-contain object-left`}
+              className="h-10 md:h-12 w-auto max-w-full object-contain object-left"
             />
           ) : (
-            <span className={`font-black tracking-tight text-neutral-900 transition-all duration-300 ${
-              isScrolled ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"
-            }`}>
+            <span className="font-black tracking-tight text-neutral-900 text-xl md:text-2xl">
               {finalSiteName}
             </span>
           )}
@@ -148,8 +129,8 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
 
         {/* Navigation & Action Buttons */}
         <div className="flex items-center gap-4 md:gap-6 shrink-0">
-          <nav className={`hidden md:flex items-center ${isScrolled ? "gap-6 text-[14px]" : "gap-8 text-[15px]"} cursor-pointer font-semibold text-gray-700 transition-all duration-300`}>
-            <a href="/contact" className="hover:text-blue-600 transition">Contact Us</a>
+          <nav className="hidden md:flex items-center gap-6 text-sm cursor-pointer font-semibold text-gray-700">
+            <a href="/contact" className="hover:text-blue-600">Contact Us</a>
           </nav>
 
           {session ? (
@@ -158,7 +139,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
               {/* Balance Layout */}
               <div 
                 style={{ backgroundColor: primaryColor }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full shadow-md transition-all border border-black/5 min-w-[75px] justify-center"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-black/5 min-w-[75px] justify-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-wallet w-4 h-4"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg> 
                 <span className="text-sm font-bold text-white tracking-tight">
@@ -170,7 +151,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
               <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                   <div className="relative flex items-center cursor-pointer select-none">
-                    <Avatar className="w-11 h-11 md:w-12 md:h-12 border border-gray-200 shadow-md transform transition active:scale-95">
+                    <Avatar className="w-11 h-11 md:w-12 md:h-12 border border-gray-200">
                       <AvatarImage 
                         src={session.user?.image || ""} 
                         alt={currentUserName} 
@@ -191,7 +172,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                   <div>
                     <div className="flex items-center gap-4 px-6 pb-6 border-b border-gray-100">
                       <div className="relative select-none">
-                        <Avatar className="w-14 h-14 border border-gray-200 shadow-sm">
+                        <Avatar className="w-14 h-14 border border-gray-200">
                           <AvatarImage src={session.user?.image || ""} alt={currentUserName} className="object-cover" />
                           <AvatarFallback 
                             style={{ backgroundColor: primaryColor }} 
@@ -212,7 +193,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                       <Link 
                         href="/profile" 
                         onClick={() => setIsSheetOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition active:scale-[0.98]"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         My Profile
@@ -221,7 +202,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                       <Link 
                         href="/myorder" 
                         onClick={() => setIsSheetOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition active:scale-[0.98]"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-bag"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                         My Order
@@ -230,7 +211,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                       <Link 
                         href="/code" 
                         onClick={() => setIsSheetOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition active:scale-[0.98]"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-code-2"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
                         My Code
@@ -239,7 +220,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                       <Link 
                         href="/add-money" 
                         onClick={() => setIsSheetOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition active:scale-[0.98]"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-circle-plus"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
                         Add Money
@@ -248,7 +229,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                       <Link 
                         href="/contact" 
                         onClick={() => setIsSheetOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition active:scale-[0.98]"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         Contact Us
@@ -262,7 +243,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
                         setIsSheetOpen(false);
                         signOut({ callbackUrl: '/' });
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 font-bold text-sm transition active:scale-[0.98] cursor-pointer"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 font-bold text-sm cursor-pointer"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                       LOGOUT
@@ -276,7 +257,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
             <Link href="/login">
               <button 
                 style={{ backgroundColor: primaryColor }}
-                className={`${isScrolled ? "py-2 px-5 text-xs" : "py-2 px-4 md:py-2 md:px-5 text-sm"} cursor-pointer text-white font-bold rounded-lg transition-all duration-300 active:scale-95 filter hover:brightness-95`}
+                className="py-2 px-5 text-sm cursor-pointer text-white font-bold rounded-lg"
               >
                 Login
               </button>

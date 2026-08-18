@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-// 🎯 Prisma Schema এর সাথে টাইপ হুবহু মেলানো হয়েছে
 export type Variation = {
   id: string;
   productId: string;
@@ -32,13 +31,12 @@ export type Variation = {
   bonus: number;
   stock: number;
   image?: string | null;
-  status: string; // Prisma Schema তে String ("ON" / "OFF")
+  status: string;
   sortOrder?: number;
 };
 
 const StatusSwitchCell = ({ row }: { row: { original: Variation } }) => {
   const variation = row.original;
-  // 🟢 Prisma String status ("ON" / "OFF") ডিটেক্ট করার ফিক্স
   const [isActive, setIsActive] = useState<boolean>(
     variation.status === "ON" || variation.status === "ACTIVE"
   );
@@ -196,7 +194,11 @@ export const columns: ColumnDef<Variation>[] = [
       }, [openEdit, variation]);
 
       const selectedProduct = productDropdownList.find((p: any) => p.id === formData.productId);
-      const isVoucherType = selectedProduct?.productType?.toUpperCase() === "VOUCHER";
+      
+      // 🎯 Voucher এবং FreeFire Auto ২টির জন্যই স্টক ফিল্ড হাইড করার লজিক
+      const isAutoDelivery = 
+        selectedProduct?.productType?.toUpperCase() === "VOUCHER" || 
+        selectedProduct?.isFreeFireAuto === true;
 
       useEffect(() => {
         const percentage = selectedProduct?.resellerPercentage ?? 0;
@@ -216,7 +218,8 @@ export const columns: ColumnDef<Variation>[] = [
           return showToast.error("Product, Title, and Price are required!");
         }
         
-        if (!isVoucherType && formData.stock === "") {
+        // অটো ডেলিভারি না হলে অবশ্যই স্টকের মান প্রদান করতে হবে
+        if (!isAutoDelivery && formData.stock === "") {
           return showToast.error("Stock field is required for this product type!");
         }
 
@@ -236,7 +239,7 @@ export const columns: ColumnDef<Variation>[] = [
               price: parseFloat(formData.price),
               offerPrice: finalOfferPrice,
               bonus: formData.bonus !== "" ? parseInt(formData.bonus) : 0,
-              stock: !isVoucherType && formData.stock !== "" ? parseInt(formData.stock) : 0,
+              stock: !isAutoDelivery && formData.stock !== "" ? parseInt(formData.stock) : 0,
               status: variation.status || "ON"
             }),
           });
@@ -276,7 +279,6 @@ export const columns: ColumnDef<Variation>[] = [
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-800" />
               
-              {/* 🟢 Safe Delete Call */}
               <DropdownMenuItem 
                 onClick={() => {
                   if (meta?.setDeleteTarget && meta?.setIsAlertOpen) {
@@ -369,8 +371,8 @@ export const columns: ColumnDef<Variation>[] = [
                   />
                 </div>
 
-                {/* ৫. স্টক ইনপুট ফিল্ড */}
-                {formData.productId && !isVoucherType && (
+                {/* ৫. স্টক ইনপুট ফিল্ড (অটো ডেলিভারি বা ভাউচার প্রোডাক্ট না হলে দেখাবে) */}
+                {formData.productId && !isAutoDelivery && (
                   <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
                     <Label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-200 flex items-center gap-1">
                       Stock <span className="text-red-500">*</span>

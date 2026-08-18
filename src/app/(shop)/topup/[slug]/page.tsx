@@ -88,6 +88,12 @@ export default async function ProductPage({
         include: {
           variations: {
             where: { status: "ON" },
+            include: {
+              vouchers: {
+                where: { status: "ACTIVE" },
+                select: { id: true }
+              }
+            },
             orderBy: { sortOrder: "asc" }
           }
         }
@@ -119,14 +125,30 @@ export default async function ProductPage({
       }
     }
 
-    const rawVariations = product.variations || [];
-    const resellerPercentage = product.resellerPercentage || 0;
-    const isListView = product.variationsDesign === "List";
+    const isVoucherOrAuto = (product as any).isFreeFireAuto || product.productType?.toUpperCase() === "VOUCHER";
+
+    // 🎯 Dynamic Stock Calculation
+    const rawVariations = (product.variations || []).map((v: any) => ({
+      ...v,
+      stock: isVoucherOrAuto ? (v.vouchers?.length || 0) : (v.stock ?? 0)
+    }));
+
+    const resellerPercentage = (product as any).resellerPercentage || 0;
+    const isListView = (product as any).variationsDesign === "List";
     const displayProductType = product.productType === "UID" ? "FreeFire Service" : product.productType;
 
-    const plainData = JSON.parse(JSON.stringify({ product, variations: rawVariations }));
+    // 🎯 সব ডাটা প্রোপারলি সেফ সোলাইজ করা হয়েছে
+    const plainData = JSON.parse(
+      JSON.stringify({
+        product,
+        variations: rawVariations,
+        siteSettings: siteSettings || null,
+      })
+    );
+
     const serializedProduct = plainData.product;
-    const dbVariations = plainData.variations; 
+    const dbVariations = plainData.variations;
+    const serializedSiteSettings = plainData.siteSettings;
 
     let finalFields: any[] = [];
     if (serializedProduct.dynamicFields) {
@@ -141,14 +163,21 @@ export default async function ProductPage({
       }
     }
 
-    const brandColor = siteSettings?.primaryColor || "#2563eb";
+    const brandColor = serializedSiteSettings?.primaryColor || "#2563eb";
+    const hasBanner = Boolean(serializedProduct.bannerImage);
 
     return (
       <main className="max-w-5xl mx-auto px-3 py-5 space-y-8 min-h-screen text-slate-800 font-sans">
         
         {/* ব্যানার সেকশন */}
-        <div className="block relative w-full [height:clamp(90px,24vw,140px)] rounded-md overflow-hidden bg-slate-950 border border-slate-200/60 transition-all">
-          {serializedProduct.bannerImage ? (
+        <div 
+          className={`block relative w-full [height:clamp(90px,24vw,140px)] rounded-md overflow-hidden transition-all ${
+            hasBanner 
+              ? "bg-slate-950 border border-slate-200/60" 
+              : "bg-transparent border border-slate-300"
+          }`}
+        >
+          {hasBanner && (
             <>
               <img 
                 src={serializedProduct.bannerImage} 
@@ -157,13 +186,11 @@ export default async function ProductPage({
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/50 to-transparent backdrop-blur-[0.3px]" />
             </>
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-[#090d16] via-[#111e3d] to-[#090d16]" />
           )}
 
           <div className="absolute inset-x-0 bottom-0 top-0 z-10 flex items-center [padding:clamp(10px,3vw,16px)]">
             <div className="flex items-center [gap:clamp(8px,2.5vw,16px)]">
-              <div className="[width:clamp(48px,14vw,100px)] [height:clamp(48px,14vw,100px)] rounded-md overflow-hidden bg-slate-900 flex-shrink-0 shadow-lg">
+              <div className="[width:clamp(48px,14vw,100px)] [height:clamp(48px,14vw,100px)] rounded-md overflow-hidden flex-shrink-0">
                 <img src={
                   serializedProduct.image === "placeholder.png" || !serializedProduct.image 
                     ? "/uploads/placeholder.png"
@@ -171,17 +198,31 @@ export default async function ProductPage({
                 } alt={serializedProduct.name} className="w-full h-full object-cover" />
               </div>
               <div className="[space-y:clamp(4px,1.2vw,8px)] flex flex-col gap-1.5 min-w-0">
-                <h1 className="[font-size:clamp(13px,3.8vw,24px)] font-bold text-white uppercase tracking-wide leading-tight truncate">
+                <h1 className={`[font-size:clamp(13px,3.8vw,24px)] font-bold uppercase tracking-wide leading-tight truncate ${
+                  hasBanner ? "text-white" : "text-black"
+                }`}>
                   {serializedProduct.name}
                 </h1>
                 <div className="flex flex-wrap [gap:clamp(4px,1.5vw,8px)] items-center">
                   {displayProductType && (
-                    <div className="inline-flex items-center [padding:clamp(3px,1vw,4px)_clamp(6px,2vw,12px)] rounded-[7px] [font-size:clamp(8px,2.2vw,12px)] font-bold bg-black/40 text-white border border-white/20 uppercase">
+                    <div className={`inline-flex items-center [padding:clamp(3px,1vw,4px)_clamp(6px,2vw,12px)] rounded-[7px] [font-size:clamp(8px,2.2vw,12px)] font-bold uppercase ${
+                      hasBanner 
+                        ? "bg-black/40 text-white border border-white/20" 
+                        : "bg-slate-100 text-slate-800 border border-slate-300"
+                    }`}>
                       {displayProductType}
                     </div>
                   )}
-                  <div className="inline-flex items-center gap-1 [padding:clamp(3px,1vw,4px)_clamp(6px,2vw,12px)] rounded-[7px] bg-black/40 text-white border border-white/20">
-                    <span className="[font-size:clamp(8px,2.2vw,12px)] font-bold text-slate-100 whitespace-nowrap">Trusted Secure</span>
+                  <div className={`inline-flex items-center gap-1 [padding:clamp(3px,1vw,4px)_clamp(6px,2vw,12px)] rounded-[7px] ${
+                    hasBanner 
+                      ? "bg-black/40 text-white border border-white/20" 
+                      : "bg-slate-100 text-slate-800 border border-slate-300"
+                  }`}>
+                    <span className={`[font-size:clamp(8px,2.2vw,12px)] font-bold whitespace-nowrap ${
+                      hasBanner ? "text-slate-100" : "text-slate-700"
+                    }`}>
+                      Trusted Secure
+                    </span>
                   </div>
                 </div>
               </div>
@@ -201,7 +242,7 @@ export default async function ProductPage({
           currentBalance={currentBalance}
           takaSvg={<TakaSvg className="h-3 w-auto" />}
           primaryColor={brandColor} 
-          siteSettings={siteSettings}
+          siteSettings={serializedSiteSettings}
           userId={currentUserId}
         />
 

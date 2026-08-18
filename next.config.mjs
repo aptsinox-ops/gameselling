@@ -1,5 +1,10 @@
 /** @type {import('next').NextNextConfig} */
 const nextConfig = {
+  serverExternalPackages: [
+    "puppeteer-extra",
+    "puppeteer-extra-plugin-stealth",
+    "puppeteer",
+  ],
   images: {
     remotePatterns: [
       {
