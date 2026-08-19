@@ -53,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
         title: title,
         description: description,
         url: "https://zebotopup.store",
-        siteName: "Zebo Topup",
+        siteName: title,
         images: settings?.logoUrl ? [{ url: settings.logoUrl }] : undefined,
       },
       twitter: {
@@ -76,14 +76,52 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // 🟢 সার্ভার রেন্ডারিংয়ের সময় সাইট কালার তুলে আনা
+  let primaryColor = "#2563eb";
+  let backgroundColor = "#ffffff";
+
+  try {
+    const settings = await db.siteSettings.findFirst();
+    if (settings?.primaryColor) primaryColor = settings.primaryColor;
+    if (settings?.backgroundColor) backgroundColor = settings.backgroundColor;
+  } catch (err) {
+    console.error("Error fetching root layout settings:", err);
+  }
+
   return (
-    <html lang="en" className={`${notoBengali.variable} ${urbanist.variable}`}>
-      <body className="bg-white text-black antialiased min-h-screen font-sans" style={{ fontFamily: 'var(--font-urbanist), sans-serif' }}>
+    <html 
+      lang="en" 
+      className={`${notoBengali.variable} ${urbanist.variable}`}
+      style={{
+        "--primary-color": primaryColor,
+        "--bg-color": backgroundColor,
+      } as React.CSSProperties}
+    >
+      <head>
+        {/* ⚡ ফার্স্ট রেন্ডারেই CSS Variable ইঞ্জেকশন (Zero Color Flash / Instant Load) */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              :root {
+                --primary-color: ${primaryColor};
+                --bg-color: ${backgroundColor};
+              }
+            `,
+          }}
+        />
+      </head>
+      <body 
+        className="text-black antialiased min-h-screen font-sans" 
+        style={{ 
+          fontFamily: 'var(--font-urbanist), sans-serif',
+          backgroundColor: backgroundColor,
+        }}
+      >
         <Providers>
           {children}
         </Providers>

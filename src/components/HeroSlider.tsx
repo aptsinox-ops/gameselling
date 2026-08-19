@@ -9,7 +9,7 @@ interface SlideItem {
   videoUrl?: string | null;
   title?: string | null;
   socialUrl?: string | null;
-  createdAt?: string;
+  createdAt?: string | Date;
 }
 
 interface HeroSliderProps {
@@ -17,7 +17,7 @@ interface HeroSliderProps {
   initialSlides?: SlideItem[];
   siteSettings?: any;
   primaryColor?: string;
-  sliders?: any[];
+  sliders?: SlideItem[];
 }
 
 export default function HeroSlider({
@@ -25,12 +25,14 @@ export default function HeroSlider({
   initialSlides = [],
   siteSettings = null,
   primaryColor: propPrimaryColor = "#2563eb",
+  sliders = [],
 }: HeroSliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showNotice, setShowNotice] = useState(true);
 
-  // 🟢 স্লাইডার রিভার্স ডিফাইন করা হচ্ছে (সার্ভার প্রপস থেকে)
-  const slides = initialSlides.length > 0 ? [...initialSlides].reverse() : [];
+  // 🟢 initialSlides অথবা sliders যেকোনো একটি প্রপস পেলেই কাজ করবে
+  const rawSlides = initialSlides && initialSlides.length > 0 ? initialSlides : sliders;
+  const slides = rawSlides.length > 0 ? [...rawSlides].reverse() : [];
   const primaryColor = siteSettings?.primaryColor || propPrimaryColor;
 
   // ⏱️ অটো স্লাইডার টাইমার
@@ -87,7 +89,6 @@ export default function HeroSlider({
 
   return (
     <div className="w-full space-y-4 block clear-both select-none">
-      {/* 🌟 Dynamic CSS Styles & Google Fonts */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -196,101 +197,107 @@ export default function HeroSlider({
 
       {/* Hero Slider Container */}
       <div className="w-full aspect-[1080/512] sm:aspect-[2.4/1] rounded-xl sm:rounded-2xl relative overflow-hidden bg-slate-900 shadow-sm">
-        {slides.map((slide, index) => {
-          const isActive = index === currentSlide;
+        {slides.length === 0 ? (
+          <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">
+            Loading Slides...
+          </div>
+        ) : (
+          slides.map((slide, index) => {
+            const isActive = index === currentSlide;
 
-          return (
-            <div
-              key={slide.id || index}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-              }`}
-            >
-              {/* BANNER */}
-              {slide.type === "BANNER" && (
-                slide.link ? (
-                  <a href={slide.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+            return (
+              <div
+                key={slide.id || index}
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                  isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                }`}
+              >
+                {/* BANNER */}
+                {slide.type === "BANNER" && (
+                  slide.link ? (
+                    <a href={slide.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                      <img
+                        src={slide.imageUrl}
+                        alt="Banner Slide"
+                        draggable="false"
+                        fetchPriority={index === 0 ? "high" : "auto"}
+                        className="w-full h-full object-cover select-none cursor-pointer"
+                      />
+                    </a>
+                  ) : (
                     <img
                       src={slide.imageUrl}
                       alt="Banner Slide"
                       draggable="false"
                       fetchPriority={index === 0 ? "high" : "auto"}
-                      className="w-full h-full object-cover select-none cursor-pointer"
+                      className="w-full h-full object-cover select-none"
                     />
-                  </a>
-                ) : (
-                  <img
-                    src={slide.imageUrl}
-                    alt="Banner Slide"
-                    draggable="false"
-                    fetchPriority={index === 0 ? "high" : "auto"}
-                    className="w-full h-full object-cover select-none"
-                  />
-                )
-              )}
+                  )
+                )}
 
-              {/* VIDEO */}
-              {slide.type === "VIDEO" && (
-                <a
-                  href={slide.videoUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative block w-full h-full group"
-                >
-                  <img
-                    src={slide.imageUrl}
-                    alt="Video Slide"
-                    draggable="false"
-                    fetchPriority={index === 0 ? "high" : "auto"}
-                    className="w-full h-full object-cover select-none"
-                  />
-                  <div
-                    style={{ backgroundColor: primaryColor }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn-animate px-3.5 py-2 sm:px-6 sm:py-3.5 rounded-lg flex items-center justify-center gap-2 text-white shadow-md border border-white/30 cursor-pointer"
+                {/* VIDEO */}
+                {slide.type === "VIDEO" && (
+                  <a
+                    href={slide.videoUrl || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative block w-full h-full group"
                   >
-                    <svg className="w-5 h-5 sm:w-8 sm:h-8 fill-current" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </a>
-              )}
+                    <img
+                      src={slide.imageUrl}
+                      alt="Video Slide"
+                      draggable="false"
+                      fetchPriority={index === 0 ? "high" : "auto"}
+                      className="w-full h-full object-cover select-none"
+                    />
+                    <div
+                      style={{ backgroundColor: primaryColor }}
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn-animate px-3.5 py-2 sm:px-6 sm:py-3.5 rounded-lg flex items-center justify-center gap-2 text-white shadow-md border border-white/30 cursor-pointer"
+                    >
+                      <svg className="w-5 h-5 sm:w-8 sm:h-8 fill-current" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </a>
+                )}
 
-              {/* SOCIAL */}
-              {slide.type === "SOCIAL" && (
-                <a
-                  href={slide.socialUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative block w-full h-full group"
-                >
-                  <img
-                    src={slide.imageUrl}
-                    alt={slide.title || "Social Slide"}
-                    draggable="false"
-                    fetchPriority={index === 0 ? "high" : "auto"}
-                    className="w-full h-full object-cover select-none"
-                  />
+                {/* SOCIAL */}
+                {slide.type === "SOCIAL" && (
+                  <a
+                    href={slide.socialUrl || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative block w-full h-full group"
+                  >
+                    <img
+                      src={slide.imageUrl}
+                      alt={slide.title || "Social Slide"}
+                      draggable="false"
+                      fetchPriority={index === 0 ? "high" : "auto"}
+                      className="w-full h-full object-cover select-none"
+                    />
 
-                  {isActive && (
-                    <div className="absolute bottom-4 sm:bottom-6 right-3 sm:right-6 flex justify-end items-center z-20 pointer-events-none">
-                      <div className="badge-slide-up pointer-events-auto">
-                        <div className="shimmer-pill-border shadow-md">
-                          <div className="liquid-glass-inner text-white px-3.5 py-1.5 sm:px-6 sm:py-2.5 flex items-center justify-center">
-                            <span className="text-[10px] sm:text-sm font-bold tracking-wide whitespace-nowrap drop-shadow-md">
-                              {slide.title}
-                            </span>
+                    {isActive && (
+                      <div className="absolute bottom-4 sm:bottom-6 right-3 sm:right-6 flex justify-end items-center z-20 pointer-events-none">
+                        <div className="badge-slide-up pointer-events-auto">
+                          <div className="shimmer-pill-border shadow-md">
+                            <div className="liquid-glass-inner text-white px-3.5 py-1.5 sm:px-6 sm:py-2.5 flex items-center justify-center">
+                              <span className="text-[10px] sm:text-sm font-bold tracking-wide whitespace-nowrap drop-shadow-md">
+                                {slide.title}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </a>
-              )}
-            </div>
-          );
-        })}
+                    )}
+                  </a>
+                )}
+              </div>
+            );
+          })
+        )}
 
-        {/* Modern Glassmorphic Slider Dots */}
+        {/* Slider Dots */}
         {slides.length > 0 && (
           <div className="absolute bottom-2.5 sm:bottom-3.5 left-0 right-0 flex justify-center z-30 pointer-events-none">
             <div className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 pointer-events-auto">

@@ -17,34 +17,18 @@ interface HeaderProps {
   primaryColor?: string;
 }
 
-export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProps) {
+export default function Header({ 
+  siteName = "Store", 
+  logoUrl, 
+  logo, 
+  primaryColor = "#00d2ff" 
+}: HeaderProps) {
   const { data: session, status } = useSession();
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
-  const [siteSettings, setSiteSettings] = useState<any>(null);
-  
-  // ড্রয়ার কন্ট্রোল করার জন্য স্টেট
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  
-  // ইমেজ এরর ট্র্যাকিং স্টেট
   const [imageError, setImageError] = useState(false);
 
-  // সাইট সেটিংস ফেচ করা
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch('/api/settings'); 
-        if (res.ok) {
-          const data = await res.json();
-          setSiteSettings(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch site settings:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
-
-  // লাইভ ব্যালেন্স ফেচ করা
+  // ⚡ লাইভ ব্যালেন্স ব্যাকগ্রাউন্ডে ফেচ করার লজিক (ইনিশিয়াল ব্যালেন্স সেশন থেকে সাথে সাথে দেখাবে)
   useEffect(() => {
     if (!session?.user?.email) return;
 
@@ -69,26 +53,17 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
     return () => clearInterval(interval);
   }, [session?.user?.email]); 
 
-  // সঠিক লোগো URL বের করা (সব ধরণের Key চেক করা হচ্ছে)
-  const finalLogoUrl = 
-    logoUrl || 
-    logo || 
-    siteSettings?.logoUrl || 
-    siteSettings?.logo || 
-    siteSettings?.data?.logoUrl || 
-    siteSettings?.data?.logo;
+  // 🟢 সরাসরি প্রপস থেকে ডাটা সেট করা হচ্ছে (কোনো ক্লায়েন্ট ফেচিং ডিলে থাকবে না)
+  const finalLogoUrl = logoUrl || logo;
+  const finalSiteName = siteName;
 
-  const finalSiteName = siteSettings?.siteName || siteSettings?.data?.siteName || siteName;
-  const primaryColor = siteSettings?.primaryColor || siteSettings?.data?.primaryColor || "#00d2ff";
-
-  // লোগো URL পরিবর্তন হলে এরর স্টেট রিসেট করা
   useEffect(() => {
     setImageError(false);
   }, [finalLogoUrl]);
 
   if (status === "loading") {
     return (
-      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 flex items-center">
+      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 flex items-center z-50">
         <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between">
         </div>
       </header>
@@ -114,10 +89,7 @@ export default function Header({ siteName = "Store", logoUrl, logo }: HeaderProp
               height={80} 
               priority
               unoptimized={finalLogoUrl.startsWith('/')}
-              onError={() => {
-                console.log("Image loading failed for URL:", finalLogoUrl);
-                setImageError(true);
-              }} 
+              onError={() => setImageError(true)} 
               className="h-10 md:h-12 w-auto max-w-full object-contain object-left"
             />
           ) : (
