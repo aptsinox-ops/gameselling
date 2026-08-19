@@ -15,43 +15,23 @@ interface SlideItem {
 interface HeroSliderProps {
   noticeText?: string | null;
   initialSlides?: SlideItem[];
-  initialSettings?: any;
+  siteSettings?: any;
+  primaryColor?: string;
+  sliders?: any[];
 }
 
 export default function HeroSlider({
   noticeText: propNoticeText,
   initialSlides = [],
-  initialSettings = null,
+  siteSettings = null,
+  primaryColor: propPrimaryColor = "#2563eb",
 }: HeroSliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [siteSettings, setSiteSettings] = useState<any>(initialSettings);
-  const [slides, setSlides] = useState<SlideItem[]>(() => 
-    initialSlides.length > 0 ? [...initialSlides].reverse() : []
-  );
   const [showNotice, setShowNotice] = useState(true);
 
-  // 🌐 সাইট সেটিংস এবং স্লাইডার ডাটা ফেচ (যদি initialProps না দেওয়া থাকে)
-  useEffect(() => {
-    if (!initialSettings) {
-      fetch("/api/settings")
-        .then((res) => res.ok && res.json())
-        .then((data) => data && setSiteSettings(data))
-        .catch((err) => console.error("Failed to fetch site settings:", err));
-    }
-
-    if (initialSlides.length === 0) {
-      fetch("/api/sliders")
-        .then((res) => res.ok && res.json())
-        .then((data) => {
-          if (data && data.length > 0) {
-            setSlides([...data].reverse());
-          }
-        })
-        .catch((err) => console.error("Failed to fetch sliders:", err));
-    }
-  }, [initialSlides.length, initialSettings]);
-
-  const primaryColor = siteSettings?.primaryColor || "#00d2ff";
+  // 🟢 স্লাইডার রিভার্স ডিফাইন করা হচ্ছে (সার্ভার প্রপস থেকে)
+  const slides = initialSlides.length > 0 ? [...initialSlides].reverse() : [];
+  const primaryColor = siteSettings?.primaryColor || propPrimaryColor;
 
   // ⏱️ অটো স্লাইডার টাইমার
   useEffect(() => {
