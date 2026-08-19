@@ -21,14 +21,14 @@ export default function Header({
   siteName = "Store", 
   logoUrl, 
   logo, 
-  primaryColor = "#00d2ff" 
+  primaryColor = "#f97316" // 🟢 ডিফল্ট কালার ব্র্যান্ডের অরেঞ্জ থিমে সেট করা হলো
 }: HeaderProps) {
   const { data: session, status } = useSession();
   const [liveBalance, setLiveBalance] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // ⚡ লাইভ ব্যালেন্স ব্যাকগ্রাউন্ডে ফেচ করার লজিক (ইনিশিয়াল ব্যালেন্স সেশন থেকে সাথে সাথে দেখাবে)
+  // ⚡ লাইভ ব্যালেন্স ব্যাকগ্রাউন্ডে ফেচ করার লজিক
   useEffect(() => {
     if (!session?.user?.email) return;
 
@@ -53,22 +53,12 @@ export default function Header({
     return () => clearInterval(interval);
   }, [session?.user?.email]); 
 
-  // 🟢 সরাসরি প্রপস থেকে ডাটা সেট করা হচ্ছে (কোনো ক্লায়েন্ট ফেচিং ডিলে থাকবে না)
   const finalLogoUrl = logoUrl || logo;
   const finalSiteName = siteName;
 
   useEffect(() => {
     setImageError(false);
   }, [finalLogoUrl]);
-
-  if (status === "loading") {
-    return (
-      <header className="fixed top-0 w-full h-16 md:h-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 flex items-center z-50">
-        <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between">
-        </div>
-      </header>
-    );
-  }
 
   const balance = liveBalance !== null ? liveBalance : (session?.user?.balance ?? 0);
   const currentUserName = session?.user?.name || "User";
@@ -79,7 +69,7 @@ export default function Header({
     <header className="fixed top-0 w-full z-50 border-b border-gray-200 h-16 md:h-20 bg-white/90 backdrop-blur-sm flex items-center">
       <div className="max-w-[1240px] w-full mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         
-        {/* Logo Section */}
+        {/* Logo Section - সাথে সাথে রেন্ডার হবে */}
         <Link href="/" className="flex items-center shrink-0 max-w-[180px] md:max-w-[280px]">
           {finalLogoUrl && !imageError ? (
             <Image 
@@ -105,16 +95,19 @@ export default function Header({
             <a href="/contact" className="hover:text-blue-600">Contact Us</a>
           </nav>
 
-          {session ? (
+          {/* ⚡ সেশন চেক চলাকালীন কেবল ডানদিকের বাটনে লাইট স্কেলিটন থাকবে, পুরো হেডার গায়েব হবে না */}
+          {status === "loading" ? (
+            <div className="h-9 w-20 bg-gray-100 animate-pulse rounded-lg" />
+          ) : session ? (
             <div className="flex items-center gap-3">
               
               {/* Balance Layout */}
               <div 
                 style={{ backgroundColor: primaryColor }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-black/5 min-w-[75px] justify-center"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-black/5 min-w-[75px] justify-center text-white"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-wallet w-4 h-4"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg> 
-                <span className="text-sm font-bold text-white tracking-tight">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-wallet w-4 h-4"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 1 1 1v-4"></path></svg> 
+                <span className="text-sm font-bold tracking-tight">
                   ৳{balance}
                 </span>
               </div>
@@ -229,7 +222,7 @@ export default function Header({
             <Link href="/login">
               <button 
                 style={{ backgroundColor: primaryColor }}
-                className="py-2 px-5 text-sm cursor-pointer text-white font-bold rounded-lg"
+                className="py-2 px-5 text-sm cursor-pointer text-white font-bold rounded-lg hover:opacity-90 transition-opacity"
               >
                 Login
               </button>
