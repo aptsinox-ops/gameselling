@@ -2,57 +2,38 @@ import HeroSlider from "@/components/HeroSlider";
 import CategoryGrid from "@/components/CategoryGrid";
 import { prisma } from "@/lib/prisma";
 
-// রিয়েল-টাইম ডাটা পাওয়ার জন্য
-export const revalidate = 0; 
-
-async function getSiteSettings() {
-  try {
-    const settings = await prisma.siteSettings.findUnique({
-      where: { id: "STATIC" },
-    });
-    return settings;
-  } catch (error) {
-    console.error("Settings fetch error:", error);
-    return null;
-  }
-}
+// 🟢 revalidate = 0 সরিয়ে ৬০ সেকেন্ড বা ৩০০ সেকেন্ড ক্যাশিং রাখুন। 
+// সাইট সেটিংস প্রতিনিয়ত পরিবর্তন হয় না, তাই প্রতি রিকোয়েস্টে DB হিট করার প্রয়োজন নেই।
+export const revalidate = 60; 
 
 export default async function Home() {
   try {
-    // 🟢 এপিআই ফেচ না করে সরাসরি ডাটাবেজ (Prisma) থেকে সেটিংস নিয়ে আসা হচ্ছে
-    const siteSettings = await getSiteSettings();
-    
-    const primaryColor = siteSettings?.primaryColor || "#2563eb";
+    // 🟢 Waterfall বাদ দিয়ে সমান্তরালে (Parallel) ডাটা ফেচিং
+    const [siteSettings, categories] = await Promise.all([
+      prisma.siteSettings.findUnique({
+        where: { id: "STATIC" },
+      }),
+      prisma.category.findMany({
+        where: { status: true },
+        include: { products: true },
+        orderBy: { slotNo: 'asc' },
+      }),
+    ]);
 
-    // শুধুমাত্র status: true (ON) থাকা ক্যাটাগরিগুলো ফেচ করা হচ্ছে
-    const categories = await prisma.category.findMany({
-      where: {
-        status: true, 
-      },
-      include: {
-        products: true,
-      },
-      orderBy: {
-        slotNo: 'asc'
-      }
-    }); 
+    const primaryColor = siteSettings?.primaryColor || "#2563eb";
 
     return (
       <main className="max-w-7xl mx-auto px-2 sm:px-4 py-3 space-y-6">
-        
-        {/* 🔵 primaryColor টাইপ কাস্টসহ স্লাইডারে পাস করা হলো */}
         <HeroSlider 
           noticeText={siteSettings?.noticeText} 
           {...({ primaryColor } as any)} 
         />
         
-        {/* 🟢 categories ডাটা টাইপ কাস্ট করে গ্রিডে পাস করা হলো */}
         <CategoryGrid categories={categories as any} />
-
       </main>
     );
   } catch (error) {
-    console.error("Error fetching categories and products:", error);
+    console.error("Error fetching homepage data:", error);
     
     return (
       <main className="max-w-7xl mx-auto px-2 sm:px-4 py-20 text-center">
