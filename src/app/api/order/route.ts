@@ -3,31 +3,31 @@ import { prisma } from "@/lib/prisma";
 import { processFreeFireAutoTopup } from "@/lib/automation-bridge";
 
 export async function POST(req: Request) {
-  let createdOrderId: string | null = null; // 🟢 number এর জায়গায় string হবে
+  let createdOrderId: string | null = null;
   let currentUserId: number | null = null;
   let currentOrderAmount: number = 0;
 
   try {
     const body = await req.json();
-    const { productId, variationId, unitPrice, totalPrice, inputValues, quantity, userId, paymentMethod } = body;
+    const { productId, variationId, totalPrice, inputValues, quantity, userId, paymentMethod } = body;
 
-    // ১. প্রোডাক্ট ও ভ্যারিয়েশন চেক করে শুরুতেই Redirect URL নির্ধারণ
+    // ১. প্রোডাক্ট ও ভ্যারিয়েশন ভ্যালিডেশন
     const variation = await prisma.variation.findUnique({
       where: { id: variationId },
       include: { product: true },
     });
 
-    const productType = variation?.product?.productType?.toLowerCase() || "";
-    const redirectUrl = productType === "vouchers" || productType === "voucher" ? "/code" : "/myorder";
-
     if (!variation || !variation.product) {
-      return NextResponse.json({ success: false, error: "Variation or Product not found!", redirectUrl: "/myorder" }, { status: 200 });
+      return NextResponse.json({ success: false, message: "Variation or Product not found!", redirectUrl: "/myorder" }, { status: 200 });
     }
 
-    // ২. userId ভ্যালিডেশন
+    const productType = variation.product.productType?.toLowerCase() || "";
+    const redirectUrl = productType === "vouchers" || productType === "voucher" ? "/code" : "/myorder";
+
+    // ২. User ও Balance ভ্যালিডেশন
     const parsedUserId = Number(userId);
     if (!userId || isNaN(parsedUserId)) {
-      return NextResponse.json({ success: false, error: "Invalid User ID!", redirectUrl }, { status: 200 });
+      return NextResponse.json({ success: false, message: "Invalid User ID!", redirectUrl }, { status: 200 });
     }
     currentUserId = parsedUserId;
 
@@ -36,25 +36,28 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found!", redirectUrl }, { status: 200 });
+      return NextResponse.json({ success: false, message: "User not found!", redirectUrl }, { status: 200 });
     }
 
     const orderAmount = Number(totalPrice);
     currentOrderAmount = orderAmount;
 
     if (user.balance < orderAmount) {
-      return NextResponse.json({ success: false, error: "Insufficient wallet balance!", redirectUrl }, { status: 200 });
+      return NextResponse.json({ success: false, message: "Insufficient wallet balance!", redirectUrl }, { status: 200 });
     }
 
     // ৩. প্লেয়ার UID চেক
     const playerUid = inputValues ? (Object.values(inputValues)[0] as string) : "";
     if (!playerUid) {
-      return NextResponse.json({ success: false, error: "Player UID is required!", redirectUrl }, { status: 200 });
+      return NextResponse.json({ success: false, message: "Player UID is required!", redirectUrl }, { status: 200 });
     }
 
     const receiptNo = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const isFreeFireAuto = variation.product?.isFreeFireAuto;
+    const isFreeFireAuto = variation.product.isFreeFireAuto;
 
+    // ==========================================
+    // 🅰️ AUTO TOPUP LOGIC (FreeFire Auto)
+    // ==========================================
     if (isFreeFireAuto) {
       const activeVoucher = await prisma.voucher.findFirst({
         where: {
@@ -66,13 +69,13 @@ export async function POST(req: Request) {
       if (!activeVoucher) {
         return NextResponse.json({ 
           success: false, 
-          message: "No active voucher available in stock!", 
+          message: "Stock out! No active voucher available.", 
           redirectUrl 
         }, { status: 200 });
       }
 
-      // ৪. ব্যালেন্স কাটা এবং অর্ডার PROCESSING হিসেবে ক্রিয়েট করা
-      const [updatedUser, order] = await prisma.$transaction([
+      // ব্যালেন্স কাটা এবং অর্ডার PROCESSING স্ট্যাটাসে তৈরি
+      const [_, order] = await prisma.$transaction([
         prisma.user.update({
           where: { id: parsedUserId },
           data: { balance: { decrement: orderAmount } },
@@ -93,16 +96,16 @@ export async function POST(req: Request) {
         }),
       ]);
 
-      createdOrderId = order.id; // 🟢 এখন আর লাল দাগ থাকবে না
+      createdOrderId = order.id;
 
-      // ৫. পাইথন অটোমেশন রান করা
+      // পাইথন অটোমেশন রান করা
       const autoResult = await processFreeFireAutoTopup({
         playerUid: playerUid,
         diamondAmount: variation.title,
         voucherCode: activeVoucher.code,
       });
 
-      // ৬. Success হলে: COMPLETED
+      // Success হলে: COMPLETED
       if (autoResult.success) {
         await prisma.voucher.update({
           where: { id: activeVoucher.id },
@@ -126,7 +129,7 @@ export async function POST(req: Request) {
         }, { status: 200 });
 
       } else {
-        // 🔴 Auto Topup Fail হলে: FAILED, Voucher EXPIRED ও Refund
+        // Auto Topup Fail হলে: FAILED, Voucher EXPIRED ও Refund
         await prisma.voucher.update({
           where: { id: activeVoucher.id },
           data: { status: "EXPIRED" },
@@ -144,26 +147,51 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
           success: false,
-          message: autoResult.message || "Auto topup failed! Refunded.",
+          message: autoResult.message || "Auto topup failed! Money refunded to balance.",
           orderId: order.id,
           redirectUrl,
         }, { status: 200 });
       }
     }
 
+    // ==========================================
+    // 🅱️ MANUAL ORDER LOGIC (Non-Auto Orders)
+    // ==========================================
+    const [_, manualOrder] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: parsedUserId },
+        data: { balance: { decrement: orderAmount } },
+      }),
+      prisma.order.create({
+        data: {
+          receiptNo,
+          userId: parsedUserId,
+          productId,
+          variationId,
+          totalPrice: orderAmount,
+          quantity: Number(quantity) || 1,
+          status: "PENDING", // ম্যানুয়াল অর্ডারের জন্য PENDING
+          inputValues: inputValues || {},
+          paymentMethod: paymentMethod || "Wallet",
+        },
+      }),
+    ]);
+
     return NextResponse.json({ 
       success: true, 
-      message: "Manual order placed!",
+      message: "Manual order placed successfully!",
+      orderId: manualOrder.id,
       redirectUrl,
     }, { status: 200 });
 
   } catch (error: any) {
     console.error("ORDER_API_ERROR:", error);
 
+    // কোনো আনহ্যান্ডেল্ড এক্সেপশন আসলে রিফান্ড লজিক
     if (createdOrderId && currentUserId) {
       try {
         await prisma.order.update({
-          where: { id: createdOrderId }, // 🟢 লাল দাগ দূর হয়ে যাবে
+          where: { id: createdOrderId },
           data: { status: "FAILED" },
         });
 
@@ -178,7 +206,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: false,
-      message: "Server error occurred. Refunded.",
+      message: error?.message || "Server error occurred. Please try again.",
       orderId: createdOrderId,
       redirectUrl: "/myorder",
     }, { status: 200 });

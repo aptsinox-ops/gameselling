@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
-import { Info, RefreshCw, Lock } from "lucide-react";
+import { Info, RefreshCw, Lock, Wallet, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react"; 
 
@@ -41,16 +41,20 @@ const PaymentSelector = memo(function PaymentSelector({
 
   const maxStock = 5; 
 
-  // 🟢 প্রপ্স না থাকলে সরাসরি API থেকে সেটিংস ফেচ করা হবে
+  // 🟢 প্রপ্স পরিবর্তন হলে সরাসরি স্টেট আপডেট
   useEffect(() => {
     if (propSettings) {
       setSiteSettings(propSettings);
-      return;
     }
+  }, [propSettings]);
+
+  // 🟢 প্রপ্স না থাকলে ব্যাকগ্রাউন্ডে সেটিংস ফেচ
+  useEffect(() => {
+    if (propSettings) return;
 
     const fetchSettings = async () => {
       try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
+        const res = await fetch("/api/settings", { cache: "force-cache" }); // ⚡ ফাস্ট লোডিংয়ের জন্য ক্যাশ ব্যবহার
         if (res.ok) {
           const data = await res.json();
           setSiteSettings(data);
@@ -116,11 +120,22 @@ const PaymentSelector = memo(function PaymentSelector({
         >
           <div className="p-3 flex flex-col items-center justify-center flex-1 space-y-1.5 overflow-hidden">
             <div className="w-full h-full flex items-center justify-center">
-              <img 
-                src={siteSettings?.walletPayBanner || "https://placehold.co/100x100/png?text=Wallet"} 
-                alt="Wallet" 
-                className="w-full h-full object-contain" 
-              />
+              {siteSettings?.walletPayBanner ? (
+                <img 
+                  src={siteSettings.walletPayBanner} 
+                  alt="Wallet Pay" 
+                  loading="eager"
+                  decoding="async"
+                  // @ts-ignore
+                  fetchPriority="high"
+                  className="w-full h-full object-contain" 
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-400">
+                  <Wallet className="w-8 h-8 mb-1" style={{ color: primaryColor }} />
+                  <span className="text-xs font-bold text-slate-700">Wallet</span>
+                </div>
+              )}
             </div>
           </div>
           <div 
@@ -154,11 +169,22 @@ const PaymentSelector = memo(function PaymentSelector({
         >
           <div className="p-3 flex flex-col items-center justify-center flex-1 space-y-1 bg-slate-50/10 overflow-hidden">
             <div className="w-full h-full flex items-center justify-center">
-              <img 
-                src={siteSettings?.autoPaymentBanner || "https://placehold.co/100x100/png?text=Instant"} 
-                alt="Instant" 
-                className="w-full h-full object-contain" 
-              />
+              {siteSettings?.autoPaymentBanner ? (
+                <img 
+                  src={siteSettings.autoPaymentBanner} 
+                  alt="Instant Pay" 
+                  loading="eager"
+                  decoding="async"
+                  // @ts-ignore
+                  fetchPriority="high"
+                  className="w-full h-full object-contain" 
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-400">
+                  <Zap className="w-8 h-8 mb-1" style={{ color: primaryColor }} />
+                  <span className="text-xs font-bold text-slate-700">Instant Pay</span>
+                </div>
+              )}
             </div>
           </div>
           <div 
