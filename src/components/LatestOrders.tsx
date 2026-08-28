@@ -72,7 +72,7 @@ export default function LatestOrders({
     }
     // Default: PENDING বা PROCESSING হলে
     return {
-      label: "Processing",
+      label: "Proccesing",
       bgClass: "bg-amber-500 text-white",
       showCheckmark: false,
     };
