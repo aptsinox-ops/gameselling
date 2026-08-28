@@ -44,13 +44,19 @@ export default function LatestOrders({
       .replace(",", "");
   };
 
-  // স্ট্যাটাস অনুযায়ী ব্যাজের ব্যাকগ্রাউন্ড কালার
-  const getStatusBadgeClass = (status: string) => {
+  // স্ট্যাটাস অনুযায়ী ব্যাজের নাম ও ব্যাকগ্রাউন্ড কালার নির্ধারণ
+  const getStatusInfo = (status: string) => {
     const s = status?.toUpperCase() || "";
-    if (s === "COMPLETED") return "bg-emerald-500 text-white";
-    if (s === "PROCESSING" || s === "PENDING") return "bg-amber-500 text-white";
-    if (s === "CANCELLED" || s === "CANCELLED" || s === "FAILED") return "bg-rose-500 text-white";
-    return "bg-slate-500 text-white";
+    if (s === "COMPLETED") {
+      return { label: "COMPLETED", bgClass: "bg-emerald-500 text-white" };
+    }
+    if (s === "PROCESSING" || s === "PENDING") {
+      return { label: "PROCESSING", bgClass: "bg-amber-500 text-white" };
+    }
+    if (s === "CANCELLED" || s === "FAILED") {
+      return { label: "FAILED", bgClass: "bg-rose-500 text-white" };
+    }
+    return { label: s || "PROCESSING", bgClass: "bg-slate-500 text-white" };
   };
 
   return (
@@ -61,7 +67,7 @@ export default function LatestOrders({
           Latest Orders
         </h2>
 
-        {/* Custom HR Divider Line */}
+        {/* Custom HR Divider Line with Primary Color */}
         <div className="flex items-center justify-center gap-2 max-w-xs mx-auto my-2">
           <div
             className="h-[1.5px] flex-1 opacity-70"
@@ -81,8 +87,9 @@ export default function LatestOrders({
           />
         </div>
 
-        <p className="text-xs text-slate-500">
-          Last updated <span className="text-red-500 font-semibold">2 minutes ago</span>
+        {/* Subtitle Updated */}
+        <p className="text-xs text-slate-500 font-medium">
+          Latest 5 orders
         </p>
       </div>
 
@@ -93,6 +100,7 @@ export default function LatestOrders({
           const initial = userName.charAt(0).toUpperCase();
           const itemTitle =
             order.variation?.title || order.product?.name || "Topup";
+          const statusInfo = getStatusInfo(order.status);
 
           return (
             <div
@@ -101,7 +109,6 @@ export default function LatestOrders({
             >
               {/* Left Side: Avatar & Info */}
               <div className="flex items-center gap-3 min-w-0">
-                {/* Google OAuth Profile Pic অথবা First Name Avatar */}
                 {order.user?.image ? (
                   <Image
                     src={order.user.image}
@@ -139,11 +146,9 @@ export default function LatestOrders({
               {/* Right Side: Dynamic Status Badge & Completion Date */}
               <div className="flex flex-col items-end justify-between shrink-0 self-stretch py-0.5">
                 <span
-                  className={`text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-full capitalize ${getStatusBadgeClass(
-                    order.status
-                  )}`}
+                  className={`text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-full ${statusInfo.bgClass}`}
                 >
-                  {order.status || "completed"}
+                  {statusInfo.label}
                 </span>
                 <span className="text-[10px] sm:text-xs text-slate-400 mt-2 sm:mt-0 text-right">
                   Completed: {formatDate(order.updatedAt || order.createdAt)}
@@ -155,4 +160,4 @@ export default function LatestOrders({
       </div>
     </section>
   );
-}
+}a
