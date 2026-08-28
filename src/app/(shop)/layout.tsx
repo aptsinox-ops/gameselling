@@ -68,7 +68,7 @@ function isBanglaText(text?: string | null): boolean {
   return /[\u0980-\u09FF]/.test(text);
 }
 
-// 🚀 ৩টি কুয়েরি একসাথে (Parallel) নিয়ে আসার মাধ্যমে পেজ লোড স্পিড প্রায় ২ গুণ বাড়ানো হয়েছে
+// 🚀 ৩টি কুয়েরি একসাথে (Parallel) নিয়ে আসার মাধ্যমে পেজ লোড স্পিড প্রায় ২ গুণ বাড়ানো হয়েছে
 async function getLayoutData() {
   try {
     const [settings, storeControl, adminCount] = await Promise.all([
@@ -237,7 +237,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       )}
 
       {/* Main Content Section */}
-      <main className={`flex-grow pb-15 md:pb-18 ${settings?.isHeaderVisible !== false ? 'pt-17 md:pt-21' : 'pt-0'}`}>
+      <main className={`flex-grow ${settings?.isHeaderVisible !== false ? 'pt-17 md:pt-21' : 'pt-0'}`}>
         {children}
       </main>
 

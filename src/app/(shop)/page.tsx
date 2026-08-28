@@ -1,6 +1,7 @@
 import HeroSlider from "@/components/HeroSlider";
 import CategoryGrid from "@/components/CategoryGrid";
 import LatestOrders from "@/components/LatestOrders";
+import TelegramBanner from "@/components/TelegramBanner"; // 🟢 ইম্পোর্ট করা হলো
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 60;
@@ -29,7 +30,7 @@ export default async function Home() {
             select: { name: true },
           },
           variation: {
-            select: { title: true, bonus: true }, // 🟢 Bonus যোগ করা হয়েছে
+            select: { title: true, bonus: true },
           },
         },
       }),
@@ -53,7 +54,12 @@ export default async function Home() {
         
         <CategoryGrid categories={safeCategories as any} />
 
-        {/* 🟢 primaryColor প্রপস পাস করা হয়েছে */}
+        {/* 🟢 LatestOrders এর ঠিক উপরে TelegramBanner যুক্ত করা হলো */}
+        <TelegramBanner 
+          username={siteSettings?.telegramUsername} 
+          primaryColor={primaryColor} 
+        />
+
         <LatestOrders orders={safeOrders} primaryColor={primaryColor} />
       </main>
     );

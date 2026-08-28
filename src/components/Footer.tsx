@@ -297,7 +297,7 @@ export default function Footer({ settings }: FooterProps) {
             <div className="flex items-center ml-1 flex-shrink-0">
               <span>Developed by</span>
               <a
-                href="https://t.me/The_Linuxuser"
+                href="/developer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shimmer-hover text-white hover:text:white/60 font-bold transition-colors cursor-pointer uppercase tracking-wider px-1 rounded custom-hover-text no-underline inline-block"
