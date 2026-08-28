@@ -120,11 +120,6 @@ export default function LoginPage() {
               <GoogleIcon className="w-7 h-7" />
             </div>
 
-            {/* Welcome Back Pill Tag */}
-            <span className="px-3 py-1 text-[11px] font-bold tracking-wider uppercase bg-blue-50 text-blue-600 rounded-full mb-2">
-              Welcome Back 👋
-            </span>
-
             <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight mb-1">
               Sign in to Account
             </h1>
