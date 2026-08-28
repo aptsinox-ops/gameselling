@@ -169,9 +169,9 @@ export default async function ProductPage({
     return (
       <main className="max-w-5xl mx-auto px-3 py-5 space-y-8 min-h-screen text-slate-800 font-sans">
         
-        {/* ব্যানার সেকশন */}
+        {/* ব্যানার সেকশন - মোবাইলে মিনিমাম হাইট বাড়িয়ে দেওয়া হয়েছে */}
         <div 
-          className={`block relative w-full [height:clamp(90px,24vw,140px)] rounded-md overflow-hidden transition-all ${
+          className={`block relative w-full min-h-[110px] sm:min-h-[120px] md:h-[140px] rounded-xl overflow-hidden transition-all ${
             hasBanner 
               ? "bg-slate-950 border border-slate-200/60" 
               : "bg-transparent border border-slate-300"
@@ -188,24 +188,27 @@ export default async function ProductPage({
             </>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 top-0 z-10 flex items-center [padding:clamp(10px,3vw,16px)]">
-            <div className="flex items-center [gap:clamp(8px,2.5vw,16px)]">
-              <div className="[width:clamp(48px,14vw,100px)] [height:clamp(48px,14vw,100px)] rounded-md overflow-hidden flex-shrink-0">
+          <div className="absolute inset-x-0 bottom-0 top-0 z-10 flex items-center p-3 md:p-4">
+            <div className="flex items-center gap-3.5 md:gap-4">
+              
+              {/* ⚡ মোবাইলে ছবি সাইজ বড় করা হয়েছে (w-20 h-20 বা 80px), ডেসktop-এ অপরিবর্তিত (100px) */}
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-[100px] md:h-[100px] rounded-lg overflow-hidden flex-shrink-0 border border-black/10 shadow-sm">
                 <img src={
                   serializedProduct.image === "placeholder.png" || !serializedProduct.image 
                     ? "/uploads/placeholder.png"
                     : serializedProduct.image
                 } alt={serializedProduct.name} className="w-full h-full object-cover" />
               </div>
-              <div className="[space-y:clamp(4px,1.2vw,8px)] flex flex-col gap-1.5 min-w-0">
-                <h1 className={`[font-size:clamp(13px,3.8vw,24px)] font-bold uppercase tracking-wide leading-tight truncate ${
+
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <h1 className={`text-base sm:text-xl md:text-2xl font-bold uppercase tracking-wide leading-tight truncate ${
                   hasBanner ? "text-white" : "text-black"
                 }`}>
                   {serializedProduct.name}
                 </h1>
-                <div className="flex flex-wrap [gap:clamp(4px,1.5vw,8px)] items-center">
+                <div className="flex flex-wrap gap-1.5 items-center">
                   {displayProductType && (
-                    <div className={`inline-flex items-center [padding:clamp(3px,1vw,4px)_clamp(6px,2vw,12px)] rounded-[7px] [font-size:clamp(8px,2.2vw,12px)] font-bold uppercase ${
+                    <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold uppercase ${
                       hasBanner 
                         ? "bg-black/40 text-white border border-white/20" 
                         : "bg-slate-100 text-slate-800 border border-slate-300"
@@ -213,12 +216,12 @@ export default async function ProductPage({
                       {displayProductType}
                     </div>
                   )}
-                  <div className={`inline-flex items-center gap-1 [padding:clamp(3px,1vw,4px)_clamp(6px,2vw,12px)] rounded-[7px] ${
+                  <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md ${
                     hasBanner 
                       ? "bg-black/40 text-white border border-white/20" 
                       : "bg-slate-100 text-slate-800 border border-slate-300"
                   }`}>
-                    <span className={`[font-size:clamp(8px,2.2vw,12px)] font-bold whitespace-nowrap ${
+                    <span className={`text-[10px] sm:text-xs font-bold whitespace-nowrap ${
                       hasBanner ? "text-slate-100" : "text-slate-700"
                     }`}>
                       Trusted Secure
