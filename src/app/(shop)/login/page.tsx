@@ -100,7 +100,7 @@ export default function LoginPage() {
 
   if (status === 'loading' || isCheckingSettings) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+      <main className="min-h-[60vh] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </main>
     );
@@ -108,73 +108,89 @@ export default function LoginPage() {
 
   if (status === 'authenticated') return null;
 
-  // 🟢 CASE 1: শুধুমাত্র OAUTH সক্রিয় থাকলে Google UI দেখাবে
+  // 🟢 CASE 1: শুধুমাত্র OAUTH সক্রিয় থাকলে প্রফেশনাল Google UI দেখাবে
   if (loginSystem === 'OAUTH') {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-        <div className="relative w-full max-w-sm rounded-[32px] p-[1.5px] bg-gradient-to-r from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853] shadow-[0_10px_30px_rgba(66,133,244,0.15)] mt-6">
-          <div className="relative w-full bg-white rounded-[30.5px] pt-12 pb-8 px-6 flex flex-col items-start text-left">
-            <div className="absolute -top-10 left-8 w-20 h-20 bg-white rounded-full border border-gray-200 flex items-center justify-center">
-              <GoogleIcon className="w-10 h-10" />
+      <main className="py-6 sm:py-10 px-4 flex items-center justify-center min-h-[calc(100vh-160px)]">
+        <div className="relative w-full max-w-sm rounded-[28px] p-[1.5px] bg-gradient-to-br from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853] shadow-[0_15px_35px_rgba(0,0,0,0.06)]">
+          <div className="relative w-full bg-white rounded-[26.5px] p-6 sm:p-7 flex flex-col items-center text-center">
+            
+            {/* Google Top Avatar / Icon */}
+            <div className="w-14 h-14 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center mb-3.5 shadow-sm">
+              <GoogleIcon className="w-7 h-7" />
             </div>
 
-            <div className="flex items-center gap-2.5 mb-3 mt-2">
-              <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center shrink-0">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+            {/* Welcome Back Pill Tag */}
+            <span className="px-3 py-1 text-[11px] font-bold tracking-wider uppercase bg-blue-50 text-blue-600 rounded-full mb-2">
+              Welcome Back 👋
+            </span>
+
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight mb-1">
+              Sign in to Account
+            </h1>
+            <p className="text-xs text-gray-500 mb-5 max-w-[260px] leading-relaxed">
+              Fast, private, and secure authentication powered by Google.
+            </p>
+
+            {/* Security Feature Box */}
+            <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mb-5 text-left flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                Your data is Protected
-              </h1>
+              <div>
+                <h4 className="text-xs font-bold text-gray-800 mb-0.5">Your data is Protected</h4>
+                <p className="text-[11px] text-gray-500 leading-snug">
+                  We never store your passwords. Authentication is handled directly via Google.
+                </p>
+              </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed mb-8">
-              We never store your Google password. Your login is handled securely through Google's authentication system.
-            </p>
-
+            {/* Main Action Button */}
             <button 
               onClick={() => signIn('google', { callbackUrl: '/' })}
               style={{ backgroundColor: dynamicColor || '#0082FF' }}
-              className="w-full text-white font-bold py-3.5 px-4 rounded-full transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_8px_25px_rgba(66,133,244,0.45)] active:scale-[0.99] flex items-center justify-center gap-3 cursor-pointer group"
+              className="w-full text-white font-bold py-3.5 px-4 rounded-xl transition-all duration-300 hover:opacity-95 hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer group mb-5"
             >
-              <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                <GoogleIcon className="w-4 h-4" />
+              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shrink-0">
+                <GoogleIcon className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs sm:text-sm tracking-wider uppercase font-extrabold">
+              <span className="text-xs sm:text-sm tracking-wide font-extrabold uppercase">
                 Continue with Google
               </span>
             </button>
 
-            <div className="w-full border-t border-gray-100 my-7" />
-
-            <div className="grid grid-cols-3 w-full gap-2">
-              <div className="flex flex-col items-center">
-                <div className="w-9 h-9 bg-emerald-100/70 text-emerald-600 rounded-full flex items-center justify-center mb-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+            {/* Bottom Security Trust Badges */}
+            <div className="w-full border-t border-gray-100 pt-4">
+              <div className="grid grid-cols-3 w-full gap-2">
+                <div className="flex flex-col items-center">
+                  <div className="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-500">Secure</span>
                 </div>
-                <span className="text-[11px] font-medium text-gray-500">Secure</span>
-              </div>
 
-              <div className="flex flex-col items-center">
-                <div className="w-9 h-9 bg-blue-100/70 text-blue-600 rounded-full flex items-center justify-center mb-1.5">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M13 2L3 14h7v8l10-12h-7V2z"/>
-                  </svg>
+                <div className="flex flex-col items-center">
+                  <div className="w-7 h-7 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-1">
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M13 2L3 14h7v8l10-12h-7V2z"/>
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-500">Fast</span>
                 </div>
-                <span className="text-[11px] font-medium text-gray-500">Fast</span>
-              </div>
 
-              <div className="flex flex-col items-center">
-                <div className="w-9 h-9 bg-purple-100/70 text-purple-600 rounded-full flex items-center justify-center mb-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <rect x="5" y="11" width="14" height="10" rx="2" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 018 0v4" />
-                  </svg>
+                <div className="flex flex-col items-center">
+                  <div className="w-7 h-7 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <rect x="5" y="11" width="14" height="10" rx="2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 018 0v4" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-500">Private</span>
                 </div>
-                <span className="text-[11px] font-medium text-gray-500">Private</span>
               </div>
             </div>
 
@@ -186,9 +202,9 @@ export default function LoginPage() {
 
   // 🟢 CASE 2: MANUAL অথবা OAUTH_MANUAL থাকলে এই ফর্ম দেখাবে
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-gray-200">
-        <h1 className="text-2xl font-extrabold text-gray-800 mb-2">Welcome Back</h1>
+    <main className="py-6 sm:py-10 px-4 flex items-center justify-center min-h-[calc(100vh-160px)]">
+      <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+        <h1 className="text-2xl font-extrabold text-gray-800 mb-1">Welcome Back</h1>
         <p className="text-gray-500 mb-6 text-sm">Please login to your account.</p>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -199,7 +215,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             onFocus={(e) => (e.target.style.borderColor = dynamicColor)}
             onBlur={(e) => (e.target.style.borderColor = '')}
-            className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800" 
+            className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800 text-sm" 
           />
           <input 
             type="password" 
@@ -208,7 +224,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             onFocus={(e) => (e.target.style.borderColor = dynamicColor)}
             onBlur={(e) => (e.target.style.borderColor = '')}
-            className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800" 
+            className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800 text-sm" 
           />
           
           <button 
@@ -242,7 +258,7 @@ export default function LoginPage() {
             {/* Google Sign In Button */}
             <button 
               onClick={() => signIn('google', { callbackUrl: '/' })}
-              className="w-full border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-gray-700 cursor-pointer"
+              className="w-full border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-gray-700 cursor-pointer text-sm"
             >
               <GoogleIcon className="w-5 h-5" />
               Login with Google
