@@ -15,7 +15,7 @@ export interface OrderItem {
   };
   variation?: {
     title: string;
-    bonus?: number; // 🟢 Bonus যোগ করা হয়েছে
+    bonus?: number;
   };
 }
 
@@ -45,19 +45,37 @@ export default function LatestOrders({
       .replace(",", "");
   };
 
-  // স্ট্যাটাস অনুযায়ী ব্যাজের নাম ও ব্যাকগ্রাউন্ড কালার নির্ধারণ
+  // স্ট্যাটাস অনুযায়ী ব্যাজের নাম, ব্যাকগ্রাউন্ড কালার ও টিকচিহ্ন নির্ধারণ
   const getStatusInfo = (status: string) => {
     const s = status?.toUpperCase() || "";
+
     if (s === "COMPLETED") {
-      return { label: "COMPLETED", bgClass: "bg-emerald-500 text-white" };
+      return {
+        label: "Completed",
+        bgClass: "bg-emerald-500 text-white",
+        showCheckmark: true,
+      };
     }
-    if (s === "PROCESSING" || s === "PENDING") {
-      return { label: "PROCESSING", bgClass: "bg-amber-500 text-white" };
+    if (s === "CANCELLED") {
+      return {
+        label: "Cancelled",
+        bgClass: "bg-rose-500 text-white",
+        showCheckmark: false,
+      };
     }
-    if (s === "CANCELLED" || s === "FAILED") {
-      return { label: "FAILED", bgClass: "bg-rose-500 text-white" };
+    if (s === "FAILED") {
+      return {
+        label: "Failed",
+        bgClass: "bg-rose-500 text-white",
+        showCheckmark: false,
+      };
     }
-    return { label: s || "PROCESSING", bgClass: "bg-slate-500 text-white" };
+    // Default: PENDING বা PROCESSING হলে
+    return {
+      label: "Processing",
+      bgClass: "bg-amber-500 text-white",
+      showCheckmark: false,
+    };
   };
 
   return (
@@ -134,7 +152,6 @@ export default function LatestOrders({
                   <p className="text-xs sm:text-sm text-slate-600 font-medium truncate mt-0.5">
                     {itemTitle}
                     
-                    {/* 🟢 Bonus Display (Golden Color) */}
                     {bonus > 0 && (
                       <span className="text-amber-500 font-bold ml-1">
                         + {bonus}
@@ -155,8 +172,20 @@ export default function LatestOrders({
               {/* Right Side: Status Badge & Completion Date */}
               <div className="flex flex-col items-end justify-between shrink-0 self-stretch py-0.5">
                 <span
-                  className={`text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-full ${statusInfo.bgClass}`}
+                  className={`text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 ${statusInfo.bgClass}`}
                 >
+                  {statusInfo.showCheckmark && (
+                    <svg
+                      className="w-3.5 h-3.5 fill-current"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
                   {statusInfo.label}
                 </span>
                 <span className="text-[10px] sm:text-xs text-slate-400 mt-2 sm:mt-0 text-right">
