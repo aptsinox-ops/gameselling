@@ -15,6 +15,7 @@ export interface OrderItem {
   };
   variation?: {
     title: string;
+    bonus?: number; // 🟢 Bonus যোগ করা হয়েছে
   };
 }
 
@@ -67,7 +68,7 @@ export default function LatestOrders({
           Latest Orders
         </h2>
 
-        {/* Custom HR Divider Line with Primary Color */}
+        {/* Custom HR Divider Line */}
         <div className="flex items-center justify-center gap-2 max-w-xs mx-auto my-2">
           <div
             className="h-[1.5px] flex-1 opacity-70"
@@ -87,7 +88,6 @@ export default function LatestOrders({
           />
         </div>
 
-        {/* Subtitle Updated */}
         <p className="text-xs text-slate-500 font-medium">
           Latest 5 orders
         </p>
@@ -100,6 +100,7 @@ export default function LatestOrders({
           const initial = userName.charAt(0).toUpperCase();
           const itemTitle =
             order.variation?.title || order.product?.name || "Topup";
+          const bonus = order.variation?.bonus || 0;
           const statusInfo = getStatusInfo(order.status);
 
           return (
@@ -131,7 +132,15 @@ export default function LatestOrders({
                     {userName}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 font-medium truncate mt-0.5">
-                    {itemTitle}{" "}
+                    {itemTitle}
+                    
+                    {/* 🟢 Bonus Display (Golden Color) */}
+                    {bonus > 0 && (
+                      <span className="text-amber-500 font-bold ml-1">
+                        + {bonus}
+                      </span>
+                    )}{" "}
+
                     <span className="text-slate-400 font-normal">-</span>{" "}
                     <span className="text-emerald-600 font-bold">
                       {order.totalPrice}৳
@@ -143,7 +152,7 @@ export default function LatestOrders({
                 </div>
               </div>
 
-              {/* Right Side: Dynamic Status Badge & Completion Date */}
+              {/* Right Side: Status Badge & Completion Date */}
               <div className="flex flex-col items-end justify-between shrink-0 self-stretch py-0.5">
                 <span
                   className={`text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-full ${statusInfo.bgClass}`}
@@ -160,4 +169,4 @@ export default function LatestOrders({
       </div>
     </section>
   );
-}a
+}
