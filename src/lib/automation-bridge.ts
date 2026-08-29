@@ -16,8 +16,8 @@ export async function processFreeFireAutoTopup({
   voucherCode,
 }: TopupParams): Promise<AutoTopupResponse> {
   try {
-    // 🟢 Render.com-এর দেওয়া API URL (env ফাইল বা সরাসরি এখানে বসাতে পারো)
-    const RENDER_BOT_URL = process.env.RENDER_BOT_URL || "https://your-bot-name.onrender.com";
+    // 🟢 আসল Render URL ফ্যালব্যাক হিসেবে বসানো হলো
+    const RENDER_BOT_URL = process.env.RENDER_BOT_URL || "https://garena-topup-bot.onrender.com";
 
     const response = await fetch(`${RENDER_BOT_URL}/api/topup`, {
       method: "POST",
