@@ -15,8 +15,11 @@ export async function processFreeFireAutoTopup({
   diamondAmount,
   voucherCode,
 }: TopupParams): Promise<AutoTopupResponse> {
+  // 🟢 Vercel ৬০ সেকেন্ডে ক্র্যাশ করার আগেই ৫০ সেকেন্ডে রিকোয়েস্ট ক্যান্সেল করার কন্ট্রোলার
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 50000);
+
   try {
-    // 🟢 আসল Render URL ফ্যালব্যাক হিসেবে বসানো হলো
     const RENDER_BOT_URL = process.env.RENDER_BOT_URL || "https://garena-topup-bot.onrender.com";
 
     const response = await fetch(`${RENDER_BOT_URL}/api/topup`, {
@@ -29,7 +32,10 @@ export async function processFreeFireAutoTopup({
         diamondAmount,
         voucherCode,
       }),
+      signal: controller.signal, // সেফটি টাইমআউট সিগন্যাল
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -42,7 +48,20 @@ export async function processFreeFireAutoTopup({
 
     const data: AutoTopupResponse = await response.json();
     return data;
+
   } catch (error: any) {
+    clearTimeout(timeoutId);
+
+    // টাইমআউট হলে সুন্দরভাবে হ্যান্ডেল করবে
+    if (error.name === "AbortError") {
+      console.error("[RENDER TIMEOUT]: Automation took more than 50 seconds.");
+      return {
+        success: false,
+        message: "Automation server timeout! Money refunded to your balance.",
+        reason: "TIMEOUT_ERROR",
+      };
+    }
+
     console.error("[RENDER API ERROR]:", error.message);
     return {
       success: false,

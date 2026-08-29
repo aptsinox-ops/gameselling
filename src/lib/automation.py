@@ -7,12 +7,14 @@ from playwright.async_api import async_playwright
 async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_code: str, pin_code: str = ""):
     async with async_playwright() as p:
         browser = await p.chromium.launch(
-            headless=True,  # Production/Render-এর জন্য Headless True করা হয়েছে
+            headless=True,
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
                 "--disable-infobars",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
                 "--window-size=1280,800",
             ]
         )
@@ -25,6 +27,9 @@ async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_c
         
         page = await context.new_page()
 
+        # 🟢 স্পিড ৩ গুণ বাড়াতে অপ্রয়োজনীয় ছবি, ফন্ট এবং ভিডিও ব্লক করা হলো
+        await page.route("**/*", lambda route, req: route.abort() if req.resource_type in ["image", "media", "font"] else route.continue_())
+
         await page.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {
                 get: () => undefined
@@ -32,14 +37,13 @@ async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_c
         """)
 
         try:
-            await page.goto("https://shop.garena.my/?app=100067&channel=202953", wait_until="domcontentloaded")
-            await page.wait_for_timeout(2000)
+            #১. পেজ লোড
+            await page.goto("https://shop.garena.my/?app=100067&channel=202953", wait_until="domcontentloaded", timeout=20000)
 
+            # ২. UID ইনপুট (Fast Fill)
             uid_input = page.locator("input[placeholder*='player ID'], input[placeholder*='Player ID'], input[type='text']").first
-            await uid_input.wait_for(timeout=15000)
-            await uid_input.click()
-            await uid_input.type(str(player_uid), delay=100)
-            await page.wait_for_timeout(1000)
+            await uid_input.wait_for(timeout=8000)
+            await uid_input.fill(str(player_uid)) # type(delay=100) এর জায়গায় দ্রুত fill করা হলো
 
             login_btn = page.locator("button:has-text('Login'), div[role='button']:has-text('Login'), .login-btn").first
             if await login_btn.is_visible():
@@ -47,28 +51,25 @@ async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_c
             else:
                 await page.keyboard.press("Enter")
 
-            await page.wait_for_timeout(3000)
-
-            proceed_btn = page.locator("button:has-text('Proceed to Payment'), div[role='button']:has-text('Proceed to Payment'), button:has-text('Login')").first
-            await proceed_btn.wait_for(timeout=10000)
+            # ৩. Proceed to Payment
+            proceed_btn = page.locator("button:has-text('Proceed to Payment'), div[role='button']:has-text('Proceed to Payment')").first
+            await proceed_btn.wait_for(timeout=8000)
             await proceed_btn.click()
-            await page.wait_for_timeout(2000)
 
+            # ৪. ডায়মন্ড সিলেক্ট
             num_only = re.sub(r"\D", "", str(diamond_amount))
-
             diamond_option = page.locator(f"text=/{num_only}\\s*Diamond/i").first
-            if await diamond_option.is_visible():
+            if await diamond_option.is_visible(timeout=3000):
                 await diamond_option.click()
             else:
                 await page.locator(f"text={num_only}").first.click()
 
-            await page.wait_for_timeout(1500)
-
+            # ৫. Physical Voucher সিলেক্ট
             physical_voucher_tab = page.locator("text=Physical Vouchers").first
-            await physical_voucher_tab.wait_for(timeout=10000)
+            await physical_voucher_tab.wait_for(timeout=6000)
             await physical_voucher_tab.click()
-            await page.wait_for_timeout(1500)
 
+            # ৬. ভাউচার ফিল্টারিং
             if " " in voucher_code or "," in voucher_code:
                 parts = re.split(r'[\s,]+', voucher_code.strip())
                 raw_serial = parts[0]
@@ -89,19 +90,18 @@ async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_c
             else:
                 return json.dumps({"success": False, "reason": "INVALID_PREFIX", "message": "Invalid Voucher Prefix"})
 
-            await page.wait_for_timeout(2000)
-
+            # ৭. Frame খোঁজা
             target_scope = page
+            await page.wait_for_timeout(1000) # আইফ্রেম লোড হওয়ার নিরাপদ ১ সে. সময়
             for frame in page.frames:
                 if "unipin" in frame.url or "unibox" in frame.url:
                     target_scope = frame
                     break
 
+            # ৮. সিরিয়াল ও পিন ইনপুট
             serial_input = target_scope.locator("input[placeholder*='UPBD'], input[placeholder*='Serial'], input[type='text']").first
-            await serial_input.wait_for(timeout=10000)
-            await serial_input.click()
+            await serial_input.wait_for(timeout=8000)
             await serial_input.fill(clean_serial)
-            await page.wait_for_timeout(500)
 
             pin_inputs = target_scope.locator("input[type='password'], input[name*='pin'], input[id*='pin']")
             pin_count = await pin_inputs.count()
@@ -109,24 +109,18 @@ async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_c
             if pin_count >= 4 and len(clean_pin) >= 12:
                 chunks = [clean_pin[i:i+4] for i in range(0, len(clean_pin), 4)]
                 for idx, chunk in enumerate(chunks[:4]):
-                    inp = pin_inputs.nth(idx)
-                    await inp.click()
-                    await inp.fill(chunk)
-                    await page.wait_for_timeout(100)
+                    await pin_inputs.nth(idx).fill(chunk)
             elif pin_count > 0:
-                await pin_inputs.first.click()
                 if len(clean_pin) == 16:
                     formatted_pin = "-".join([clean_pin[i:i+4] for i in range(0, 16, 4)])
                     await pin_inputs.first.fill(formatted_pin)
                 else:
                     await pin_inputs.first.fill(clean_pin)
 
-            await page.wait_for_timeout(1500)
-
+            # ৯. Confirm বাটনে ক্লিক
             confirm_btn = target_scope.locator("input[type='submit'][value='Confirm'], input[value='Confirm']").first
 
-            if await confirm_btn.is_visible(timeout=3000):
-                await confirm_btn.scroll_into_view_if_needed()
+            if await confirm_btn.is_visible(timeout=2000):
                 await confirm_btn.click(force=True)
             else:
                 await target_scope.evaluate("""
@@ -135,7 +129,8 @@ async def process_freefire_topup(player_uid: str, diamond_amount: str, voucher_c
                     if (btn) btn.click();
                 """)
 
-            await page.wait_for_timeout(7000)
+            # ১০. রেসপন্সের জন্য অপেক্ষা (সাত সেকেন্ড থেকে কমিয়ে ৩ সেকেন্ড করা হয়েছে)
+            await page.wait_for_timeout(3000)
 
             content = await target_scope.content()
             main_content = await page.content()
