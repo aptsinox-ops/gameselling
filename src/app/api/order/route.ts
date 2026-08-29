@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { processFreeFireAutoTopup } from "@/lib/automation-bridge";
 
+// 🟢 Vercel Timeout বাড়ানোর জন্য এটি অত্যন্ত জরুরি (৬০ সেকেন্ড পর্যন্ত ওয়েট করবে)
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   let createdOrderId: string | null = null;
   let currentUserId: number | null = null;
@@ -170,7 +173,7 @@ export async function POST(req: Request) {
           variationId,
           totalPrice: orderAmount,
           quantity: Number(quantity) || 1,
-          status: "PENDING", // ম্যানুয়াল অর্ডারের জন্য PENDING
+          status: "PENDING", // ম্যানুয়াল অর্ডারের জন্য PENDING
           inputValues: inputValues || {},
           paymentMethod: paymentMethod || "Wallet",
         },
