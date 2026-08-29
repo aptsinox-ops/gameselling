@@ -201,13 +201,13 @@ export default function Footer({ settings }: FooterProps) {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-[15px] text-slate-300 pt-1">
                 <div className="space-y-3">
-                  <a href="#" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Terms & Conditions</a>
-                  <a href="#" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Privacy Policy</a>
+                  <a href="/terms" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Terms & Conditions</a>
+                  <a href="/privacy-policy" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Privacy Policy</a>
                   <a href="#" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Shipping Info</a>
                   <a href="#" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Refund & Returns</a>
                 </div>
                 <div className="space-y-3">
-                  <a href="#" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Contact Us</a>
+                  <a href="/contact" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">Contact Us</a>
                   <a href="#" className="block transform transition-transform duration-200 ease-out hover:translate-x-2 custom-hover-text py-0.5 rounded">About Us</a>
                 </div>
               </div>
