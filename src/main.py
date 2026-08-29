@@ -5,6 +5,11 @@ from src.lib.automation import process_freefire_topup
 
 app = FastAPI()
 
+# 🟢 এটি যোগ করো (হোম পেজে ৪০৪ বন্ধ করার জন্য)
+@app.get("/")
+def home():
+    return {"status": "Bot is running perfectly!"}
+
 class TopupRequest(BaseModel):
     playerUid: str
     diamondAmount: str
@@ -20,7 +25,6 @@ async def topup(req: TopupRequest):
             req.voucherCode, 
             req.pinCode
         )
-        # JSON string কে JSON object এ কনভার্ট করে রিটার্ন করা
         res_json = json.loads(res_str)
         return res_json
     except Exception as e:
