@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { processFreeFireAutoTopup } from "@/lib/automation-bridge";
 
-// 🟢 Vercel Timeout বাড়ানোর জন্য এটি অত্যন্ত জরুরি (৬০ সেকেন্ড পর্যন্ত ওয়েট করবে)
 export const maxDuration = 60;
+
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://zebotopup.store";
 
 export async function POST(req: Request) {
   let createdOrderId: string | null = null;
@@ -14,10 +14,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productId, variationId, totalPrice, inputValues, quantity, userId, paymentMethod } = body;
 
-    // ১. প্রোডাক্ট ও ভ্যারিয়েশন ভ্যালিডেশন
+    // ১. প্রোডাক্ট, ভ্যারিয়েশন এবং প্রোভাইডার ডাটা ফেচ
     const variation = await prisma.variation.findUnique({
       where: { id: variationId },
-      include: { product: true },
+      include: { 
+        product: true,
+        provider: true, // 👈 DB থেকে Dynamic Provider Relational Data
+      },
     });
 
     if (!variation || !variation.product) {
@@ -59,9 +62,22 @@ export async function POST(req: Request) {
     const isFreeFireAuto = variation.product.isFreeFireAuto;
 
     // ==========================================
-    // 🅰️ AUTO TOPUP LOGIC (FreeFire Auto)
+    // 🅰️ AUTO TOPUP LOGIC (Dynamic 3rd Party Provider API)
     // ==========================================
     if (isFreeFireAuto) {
+      // dynamic provider URL & Key (প্রথমে DB থেকে নিবে, না থাকলে .env থেকে)
+      const providerBaseUrl = (variation as any).provider?.baseUrl || process.env.PROVIDER_BASE_URL;
+      const providerApiKey = (variation as any).provider?.apiKey || process.env.PROVIDER_API_KEY;
+
+      if (!providerBaseUrl || !providerApiKey) {
+        return NextResponse.json({
+          success: false,
+          message: "API Provider configuration missing!",
+          redirectUrl,
+        }, { status: 200 });
+      }
+
+      // ১. Active Voucher চেক করা
       const activeVoucher = await prisma.voucher.findFirst({
         where: {
           variationId: variationId,
@@ -77,7 +93,7 @@ export async function POST(req: Request) {
         }, { status: 200 });
       }
 
-      // ব্যালেন্স কাটা এবং অর্ডার PROCESSING স্ট্যাটাসে তৈরি
+      // ২. ইউজার ব্যালেন্স ডেবিট করা ও Order (PROCESSING) তৈরি করা
       const [_, order] = await prisma.$transaction([
         prisma.user.update({
           where: { id: parsedUserId },
@@ -101,15 +117,27 @@ export async function POST(req: Request) {
 
       createdOrderId = order.id;
 
-      // পাইথন অটোমেশন রান করা
-      const autoResult = await processFreeFireAutoTopup({
-        playerUid: playerUid,
-        diamondAmount: variation.title,
-        voucherCode: activeVoucher.code,
+      // ৩. 3rd Party Provider API Request Call
+      const apiRes = await fetch(`${providerBaseUrl}/api/v1/user/order/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": providerApiKey,
+        },
+        body: JSON.stringify({
+          playerid: playerUid,
+          package: Number((variation as any).apiPackageId || variation.title),
+          code: activeVoucher.code,
+          orderid: order.receiptNo,
+          callback_url: `${SITE_URL}/api/webhook/topup`,
+        }),
       });
 
-      // Success হলে: COMPLETED
-      if (autoResult.success) {
+      const apiData = await apiRes.json();
+
+      // ৪. Provider Response হ্যান্ডলিং
+      if (apiData.status === "success" || apiData.success === true) {
+        // Voucher Mark as USED
         await prisma.voucher.update({
           where: { id: activeVoucher.id },
           data: {
@@ -119,25 +147,24 @@ export async function POST(req: Request) {
           },
         });
 
+        // Provider API Order ID আপডেট
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: "COMPLETED" },
+          data: { 
+            apiOrderId: apiData.order_id || null,
+            status: "PROCESSING" 
+          },
         });
 
         return NextResponse.json({
           success: true,
-          message: "Order placed and Topup completed successfully!",
+          message: "Order placed successfully! Top-up is processing.",
           orderId: order.id,
           redirectUrl,
         }, { status: 200 });
 
       } else {
-        // Auto Topup Fail হলে: FAILED, Voucher EXPIRED ও Refund
-        await prisma.voucher.update({
-          where: { id: activeVoucher.id },
-          data: { status: "EXPIRED" },
-        });
-
+        // API Failed: Order FAILED এবং Balance Refund
         await prisma.order.update({
           where: { id: order.id },
           data: { status: "FAILED" },
@@ -150,7 +177,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
           success: false,
-          message: autoResult.message || "Auto topup failed! Money refunded to balance.",
+          message: apiData.message || "Auto top-up failed! Money refunded to your balance.",
           orderId: order.id,
           redirectUrl,
         }, { status: 200 });
@@ -173,7 +200,7 @@ export async function POST(req: Request) {
           variationId,
           totalPrice: orderAmount,
           quantity: Number(quantity) || 1,
-          status: "PENDING", // ম্যানুয়াল অর্ডারের জন্য PENDING
+          status: "PENDING",
           inputValues: inputValues || {},
           paymentMethod: paymentMethod || "Wallet",
         },
@@ -190,7 +217,6 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("ORDER_API_ERROR:", error);
 
-    // কোনো আনহ্যান্ডেল্ড এক্সেপশন আসলে রিফান্ড লজিক
     if (createdOrderId && currentUserId) {
       try {
         await prisma.order.update({

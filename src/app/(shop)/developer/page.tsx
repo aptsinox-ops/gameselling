@@ -184,7 +184,7 @@ export default function DeveloperPage({ siteName = "DEMO BAZAR" }: DeveloperPage
               {/* Profile Image */}
               <div className="relative w-20 h-20 sm:w-28 sm:h-28 mx-auto">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop"
+                  src="developer.png"
                   alt="SINOX"
                   className="relative w-full h-full object-cover rounded-md border-2 border-slate-100 shadow-none"
                 />

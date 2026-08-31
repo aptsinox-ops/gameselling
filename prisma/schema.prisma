@@ -107,6 +107,11 @@ model Variation {
   vouchers   Voucher[]
   orders     Order[] 
 
+  apiType      String?   @default("MANUAL") // "UNIPIN", "SHELL", "MANUAL"
+  apiPackageId String?
+  providerId   String?
+
+
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -143,6 +148,7 @@ model Order {
   voucherCode String?   
   
   paymentMethod String  @default("Wallet") 
+  apiOrderId   String?  // Provider API থেকে আসা order_id (e.g. TZUP-ABCD12345678)
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -234,7 +240,13 @@ model SiteSettings {
   heroBtn2Title       String?  @default("Telegram") 
   heroBtn2Link        String?                     
   heroBtn2ImageUrl    String?                     
-  heroBtn2Svg         String?                     
+  heroBtn2Svg         String?     
+
+// Auto Topup / Provider Fields
+  isAutoTopupEnabled Boolean  @default(false)
+  providerName       String?
+  providerBaseUrl    String?
+  providerApiKey     String?
 
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt

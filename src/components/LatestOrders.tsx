@@ -187,7 +187,7 @@ export default function LatestOrders({
                   {statusInfo.label}
                 </span>
                 <span className="text-[8px] sm:text-xs text-slate-400 mt-1 sm:mt-0 text-right whitespace-nowrap">
-                  Completed: {formatDate(order.updatedAt || order.createdAt)}
+                 {formatDate(order.updatedAt || order.createdAt)}
                 </span>
               </div>
             </div>

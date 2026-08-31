@@ -41,6 +41,12 @@ export async function GET() {
           paymentMinAmount: "20",
           paymentMaxAmount: "50000",
 
+          // 🤖 AUTO TOPUP / PROVIDER DEFAULTS
+          isAutoTopupEnabled: false,
+          providerName: null,
+          providerBaseUrl: null,
+          providerApiKey: null,
+
           primaryColor: "#00d2ff",
           backgroundColor: "#0a0a0c",
 
@@ -128,6 +134,12 @@ export async function PUT(request: Request) {
       paymentMinAmount: body.paymentMinAmount ? String(body.paymentMinAmount).trim() : "20",
       paymentMaxAmount: body.paymentMaxAmount ? String(body.paymentMaxAmount).trim() : "50000",
 
+      // 🤖 AUTO TOPUP / PROVIDER FIELDS
+      isAutoTopupEnabled: typeof body.isAutoTopupEnabled === "boolean" ? body.isAutoTopupEnabled : false,
+      providerName: body.providerName ? String(body.providerName).trim() : null,
+      providerBaseUrl: body.providerBaseUrl ? String(body.providerBaseUrl).trim() : null,
+      providerApiKey: body.providerApiKey ? String(body.providerApiKey).trim() : null,
+
       metaKeywords: body.metaKeywords ? String(body.metaKeywords).trim() : null,
       noticeText: body.noticeText ? String(body.noticeText).trim() : null,
       isHeaderVisible: typeof body.isHeaderVisible === "boolean" ? body.isHeaderVisible : true,
@@ -145,7 +157,6 @@ export async function PUT(request: Request) {
       // কালার ফিল্ডগুলো
       primaryColor: body.primaryColor ? String(body.primaryColor).trim() : "#00d2ff",
       backgroundColor: body.backgroundColor ? String(body.backgroundColor).trim() : "#0a0a0c",
-
 
       // 🔘 HERO BUTTON 1 DATA
       isHeroBtn1Visible:

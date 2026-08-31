@@ -26,7 +26,7 @@ export default function TelegramBanner({
         href={telegramUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative flex items-center justify-between w-full px-4 py-3 sm:py-3.5 rounded-md text-white transition-all duration-300 ease-in-out hover:scale-[1.015] active:scale-[0.98] cursor-pointer overflow-hidden"
+        className="group relative flex items-center justify-between w-full px-4 py-3 sm:py-3.5 rounded-xl text-white transition-all duration-300 ease-in-out hover:scale-[1.015] active:scale-[0.98] cursor-pointer overflow-hidden"
         style={{ backgroundColor: primaryColor }}
       >
         {/* Left Side: Telegram Icon Box & Titles */}
