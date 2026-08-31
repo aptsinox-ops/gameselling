@@ -14,12 +14,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productId, variationId, totalPrice, inputValues, quantity, userId, paymentMethod } = body;
 
-    // ১. প্রোডাক্ট, ভ্যারিয়েশন এবং প্রোভাইডার ডাটা ফেচ
+    // ১. প্রোডাক্ট ও ভ্যারিয়েশন ডাটা ফেচ (Fix 4: Provider Include রিমুভড)
     const variation = await prisma.variation.findUnique({
       where: { id: variationId },
       include: { 
         product: true,
-        provider: true, // 👈 DB থেকে Dynamic Provider Relational Data
       },
     });
 
@@ -65,14 +64,18 @@ export async function POST(req: Request) {
     // 🅰️ AUTO TOPUP LOGIC (Dynamic 3rd Party Provider API)
     // ==========================================
     if (isFreeFireAuto) {
-      // dynamic provider URL & Key (প্রথমে DB থেকে নিবে, না থাকলে .env থেকে)
-      const providerBaseUrl = (variation as any).provider?.baseUrl || process.env.PROVIDER_BASE_URL;
-      const providerApiKey = (variation as any).provider?.apiKey || process.env.PROVIDER_API_KEY;
+      // Fix 1: SiteSettings টেবিল থেকে Credential ফেচ করা
+      const settings = await prisma.siteSettings.findUnique({
+        where: { id: "STATIC" },
+      });
+
+      const providerBaseUrl = settings?.providerBaseUrl || process.env.PROVIDER_BASE_URL;
+      const providerApiKey = settings?.providerApiKey || process.env.PROVIDER_API_KEY;
 
       if (!providerBaseUrl || !providerApiKey) {
         return NextResponse.json({
           success: false,
-          message: "API Provider configuration missing!",
+          message: "API Provider configuration missing in Admin Settings!",
           redirectUrl,
         }, { status: 200 });
       }
@@ -117,8 +120,20 @@ export async function POST(req: Request) {
 
       createdOrderId = order.id;
 
+      // Fix 2: Package Number Extraction Safe parsing (NaN ইস্যু ফিক্স করা হলো)
+      let finalPackageId: number;
+      if (variation.apiPackageId) {
+        finalPackageId = Number(variation.apiPackageId);
+      } else {
+        const extractedDigits = variation.title.replace(/\D/g, "");
+        finalPackageId = extractedDigits ? parseInt(extractedDigits, 10) : 0;
+      }
+
+      // Fix 3: URL Trailing Slash Fix
+      const cleanBaseUrl = providerBaseUrl.replace(/\/+$/, "");
+
       // ৩. 3rd Party Provider API Request Call
-      const apiRes = await fetch(`${providerBaseUrl}/api/v1/user/order/create`, {
+      const apiRes = await fetch(`${cleanBaseUrl}/api/v1/user/order/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -126,7 +141,7 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           playerid: playerUid,
-          package: Number((variation as any).apiPackageId || variation.title),
+          package: finalPackageId,
           code: activeVoucher.code,
           orderid: order.receiptNo,
           callback_url: `${SITE_URL}/api/webhook/topup`,
