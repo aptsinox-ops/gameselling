@@ -30,30 +30,35 @@ export default function AutoProvider({
           Provider Credentials
         </h3>
 
-        {/* Form Fields: Only Base URL & API Key */}
-        <div className="grid grid-cols-1 gap-6 pt-2">
-          {/* Base API URL */}
+        {/* Form Fields: Only Request URL & API Key */}
+        <form autoComplete="off" onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 gap-6 pt-2">
+          {/* Request URL */}
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Provider API Base URL
+              Provider Request URL
             </Label>
             <Input
+              type="text"
+              name="provider_request_url_no_autofill"
+              autoComplete="off"
               value={formData.providerBaseUrl || ""}
               onChange={(e) =>
                 setFormData({ ...formData, providerBaseUrl: e.target.value })
               }
-              placeholder="e.g. https://api.provider.com"
+              placeholder="e.g. https://api.provider.com/v1/order"
               className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl font-mono text-sm"
             />
           </div>
 
-          {/* API Secret Key */}
+          {/* API Key */}
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Provider API Secret Key (X-API-KEY)
+              Provider API Key
             </Label>
             <Input
-              type="password"
+              type="text"
+              name="provider_api_key_no_autofill"
+              autoComplete="new-password"
               value={formData.providerApiKey || ""}
               onChange={(e) =>
                 setFormData({ ...formData, providerApiKey: e.target.value })
@@ -62,7 +67,7 @@ export default function AutoProvider({
               className="bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 h-11 rounded-xl font-mono text-sm"
             />
           </div>
-        </div>
+        </form>
       </div>
 
       {/* Reusable Save Button Component */}

@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: বর্তমান প্রোভাইডার সেটিংস পাওয়ার জন্য
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
-    const settings = await prisma.siteSettings.findFirst();
+    let settings = await prisma.siteSettings.findUnique({
+      where: { id: "STATIC" },
+    });
+
+    if (!settings) {
+      settings = await prisma.siteSettings.create({
+        data: {
+          id: "STATIC",
+          siteName: "DEMO BAZAR",
+        },
+      });
+    }
+
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     return NextResponse.json(
@@ -14,27 +27,20 @@ export async function GET() {
   }
 }
 
-// POST / PUT: প্রোভাইডার ক্রেডেনশিয়াল আপডেট করার জন্য
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { providerName, providerBaseUrl, providerApiKey, isAutoTopupEnabled } = body;
 
-    // upsert ব্যবহার করলে আগে থেকে রেকর্ড থাকলে update হবে, না থাকলে create হবে
     const updatedSettings = await prisma.siteSettings.upsert({
       where: { id: "STATIC" },
       update: {
-        providerName,
-        providerBaseUrl,
-        providerApiKey,
-        isAutoTopupEnabled,
+        providerBaseUrl: body.providerBaseUrl || null,
+        providerApiKey: body.providerApiKey || null,
       },
       create: {
         id: "STATIC",
-        providerName,
-        providerBaseUrl,
-        providerApiKey,
-        isAutoTopupEnabled,
+        providerBaseUrl: body.providerBaseUrl || null,
+        providerApiKey: body.providerApiKey || null,
       },
     });
 
@@ -45,7 +51,7 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error?.message || "Failed to save provider settings" },
+      { success: false, message: error?.message || "Failed to save settings" },
       { status: 500 }
     );
   }

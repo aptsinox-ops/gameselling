@@ -6,6 +6,10 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 // 🛠️ প্রিজমা ইম্পোর্ট
 import { prisma } from "@/lib/prisma";
 
+// ⚡ Dynamic Data Fetching (ক্যাশ এড়ানোর জন্য)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function SettingsPage() {
   
   // ১. সাইট সেটিংস ফেচ করা হচ্ছে
@@ -22,6 +26,10 @@ export default async function SettingsPage() {
   const defaultData = {
     siteName: dbSettings?.siteName || "", 
     
+    // ⚡ Auto Provider (এখন ডেটা ফেচ হবে)
+    providerBaseUrl: dbSettings?.providerBaseUrl || "",
+    providerApiKey: dbSettings?.providerApiKey || "",
+
     // 🎯 নতুন যোগ করা SEO & Google OAuth ফিল্ডস
     siteTitle: dbSettings?.siteTitle || "",
     siteDescription: dbSettings?.siteDescription || "",
@@ -106,14 +114,12 @@ export default async function SettingsPage() {
       <AppSidebar variant="inset" />
       
       <SidebarInset>
-        {/* হেডারে অতিরিক্ত প্রোপস ছাড়া অ্যাডমিন হেডার লোড করা হলো */}
         <AdminHeader />
         
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               
-              {/* টাইটেল এবং ডেসক্রিপশন */}
               <div className="space-y-1">
                 <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
                   System Settings
@@ -123,7 +129,6 @@ export default async function SettingsPage() {
                 </p>
               </div>
 
-              {/* সেটিংস ফর্ম কন্টেইনার */}
               <div className="mt-2 mr-0 sm:mr-50 md:mr-50">
                 <SettingsForm initialData={defaultData} />
               </div>
