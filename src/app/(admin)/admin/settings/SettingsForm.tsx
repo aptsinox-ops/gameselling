@@ -11,6 +11,7 @@ import {
   CreditCard,
   Info,
   Cpu,
+  Server,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,6 +47,10 @@ interface SettingsFormProps {
     paymentApiKey?: string | null;
     paymentMinAmount?: string | number | null;
     paymentMaxAmount?: string | number | null;
+
+    // 🤖 Provider Credentials
+    providerBaseUrl?: string | null;
+    providerApiKey?: string | null;
 
     metaKeywords?: string | null;
     noticeText?: string | null;
@@ -125,6 +130,10 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
     paymentMinAmount: initialData?.paymentMinAmount || "20",
     paymentMaxAmount: initialData?.paymentMaxAmount || "50000",
 
+    // Provider fields
+    providerBaseUrl: initialData?.providerBaseUrl || "",
+    providerApiKey: initialData?.providerApiKey || "",
+
     noticeText: initialData?.noticeText || "",
     isHeaderVisible: initialData?.isHeaderVisible ?? true,
     isFooterVisible: initialData?.isFooterVisible ?? true,
@@ -203,6 +212,10 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         paymentApiKey: initialData.paymentApiKey || "",
         paymentMinAmount: initialData.paymentMinAmount || "20",
         paymentMaxAmount: initialData.paymentMaxAmount || "50000",
+
+        // Provider fields
+        providerBaseUrl: initialData.providerBaseUrl || "",
+        providerApiKey: initialData.providerApiKey || "",
 
         noticeText: initialData.noticeText || "",
         isHeaderVisible: initialData.isHeaderVisible ?? true,
@@ -400,7 +413,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           value="autoprovider"
           className="shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-950 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-white text-neutral-500 dark:text-neutral-400 text-xs font-bold px-4 py-2 rounded-lg transition-all border border-transparent data-[state=active]:border-neutral-200 dark:data-[state=active]:border-neutral-800"
         >
-          <Cpu className="w-3.5 h-3.5" /> Auto Provider
+          <Server className="w-3.5 h-3.5" /> Auto Provider
         </TabsTrigger>
         <TabsTrigger
           value="adminInfo"

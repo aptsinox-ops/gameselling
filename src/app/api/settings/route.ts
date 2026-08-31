@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Next.js-কে বাধ্য করা যাতে এই API-র কোনো রিকোয়েস্ট কোনোভাবেই ক্যাশ না করে সরাসরি DB থেকে ডাটা আনে
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// নো-ক্যাশ হেডার অবজেক্ট যা GET এবং PUT উভয় জায়গাতেই ব্রাউজার ও নেক্সট-জেএস ক্যাশ ব্রেক করবে
 const noCacheHeaders = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
   "Pragma": "no-cache",
   "Expires": "0",
 };
 
-// ডেটাবেজ থেকে সেটিংস ডাটা রিট্রিভ করার জন্য (GET)
+const parseString = (val: any): string | null => {
+  if (val === null || val === undefined) return null;
+  const str = String(val).trim();
+  return str.length > 0 ? str : null;
+};
+
+// GET: সেটিংস ডাটা রিট্রিভ করার জন্য
 export async function GET() {
   try {
     let settings = await prisma.siteSettings.findUnique({
@@ -20,42 +24,33 @@ export async function GET() {
     });
 
     if (!settings) {
-      // 🎯 নতুন ফিল্ডগুলোর ডিফল্ট ভ্যালুসহ তৈরি করা হবে
       settings = await prisma.siteSettings.create({
         data: {
           id: "STATIC",
           siteName: "DEMO BAZAR",
 
-          // 🎯 SEO & Google Auth Defaults
-          siteTitle: "",
-          siteDescription: "",
+          // SEO & Auth
+          siteTitle: "DEMO BAZAR | Best Online Topup Store",
+          siteDescription: null,
           googleClientId: null,
           googleClientSecret: null,
-
           loginSystem: "OAUTH_MANUAL",
 
-          // 💳 পেমেন্ট সেটিংস ডিফল্টস
+          // Payment
           paymentGateway: "Uddokotapay",
-          paymentBaseUrl: "",
-          paymentApiKey: "",
+          paymentBaseUrl: null,
+          paymentApiKey: null,
           paymentMinAmount: "20",
           paymentMaxAmount: "50000",
 
-          // 🤖 AUTO TOPUP / PROVIDER DEFAULTS
-          isAutoTopupEnabled: false,
-          providerName: null,
+          // 🤖 শুধুমাত্র Provider Base URL এবং API Key
           providerBaseUrl: null,
           providerApiKey: null,
 
           primaryColor: "#00d2ff",
           backgroundColor: "#0a0a0c",
 
-          // 🚀 HERO SLIDER & DYNAMIC BUTTON DEFAULTS
-          heroTitle: null,
-          heroDescription: null,
-          heroLogoUrl: null,
-
-          // 🔘 Hero Button 1
+          // Hero Buttons
           isHeroBtn1Visible: true,
           heroBtn1Subtitle: "SUPPORT",
           heroBtn1Title: "Telegram",
@@ -63,7 +58,6 @@ export async function GET() {
           heroBtn1ImageUrl: null,
           heroBtn1Svg: null,
 
-          // 🔘 Hero Button 2
           isHeroBtn2Visible: true,
           heroBtn2Subtitle: "GROUP",
           heroBtn2Title: "Telegram",
@@ -71,7 +65,7 @@ export async function GET() {
           heroBtn2ImageUrl: null,
           heroBtn2Svg: null,
 
-          // 🦶 ফুটার আলাদা গ্রাডিয়েন্ট ডিফল্ট কালার
+          // Footer
           footerTopColor: "#061124",
           footerBottomColor: "#1a3b7b",
 
@@ -88,116 +82,93 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json(settings, {
-      headers: noCacheHeaders,
-    });
+    return NextResponse.json(settings, { headers: noCacheHeaders });
   } catch (error) {
     console.error("Failed to fetch settings:", error);
     return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Internal Server Error", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
 }
 
-// সেটিংস ডাটা আপডেট করার জন্য (PUT)
+// PUT: সেটিংস ডাটা আপডেট করার জন্য
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
 
-    // 🛠️ ফিক্সড ও সেফ ডাটা অবজেক্ট তৈরি
     const updateData = {
-      siteName: body.siteName ? String(body.siteName).trim() : "",
+      siteName: parseString(body.siteName) || "DEMO BAZAR",
 
-      // 🎯 SEO & Google OAuth ফিল্ডস
-      siteTitle: body.siteTitle ? String(body.siteTitle).trim() : null,
-      siteDescription: body.siteDescription ? String(body.siteDescription).trim() : null,
-      googleClientId: body.googleClientId ? String(body.googleClientId).trim() : null,
-      googleClientSecret: body.googleClientSecret ? String(body.googleClientSecret).trim() : null,
+      siteTitle: parseString(body.siteTitle),
+      siteDescription: parseString(body.siteDescription),
+      googleClientId: parseString(body.googleClientId),
+      googleClientSecret: parseString(body.googleClientSecret),
 
-      logoUrl: body.logoUrl ? String(body.logoUrl).trim() : null,
-      bannerUrl: body.bannerUrl ? String(body.bannerUrl).trim() : null,
-      faviconUrl: body.faviconUrl ? String(body.faviconUrl).trim() : null,
+      logoUrl: parseString(body.logoUrl),
+      bannerUrl: parseString(body.bannerUrl),
+      faviconUrl: parseString(body.faviconUrl),
 
-      // 🎯 ব্যানার ও লগইন সিস্টেম ডাটা
-      walletPayBanner: body.walletPayBanner ? String(body.walletPayBanner).trim() : null,
-      autoPaymentBanner: body.autoPaymentBanner ? String(body.autoPaymentBanner).trim() : null,
+      walletPayBanner: parseString(body.walletPayBanner),
+      autoPaymentBanner: parseString(body.autoPaymentBanner),
       loginSystem: body.loginSystem ?? "OAUTH_MANUAL",
 
-      // 💳 পেমেন্ট সেটিং ফিল্ডস
       paymentGateway: body.paymentGateway ?? "Uddokotapay",
-      paymentBaseUrl: body.paymentBaseUrl ? String(body.paymentBaseUrl).trim() : null,
-      paymentApiKey: body.paymentApiKey ? String(body.paymentApiKey).trim() : null,
-      paymentMinAmount: body.paymentMinAmount ? String(body.paymentMinAmount).trim() : "20",
-      paymentMaxAmount: body.paymentMaxAmount ? String(body.paymentMaxAmount).trim() : "50000",
+      paymentBaseUrl: parseString(body.paymentBaseUrl),
+      paymentApiKey: parseString(body.paymentApiKey),
+      paymentMinAmount: parseString(body.paymentMinAmount) || "20",
+      paymentMaxAmount: parseString(body.paymentMaxAmount) || "50000",
 
-      // 🤖 AUTO TOPUP / PROVIDER FIELDS
-      isAutoTopupEnabled: typeof body.isAutoTopupEnabled === "boolean" ? body.isAutoTopupEnabled : false,
-      providerName: body.providerName ? String(body.providerName).trim() : null,
-      providerBaseUrl: body.providerBaseUrl ? String(body.providerBaseUrl).trim() : null,
-      providerApiKey: body.providerApiKey ? String(body.providerApiKey).trim() : null,
+      // 🤖 শুধুমাত্র Provider Base URL এবং API Key
+      providerBaseUrl: parseString(body.providerBaseUrl),
+      providerApiKey: parseString(body.providerApiKey),
 
-      metaKeywords: body.metaKeywords ? String(body.metaKeywords).trim() : null,
-      noticeText: body.noticeText ? String(body.noticeText).trim() : null,
+      metaKeywords: parseString(body.metaKeywords),
+      noticeText: parseString(body.noticeText),
       isHeaderVisible: typeof body.isHeaderVisible === "boolean" ? body.isHeaderVisible : true,
       isFooterVisible: typeof body.isFooterVisible === "boolean" ? body.isFooterVisible : true,
-      whatsappNumber: body.whatsappNumber ? String(body.whatsappNumber).trim() : null,
-      telegramUsername: body.telegramUsername ? String(body.telegramUsername).trim() : null,
+      whatsappNumber: parseString(body.whatsappNumber),
+      telegramUsername: parseString(body.telegramUsername),
       activeFloatingButton: body.activeFloatingButton ?? "WHATSAPP",
-      adminEmail: body.adminEmail ? String(body.adminEmail).trim() : null,
-      youtubeLink: body.youtubeLink ? String(body.youtubeLink).trim() : null,
+      adminEmail: parseString(body.adminEmail),
+      youtubeLink: parseString(body.youtubeLink),
 
-      // সোশ্যাল মিডিয়া লিংক
-      facebookLink: body.facebookLink ? String(body.facebookLink).trim() : null,
-      instagramLink: body.instagramLink ? String(body.instagramLink).trim() : null,
+      facebookLink: parseString(body.facebookLink),
+      instagramLink: parseString(body.instagramLink),
 
-      // কালার ফিল্ডগুলো
-      primaryColor: body.primaryColor ? String(body.primaryColor).trim() : "#00d2ff",
-      backgroundColor: body.backgroundColor ? String(body.backgroundColor).trim() : "#0a0a0c",
+      primaryColor: parseString(body.primaryColor) || "#00d2ff",
+      backgroundColor: parseString(body.backgroundColor) || "#0a0a0c",
 
-      // 🔘 HERO BUTTON 1 DATA
-      isHeroBtn1Visible:
-        typeof body.isHeroBtn1Visible === "boolean" ? body.isHeroBtn1Visible : true,
-      heroBtn1Subtitle: body.heroBtn1Subtitle ? String(body.heroBtn1Subtitle).trim() : "SUPPORT",
-      heroBtn1Title: body.heroBtn1Title ? String(body.heroBtn1Title).trim() : "Telegram",
-      heroBtn1Link: body.heroBtn1Link ? String(body.heroBtn1Link).trim() : null,
-      heroBtn1ImageUrl: body.heroBtn1ImageUrl ? String(body.heroBtn1ImageUrl).trim() : null,
-      heroBtn1Svg: body.heroBtn1Svg ? String(body.heroBtn1Svg) : null,
+      isHeroBtn1Visible: typeof body.isHeroBtn1Visible === "boolean" ? body.isHeroBtn1Visible : true,
+      heroBtn1Subtitle: parseString(body.heroBtn1Subtitle) || "SUPPORT",
+      heroBtn1Title: parseString(body.heroBtn1Title) || "Telegram",
+      heroBtn1Link: parseString(body.heroBtn1Link),
+      heroBtn1ImageUrl: parseString(body.heroBtn1ImageUrl),
+      heroBtn1Svg: parseString(body.heroBtn1Svg),
 
-      // 🔘 HERO BUTTON 2 DATA
-      isHeroBtn2Visible:
-        typeof body.isHeroBtn2Visible === "boolean" ? body.isHeroBtn2Visible : true,
-      heroBtn2Subtitle: body.heroBtn2Subtitle ? String(body.heroBtn2Subtitle).trim() : "GROUP",
-      heroBtn2Title: body.heroBtn2Title ? String(body.heroBtn2Title).trim() : "Telegram",
-      heroBtn2Link: body.heroBtn2Link ? String(body.heroBtn2Link).trim() : null,
-      heroBtn2ImageUrl: body.heroBtn2ImageUrl ? String(body.heroBtn2ImageUrl).trim() : null,
-      heroBtn2Svg: body.heroBtn2Svg ? String(body.heroBtn2Svg) : null,
+      isHeroBtn2Visible: typeof body.isHeroBtn2Visible === "boolean" ? body.isHeroBtn2Visible : true,
+      heroBtn2Subtitle: parseString(body.heroBtn2Subtitle) || "GROUP",
+      heroBtn2Title: parseString(body.heroBtn2Title) || "Telegram",
+      heroBtn2Link: parseString(body.heroBtn2Link),
+      heroBtn2ImageUrl: parseString(body.heroBtn2ImageUrl),
+      heroBtn2Svg: parseString(body.heroBtn2Svg),
 
-      // 🦶 ফুটার ব্যাকগ্রাউন্ড কালার
-      footerTopColor: body.footerTopColor ? String(body.footerTopColor).trim() : "#061124",
-      footerBottomColor: body.footerBottomColor ? String(body.footerBottomColor).trim() : "#1a3b7b",
+      footerTopColor: parseString(body.footerTopColor) || "#061124",
+      footerBottomColor: parseString(body.footerBottomColor) || "#1a3b7b",
 
-      // 🦶 ফুটার সেকশন কার্ড ১ ডাটা
-      isFooterCard1Visible:
-        typeof body.isFooterCard1Visible === "boolean" ? body.isFooterCard1Visible : true,
-      footerCard1Title1: body.footerCard1Title1 ? String(body.footerCard1Title1).trim() : "Fast Delivery",
-      footerCard1Title2: body.footerCard1Title2 ? String(body.footerCard1Title2).trim() : "Within 5-10 Minutes",
-      footerCard1Link: body.footerCard1Link ? String(body.footerCard1Link).trim() : "#",
-      footerCard1ImageUrl: body.footerCard1ImageUrl ? String(body.footerCard1ImageUrl).trim() : null,
+      isFooterCard1Visible: typeof body.isFooterCard1Visible === "boolean" ? body.isFooterCard1Visible : true,
+      footerCard1Title1: parseString(body.footerCard1Title1) || "Fast Delivery",
+      footerCard1Title2: parseString(body.footerCard1Title2) || "Within 5-10 Minutes",
+      footerCard1Link: parseString(body.footerCard1Link) || "#",
+      footerCard1ImageUrl: parseString(body.footerCard1ImageUrl),
 
-      // 🦶 ফুটার সেকশন কার্ড ২ ডাটা
-      isFooterCard2Visible:
-        typeof body.isFooterCard2Visible === "boolean" ? body.isFooterCard2Visible : true,
-      footerCard2Title1: body.footerCard2Title1 ? String(body.footerCard2Title1).trim() : "Support 24/7",
-      footerCard2Title2: body.footerCard2Title2 ? String(body.footerCard2Title2).trim() : "Live Chat & WhatsApp",
-      footerCard2Link: body.footerCard2Link ? String(body.footerCard2Link).trim() : "#",
-      footerCard2ImageUrl: body.footerCard2ImageUrl ? String(body.footerCard2ImageUrl).trim() : null,
+      isFooterCard2Visible: typeof body.isFooterCard2Visible === "boolean" ? body.isFooterCard2Visible : true,
+      footerCard2Title1: parseString(body.footerCard2Title1) || "Support 24/7",
+      footerCard2Title2: parseString(body.footerCard2Title2) || "Live Chat & WhatsApp",
+      footerCard2Link: parseString(body.footerCard2Link) || "#",
+      footerCard2ImageUrl: parseString(body.footerCard2ImageUrl),
     };
 
-    // ডেটাবেজে STATIC আইডির রো-তে নতুন ভ্যালু পুশ/আপডেট করা হচ্ছে
     const updatedSettings = await prisma.siteSettings.upsert({
       where: { id: "STATIC" },
       update: updateData,
@@ -207,16 +178,11 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json(updatedSettings, {
-      headers: noCacheHeaders,
-    });
+    return NextResponse.json(updatedSettings, { headers: noCacheHeaders });
   } catch (error) {
     console.error("Failed to update settings:", error);
     return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Internal Server Error", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

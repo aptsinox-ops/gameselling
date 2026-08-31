@@ -242,9 +242,6 @@ model SiteSettings {
   heroBtn2ImageUrl    String?                     
   heroBtn2Svg         String?     
 
-// Auto Topup / Provider Fields
-  isAutoTopupEnabled Boolean  @default(false)
-  providerName       String?
   providerBaseUrl    String?
   providerApiKey     String?
 
