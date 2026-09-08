@@ -202,110 +202,105 @@ function ProductPurchaseFlow({
     toast.success("ভাউচার কোডটি সফলভাবে কপি হয়েছে!");
   };
 
-const handleBuyNowSubmit = async () => {
-  if (isSubmitting) return;
+  const handleBuyNowSubmit = async () => {
+    if (isSubmitting) return;
 
-  if (!isLoggedIn) {
-    toast("দয়া করে ক্রয় করতে প্রথমে লগইন করুন!", { icon: <ErrorIcon /> });
-    return;
-  }
-
-  if (!isVariationSelected || !selectedVariation) {
-    toast("দয়া করে আইটেম ভ্যারিয়েশন সিলেক্ট করুন!", { icon: <ErrorIcon /> });
-    return;
-  }
-
-  for (const labelName of cleanFields) {
-    if (!inputValues[labelName] || inputValues[labelName].trim() === "") {
-      toast(`দয়া করে "${labelName}" ফিল্ডটি পূরণ করুন!`, { icon: <ErrorIcon /> });
+    if (!isLoggedIn) {
+      toast("দয়া করে ক্রয় করতে প্রথমে লগইন করুন!", { icon: <ErrorIcon /> });
       return;
     }
-  }
 
-  setIsSubmitting(true);
-  setIsDialogOpen(true);
-  setDialogStep("loading");
-  setProgress(0);
+    if (!isVariationSelected || !selectedVariation) {
+      toast("দয়া করে আইটেম ভ্যারিয়েশন সিলেক্ট করুন!", { icon: <ErrorIcon /> });
+      return;
+    }
 
-  const calculatedTotalPrice = Math.round(basePrice * paymentDetails.quantity * 100) / 100;
-  const validUserId = userId ? Number(userId) : null;
-
-  // Instant payment এখনো gateway URL এর জন্য wait করবে — এটা real redirect dependency
-  if (paymentDetails.paymentMethod === "Instant") {
-    try {
-      const response = await fetch("/api/instant-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          variationId: selectedVariation.id,
-          unitPrice: basePrice,
-          totalPrice: calculatedTotalPrice,
-          inputValues,
-          quantity: paymentDetails.quantity,
-          userId: validUserId,
-        }),
-      });
-      const resData = await response.json();
-      if (response.ok && resData.payment_url) {
-        window.location.href = resData.payment_url;
+    for (const labelName of cleanFields) {
+      if (!inputValues[labelName] || inputValues[labelName].trim() === "") {
+        toast(`দয়া করে "${labelName}" ফিল্ডটি পূরণ করুন!`, { icon: <ErrorIcon /> });
         return;
       }
-    } catch (error) {
-      console.error(error);
     }
-    // Instant e সমস্যা হলেও silently myorder এ পাঠিয়ে দেই, কোনো error dialog না
-    setIsDialogOpen(false);
-    setIsSubmitting(false);
-    router.push("/myorder");
-    return;
-  }
 
-  // ---- Wallet Payment: fire-and-forget ----
-  // API call ব্যাকগ্রাউন্ডে পাঠানো হলো, রেসপন্সের জন্য UI block হবে না
-  fetch("/api/order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      productId: product.id,
-      variationId: selectedVariation.id,
-      unitPrice: basePrice,
-      totalPrice: calculatedTotalPrice,
-      inputValues,
-      quantity: paymentDetails.quantity,
-      userId: validUserId,
-      paymentMethod: "Wallet",
-    }),
-  }).catch((err) => console.error("Background order error:", err));
+    setIsSubmitting(true);
+    setIsDialogOpen(true);
+    setDialogStep("loading");
+    setProgress(0);
 
-  // Progress animation দ্রুত শেষ করে দিচ্ছি (UX এর জন্য রাখলাম, কিন্তু কোনো API wait নাই)
-  const quickSteps = [30, 65, 100];
-  let i = 0;
-  const quickTimer = setInterval(() => {
-    setProgress(quickSteps[i]);
-    i++;
-    if (i >= quickSteps.length) {
-      clearInterval(quickTimer);
+    const calculatedTotalPrice = Math.round(basePrice * paymentDetails.quantity * 100) / 100;
+    const validUserId = userId ? Number(userId) : null;
 
-      setTimeout(() => {
-        const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
-        setOrderTime(bdTime);
-        toast("Order Are Placed!", { icon: <SuccessIcon /> });
-
-        setIsDialogOpen(false);
-        setIsSubmitting(false);
-
-        const redirectPath =
-          product?.productType?.toLowerCase() === "voucher" ||
-          product?.productType?.toLowerCase() === "vouchers"
-            ? "/code"
-            : "/myorder";
-
-        router.push(redirectPath);
-      }, 400);
+    if (paymentDetails.paymentMethod === "Instant") {
+      try {
+        const response = await fetch("/api/instant-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId: product.id,
+            variationId: selectedVariation.id,
+            unitPrice: basePrice,
+            totalPrice: calculatedTotalPrice,
+            inputValues,
+            quantity: paymentDetails.quantity,
+            userId: validUserId,
+          }),
+        });
+        const resData = await response.json();
+        if (response.ok && resData.payment_url) {
+          window.location.href = resData.payment_url;
+          return;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      setIsDialogOpen(false);
+      setIsSubmitting(false);
+      router.push("/myorder");
+      return;
     }
-  }, 250);
-};
+
+    fetch("/api/order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productId: product.id,
+        variationId: selectedVariation.id,
+        unitPrice: basePrice,
+        totalPrice: calculatedTotalPrice,
+        inputValues,
+        quantity: paymentDetails.quantity,
+        userId: validUserId,
+        paymentMethod: "Wallet",
+      }),
+    }).catch((err) => console.error("Background order error:", err));
+
+    const quickSteps = [30, 65, 100];
+    let i = 0;
+    const quickTimer = setInterval(() => {
+      setProgress(quickSteps[i]);
+      i++;
+      if (i >= quickSteps.length) {
+        clearInterval(quickTimer);
+
+        setTimeout(() => {
+          const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+          setOrderTime(bdTime);
+          toast("Order Are Placed!", { icon: <SuccessIcon /> });
+
+          setIsDialogOpen(false);
+          setIsSubmitting(false);
+
+          const redirectPath =
+            product?.productType?.toLowerCase() === "voucher" ||
+            product?.productType?.toLowerCase() === "vouchers"
+              ? "/code"
+              : "/myorder";
+
+          router.push(redirectPath);
+        }, 400);
+      }
+    }, 250);
+  };
 
   const displayProductType = useMemo(() => {
     if (product?.productType === "UID" || product?.productType === "UID Topup") return "FreeFire";
@@ -314,128 +309,138 @@ const handleBuyNowSubmit = async () => {
 
   return (
     <div className="space-y-8 pt-4 pb-24 lg:pb-8">
-      {/* ১. ভ্যারিয়েশন সেকশন */}
-      <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-        <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">1</div>
-        <div className="w-full pb-3">
-          <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Select Recharge</h2>
-          <hr className="mt-3 border-slate-200 w-full" />
-        </div>
+      {/* Side by Side Grid Wrapper */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <VariationSelector 
-          variations={dbVariations || []} 
-          isListView={isListView} 
-          variationIcon={product?.variationIcon} 
-          resellerPercentage={resellerPercentage}
-          userRole={currentUserRole}
-          onChange={handleVariationChange}
-          primaryColor={primaryColor} 
-          userBalance={paymentDetails.userBalance}
-          isInstantPayment={paymentDetails.paymentMethod === "Instant"} 
-          onAddBalance={handleAddBalance}
-          nextStepId="step-2"
-        />
-      </section>
-
-      {/* ২. অ্যাকাউন্ট সেকশন */}
-      <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-        <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">2</div>
-        <div className="w-full pb-3">
-          <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Account Info</h2>
-          <hr className="mt-3 border-slate-200 w-full" />
-        </div>
-        
-        <div className="px-2.5 pb-5 space-y-4">
-          {cleanFields.map((labelName, index) => (
-            <div key={index} className="space-y-1">
-              <label className="[font-size:clamp(11px,2.8vw,14px)] font-medium text-slate-600">Enter {labelName}</label>
-              <input 
-                type="text" 
-                value={inputValues[labelName] || ""}
-                onChange={(e) => handleInputChange(labelName, e.target.value)}
-                onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
-                className="w-full px-3 py-2.5 rounded-md border border-slate-200 focus:outline [font-size:clamp(13px,3.2vw,16px)]" 
-                placeholder={`Enter your ${labelName}`}
-              />
+        {/* Left Side: Step 1 */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* ১. ভ্যারিয়েশন সেকশন */}
+          <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
+            <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">1</div>
+            <div className="w-full pb-3">
+              <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Select Recharge</h2>
+              <hr className="mt-3 border-slate-200 w-full" />
             </div>
-          ))}
+            
+            <VariationSelector 
+              variations={dbVariations || []} 
+              isListView={isListView} 
+              variationIcon={product?.variationIcon} 
+              resellerPercentage={resellerPercentage}
+              userRole={currentUserRole}
+              onChange={handleVariationChange}
+              primaryColor={primaryColor} 
+              userBalance={paymentDetails.userBalance}
+              isInstantPayment={paymentDetails.paymentMethod === "Instant"} 
+              onAddBalance={handleAddBalance}
+              nextStepId="step-2"
+            />
+          </section>
+        </div>
 
-          {showNameChecker && (
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={handleCheckUIDName}
-                disabled={ffNameLoading}
-                style={{ backgroundColor: primaryColor }}
-                className="w-full px-6 py-2.5 rounded-md font-semibold [font-size:clamp(11px,2.8vw,14px)] text-white tracking-wide hover:opacity-90 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed uppercase shadow-sm"
-              >
-                {ffNameLoading ? "Processing..." : "CLICK TO CHECK"}
-              </button>
+        {/* Right Side: Step 2, Step 3 & Buy Now Button */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* ২. অ্যাকাউন্ট সেকশন */}
+          <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
+            <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">2</div>
+            <div className="w-full pb-3">
+              <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Account Info</h2>
+              <hr className="mt-3 border-slate-200 w-full" />
+            </div>
+            
+            <div className="px-2.5 pb-5 space-y-4">
+              {cleanFields.map((labelName, index) => (
+                <div key={index} className="space-y-1">
+                  <label className="[font-size:clamp(11px,2.8vw,14px)] font-medium text-slate-600">Enter {labelName}</label>
+                  <input 
+                    type="text" 
+                    value={inputValues[labelName] || ""}
+                    onChange={(e) => handleInputChange(labelName, e.target.value)}
+                    onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
+                    className="w-full px-3 py-2.5 rounded-md border border-slate-200 focus:outline [font-size:clamp(13px,3.2vw,16px)]" 
+                    placeholder={`Enter your ${labelName}`}
+                  />
+                </div>
+              ))}
 
-              {playerData && (
-                <div className="mt-4 border border-slate-200 rounded-md overflow-hidden bg-slate-50/50 shadow-sm transition-all duration-300">
-                  <div style={{ backgroundColor: primaryColor }} className="px-4 py-2 text-white text-xs font-bold uppercase tracking-wider flex items-center">
-                    <FireIcon /> Player Account Details
-                  </div>
-                  
-                  <div className="p-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [font-size:clamp(12px,3.2vw,14px)]">
-                    <div className="bg-white p-2.5 rounded-md border border-slate-100 min-w-0">
-                      <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wide">Name</span>
-                      <span style={{ color: primaryColor }} className="font-bold [font-size:clamp(13px,3.5vw,16px)] block mt-0.5 truncate">
-                        {playerData.username}
-                      </span>
+              {showNameChecker && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleCheckUIDName}
+                    disabled={ffNameLoading}
+                    style={{ backgroundColor: primaryColor }}
+                    className="w-full px-6 py-2.5 rounded-md font-semibold [font-size:clamp(11px,2.8vw,14px)] text-white tracking-wide hover:opacity-90 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed uppercase shadow-sm"
+                  >
+                    {ffNameLoading ? "Processing..." : "CLICK TO CHECK"}
+                  </button>
+
+                  {playerData && (
+                    <div className="mt-4 border border-slate-200 rounded-md overflow-hidden bg-slate-50/50 shadow-sm transition-all duration-300">
+                      <div style={{ backgroundColor: primaryColor }} className="px-4 py-2 text-white text-xs font-bold uppercase tracking-wider flex items-center">
+                        <FireIcon /> Player Account Details
+                      </div>
+                      
+                      <div className="p-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [font-size:clamp(12px,3.2vw,14px)]">
+                        <div className="bg-white p-2.5 rounded-md border border-slate-100 min-w-0">
+                          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wide">Name</span>
+                          <span style={{ color: primaryColor }} className="font-bold [font-size:clamp(13px,3.5vw,16px)] block mt-0.5 truncate">
+                            {playerData.username}
+                          </span>
+                        </div>
+                        
+                        <div className="bg-white p-2.5 rounded-md border border-slate-100 min-w-0">
+                          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wide">UID</span>
+                          <span className="font-bold text-slate-700 [font-size:clamp(13px,3.5vw,16px)] block mt-0.5 truncate">
+                            {playerData.uid}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="bg-white p-2.5 rounded-md border border-slate-100 min-w-0">
-                      <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wide">UID</span>
-                      <span className="font-bold text-slate-700 [font-size:clamp(13px,3.5vw,16px)] block mt-0.5 truncate">
-                        {playerData.uid}
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </section>
+          </section>
 
-      {/* ৩. পেমেন্ট সেকশন */}
-      <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-        <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">3</div>
-        <div className="w-full pb-3">
-          <h2 style={{ color: primaryColor }} className="[font-size:clamp(14px,3.5vw,18px)] font-bold mt-1 px-5">Select Payment</h2>
-          <hr className="mt-3 border-slate-200 w-full" />
-        </div>
-        
-        <PaymentSelector 
-          takaSvg={takaSvg} 
-          basePrice={basePrice}
-          onChange={handlePaymentChange}
-          primaryColor={primaryColor} 
-        />
-      </section>
+          {/* ৩. পেমেন্ট সেকশন */}
+          <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
+            <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">3</div>
+            <div className="w-full pb-3">
+              <h2 style={{ color: primaryColor }} className="[font-size:clamp(14px,3.5vw,18px)] font-bold mt-1 px-5">Select Payment</h2>
+              <hr className="mt-3 border-slate-200 w-full" />
+            </div>
+            
+            <PaymentSelector 
+              takaSvg={takaSvg} 
+              basePrice={basePrice}
+              onChange={handlePaymentChange}
+              primaryColor={primaryColor} 
+            />
+          </section>
 
-      {/* BUY NOW বাটন */}
-      <div className="lg:block space-y-3 pt-2">
-        <button
-          onClick={handleBuyNowSubmit}
-          disabled={isSubmitting}
-          style={{ backgroundColor: isSubmitting ? "#94a3b8" : primaryColor }}
-          className="w-full py-3 rounded-md font-bold transition-all duration-300 tracking-wider text-md text-white uppercase select-none hover:opacity-90 cursor-pointer active:scale-[0.99] flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <>
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Processing</span>
-            </>
-          ) : (
-            <span>Buy Now</span>
-          )}
-        </button>
+          {/* BUY NOW বাটন */}
+          <div className="lg:block space-y-3 pt-2">
+            <button
+              onClick={handleBuyNowSubmit}
+              disabled={isSubmitting}
+              style={{ backgroundColor: isSubmitting ? "#94a3b8" : primaryColor }}
+              className="w-full py-3 rounded-md font-bold transition-all duration-300 tracking-wider text-md text-white uppercase select-none hover:opacity-90 cursor-pointer active:scale-[0.99] flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Processing</span>
+                </>
+              ) : (
+                <span>Buy Now</span>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Rules & Conditions */}
@@ -457,8 +462,7 @@ const handleBuyNowSubmit = async () => {
           />
         </section>
       )}
-
-      {/* 🟢 ULTRA-SMOOTH DIALOG COMPONENT 🟢 */}
+     {/* 🟢 ULTRA-SMOOTH DIALOG COMPONENT 🟢 */}
       {isDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="relative w-full max-w-md bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto">

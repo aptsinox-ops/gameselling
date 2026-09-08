@@ -1,7 +1,7 @@
 import HeroSlider from "@/components/HeroSlider";
 import CategoryGrid from "@/components/CategoryGrid";
 import LatestOrders from "@/components/LatestOrders";
-import TelegramBanner from "@/components/TelegramBanner"; // 🟢 ইম্পোর্ট করা হলো
+import TelegramBanner from "@/components/TelegramBanner";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 60;
@@ -36,7 +36,10 @@ export default async function Home() {
       }),
     ]);
 
-    const primaryColor = siteSettings?.primaryColor || "#2563eb";
+    // 🟢 ব্যাকএন্ড বা ডাটাবেজ থেকে প্রাইমারি কালার না পেলে ডিফল্ট ব্ল্যাক (#000000) হবে
+    const primaryColor = siteSettings?.primaryColor && siteSettings.primaryColor.trim() !== "" 
+      ? siteSettings.primaryColor 
+      : "#000000";
 
     const sliders = JSON.parse(JSON.stringify(rawSliders));
     const safeCategories = JSON.parse(JSON.stringify(categories));
@@ -44,7 +47,7 @@ export default async function Home() {
     const safeOrders = JSON.parse(JSON.stringify(rawOrders));
 
     return (
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 py-3 space-y-6">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 space-y-4 sm:space-y-6">
         <HeroSlider 
           noticeText={siteSettings?.noticeText} 
           primaryColor={primaryColor}
@@ -54,7 +57,6 @@ export default async function Home() {
         
         <CategoryGrid categories={safeCategories as any} />
 
-        {/* 🟢 LatestOrders এর ঠিক উপরে TelegramBanner যুক্ত করা হলো */}
         <TelegramBanner 
           username={siteSettings?.telegramUsername} 
           primaryColor={primaryColor} 
