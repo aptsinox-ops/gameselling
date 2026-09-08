@@ -217,7 +217,7 @@ const PaymentSelector = memo(function PaymentSelector({
       {/* Info & Balance Section */}
       <div className="space-y-2 pt-1">
         {isLoggedIn ? (
-          <div className="flex items-center justify-between text-[11px] sm:text-xs md:text-sm text-slate-600">
+          <div className="flex items-center justify-between p-2 sm:p-2.5 bg-slate-50 border border-slate-100 rounded-md text-[11px] sm:text-xs md:text-sm text-slate-600">
             <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
               <Info style={{ color: primaryColor }} className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="flex items-center space-x-1 truncate">
@@ -248,7 +248,7 @@ const PaymentSelector = memo(function PaymentSelector({
         )}
 
         {/* Product Total Price Information */}
-        <div className="flex items-center justify-between text-[11px] sm:text-xs md:text-sm text-slate-600">
+        <div className="flex items-center justify-between p-2 sm:p-2.5 bg-slate-50 border border-slate-100 rounded-md text-[11px] sm:text-xs md:text-sm text-slate-600">
           <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
             <Info style={{ color: primaryColor }} className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
             <span className="flex items-center space-x-1 truncate">
