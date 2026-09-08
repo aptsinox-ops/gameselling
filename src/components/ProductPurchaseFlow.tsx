@@ -341,7 +341,7 @@ function ProductPurchaseFlow({
         {/* Right Side: Step 2, Step 3 & Buy Now Button */}
         <div className="lg:col-span-5 space-y-6">
           {/* ২. অ্যাকাউন্ট সেকশন */}
-<section className="relative bg-white rounded-lg border border-slate-200 pt-5 sm:pt-6 shadow-sm">
+<section className="relative bg-white rounded-md border border-slate-200 pt-5 sm:pt-6">
   {/* Number Badge */}
   <div 
     style={{ backgroundColor: primaryColor }} 

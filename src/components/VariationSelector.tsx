@@ -190,7 +190,7 @@ export default function VariationSelector({
                   <img
                     src={variationIcon}
                     alt="icon"
-                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0 rounded-md ${
+                    className={`w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain flex-shrink-0 rounded-md ${
                       isStockOut ? "grayscale opacity-30" : ""
                     }`}
                   />
