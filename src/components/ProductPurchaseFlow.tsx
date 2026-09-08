@@ -345,7 +345,7 @@ function ProductPurchaseFlow({
   {/* Number Badge */}
   <div 
     style={{ backgroundColor: primaryColor }} 
-    className="absolute -top-5 sm:-top-6 left-3.5 sm:left-4 z-10 flex items-center justify-center [width:clamp(34px,8vw,44px)] [height:clamp(34px,8vw,44px)] text-white rounded-full [font-size:clamp(15px,4.5vw,20px)] font-bold border-4 border-white shadow-sm"
+    className="absolute -top-5 sm:-top-6 left-3.5 sm:left-4 z-10 flex items-center justify-center text-white rounded-full [width:clamp(34px,8vw,44px)] [height:clamp(34px,8vw,44px)] [font-size:clamp(15px,4.5vw,20px)] font-bold"
   >
     2
   </div>
