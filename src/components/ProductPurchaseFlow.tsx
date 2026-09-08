@@ -341,67 +341,95 @@ function ProductPurchaseFlow({
         {/* Right Side: Step 2, Step 3 & Buy Now Button */}
         <div className="lg:col-span-5 space-y-6">
           {/* ২. অ্যাকাউন্ট সেকশন */}
-          <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
-            <div style={{ backgroundColor: primaryColor }} className="absolute -top-6 left-3 z-10 flex items-center justify-center [width:clamp(38px,10vw,50px)] [height:clamp(38px,10vw,50px)] text-white rounded-full [font-size:clamp(18px,5vw,22px)] font-bold border-5 border-white ">2</div>
-            <div className="w-full pb-3">
-              <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Account Info</h2>
-              <hr className="mt-3 border-slate-200 w-full" />
+<section className="relative bg-white rounded-lg border border-slate-200 pt-5 sm:pt-6 shadow-sm">
+  {/* Number Badge */}
+  <div 
+    style={{ backgroundColor: primaryColor }} 
+    className="absolute -top-5 sm:-top-6 left-3.5 sm:left-4 z-10 flex items-center justify-center [width:clamp(34px,8vw,44px)] [height:clamp(34px,8vw,44px)] text-white rounded-full [font-size:clamp(15px,4.5vw,20px)] font-bold border-4 border-white shadow-sm"
+  >
+    2
+  </div>
+
+  {/* Header Section */}
+  <div className="w-full pb-2.5 sm:pb-3">
+    <h2 
+      style={{ color: primaryColor }} 
+      className="[font-size:clamp(14px,3.8vw,18px)] mt-0.5 font-bold px-3.5 sm:px-5"
+    >
+      Account Info
+    </h2>
+    <hr className="mt-2.5 border-slate-200 w-full" />
+  </div>
+  
+  {/* Input Fields & Content Area */}
+  <div className="px-3.5 sm:px-5 pb-5 sm:pb-6 space-y-3.5 sm:space-y-4">
+    {cleanFields.map((labelName, index) => (
+      <div key={index} className="space-y-1 sm:space-y-1.5">
+        <label className="[font-size:clamp(11px,2.7vw,13.5px)] font-semibold text-slate-600 block">
+          Enter {labelName}
+        </label>
+        <input 
+          type="text" 
+          value={inputValues[labelName] || ""}
+          onChange={(e) => handleInputChange(labelName, e.target.value)}
+          onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
+          className="w-full px-3.5 py-2.5 sm:py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 [font-size:clamp(12px,3vw,15px)] transition-all bg-slate-50/30 focus:bg-white text-slate-800 placeholder:text-slate-400" 
+          placeholder={`Enter your ${labelName}`}
+        />
+      </div>
+    ))}
+
+    {/* UID Checker Section */}
+    {showNameChecker && (
+      <div className="pt-1">
+        <button
+          type="button"
+          onClick={handleCheckUIDName}
+          disabled={ffNameLoading}
+          style={{ backgroundColor: primaryColor }}
+          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold [font-size:clamp(11px,2.8vw,13.5px)] text-white tracking-wider hover:opacity-90 transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed uppercase shadow-sm flex items-center justify-center"
+        >
+          {ffNameLoading ? "Processing..." : "CLICK TO CHECK"}
+        </button>
+
+        {/* Player Details Result Card */}
+        {playerData && (
+          <div className="mt-3.5 sm:mt-4 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/60 shadow-sm transition-all duration-300">
+            <div 
+              style={{ backgroundColor: primaryColor }} 
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <FireIcon /> Player Account Details
             </div>
             
-            <div className="px-2.5 pb-5 space-y-4">
-              {cleanFields.map((labelName, index) => (
-                <div key={index} className="space-y-1">
-                  <label className="[font-size:clamp(11px,2.8vw,14px)] font-medium text-slate-600">Enter {labelName}</label>
-                  <input 
-                    type="text" 
-                    value={inputValues[labelName] || ""}
-                    onChange={(e) => handleInputChange(labelName, e.target.value)}
-                    onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
-                    className="w-full px-3 py-2.5 rounded-md border border-slate-200 focus:outline [font-size:clamp(13px,3.2vw,16px)]" 
-                    placeholder={`Enter your ${labelName}`}
-                  />
-                </div>
-              ))}
-
-              {showNameChecker && (
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleCheckUIDName}
-                    disabled={ffNameLoading}
-                    style={{ backgroundColor: primaryColor }}
-                    className="w-full px-6 py-2.5 rounded-md font-semibold [font-size:clamp(11px,2.8vw,14px)] text-white tracking-wide hover:opacity-90 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed uppercase shadow-sm"
-                  >
-                    {ffNameLoading ? "Processing..." : "CLICK TO CHECK"}
-                  </button>
-
-                  {playerData && (
-                    <div className="mt-4 border border-slate-200 rounded-md overflow-hidden bg-slate-50/50 shadow-sm transition-all duration-300">
-                      <div style={{ backgroundColor: primaryColor }} className="px-4 py-2 text-white text-xs font-bold uppercase tracking-wider flex items-center">
-                        <FireIcon /> Player Account Details
-                      </div>
-                      
-                      <div className="p-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [font-size:clamp(12px,3.2vw,14px)]">
-                        <div className="bg-white p-2.5 rounded-md border border-slate-100 min-w-0">
-                          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wide">Name</span>
-                          <span style={{ color: primaryColor }} className="font-bold [font-size:clamp(13px,3.5vw,16px)] block mt-0.5 truncate">
-                            {playerData.username}
-                          </span>
-                        </div>
-                        
-                        <div className="bg-white p-2.5 rounded-md border border-slate-100 min-w-0">
-                          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wide">UID</span>
-                          <span className="font-bold text-slate-700 [font-size:clamp(13px,3.5vw,16px)] block mt-0.5 truncate">
-                            {playerData.uid}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="p-3 sm:p-4 grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
+              <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
+                <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                  Name
+                </span>
+                <span 
+                  style={{ color: primaryColor }} 
+                  className="font-bold [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate"
+                >
+                  {playerData.username}
+                </span>
+              </div>
+              
+              <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
+                <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                  UID
+                </span>
+                <span className="font-bold text-slate-700 [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate">
+                  {playerData.uid}
+                </span>
+              </div>
             </div>
-          </section>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+</section>
 
           {/* ৩. পেমেন্ট সেকশন */}
           <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">

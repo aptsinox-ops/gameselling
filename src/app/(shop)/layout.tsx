@@ -68,7 +68,7 @@ function isBanglaText(text?: string | null): boolean {
   return /[\u0980-\u09FF]/.test(text);
 }
 
-// 🚀 ৩টি কুয়েরি একসাথে (Parallel) নিয়ে আসার মাধ্যমে পেজ লোড স্পিড প্রায় ২ গুণ বাড়ানো হয়েছে
+// 🚀 ৩টি কুয়েরি একসাথে (Parallel) নিয়ে আসার মাধ্যমে পেজ লোড স্পিড বাড়ানো হয়েছে
 async function getLayoutData() {
   try {
     const [settings, storeControl, adminCount] = await Promise.all([
@@ -231,9 +231,13 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         </div>
       )}
 
-      {/* Header Component */}
+      {/* Header Component - 🟢 primaryColor প্রপ্স পাস করা হয়েছে */}
       {settings?.isHeaderVisible !== false && (
-        <Header logo={settings?.logoUrl} siteName={settings?.siteName} /> 
+        <Header 
+          logo={settings?.logoUrl} 
+          siteName={settings?.siteName} 
+          primaryColor={primaryColor} 
+        /> 
       )}
 
       {/* Main Content Section */}

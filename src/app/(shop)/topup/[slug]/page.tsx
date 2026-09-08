@@ -167,7 +167,7 @@ export default async function ProductPage({
     const hasBanner = Boolean(serializedProduct.bannerImage);
 
     return (
-      <main className="max-w-5xl mx-auto px-3 py-5 space-y-8 min-h-screen text-slate-800 font-sans">
+      <main className="max-w-7xl mx-auto px-3 py-5 space-y-8 min-h-screen text-slate-800 font-sans">
         
         {/* ব্যানার সেকশন - মোবাইলে মিনিমাম হাইট বাড়িয়ে দেওয়া হয়েছে */}
         <div 

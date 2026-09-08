@@ -70,7 +70,7 @@ export default function VariationSelector({
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [variations]);
 
-  /* 🎯 রিসেলার ও ডিসকাউন্ট প্রাইস হিসেব করার নির্ভুল লজিক */
+  /* 🎯 রিসেলার ও ডিসকাউন্ট প্রাইস হিসেব করার লজিক */
   const calculateFinalPrice = (basePrice: number) => {
     const isReseller = userRole?.toLowerCase()?.includes("reseller");
     if (isReseller && resellerPercentage > 0) {
@@ -127,14 +127,15 @@ export default function VariationSelector({
   }, [selectedId, activeVariations, resellerPercentage, userRole, selectedVar, currentSelectedPrice]);
 
   if (activeVariations.length === 0) {
-    return <div className="px-2.5 pb-5 text-slate-400 text-xs font-sans">No variations available.</div>;
+    return <div className="px-3 pb-4 text-slate-400 text-xs font-sans">No variations available.</div>;
   }
 
   return (
-    <div className="[padding:clamp(6px,2vw,10px)] mb-5 bg-white rounded-b-md">
+    <div className="p-2 sm:p-3 mb-4 sm:mb-5 bg-white rounded-b-md text-slate-800">
+      
       {/* 1. ভ্যারিয়েশন বাটনগুলোর গ্রিড */}
       <div
-        className={`grid [gap:clamp(6px,2vw,8px)] ${
+        className={`grid gap-2 sm:gap-2.5 ${
           isListView ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3"
         }`}
       >
@@ -159,12 +160,12 @@ export default function VariationSelector({
                   ? { borderColor: primaryColor }
                   : {}
               }
-              className={`group relative flex items-center justify-between [padding:clamp(8px,2.2vw,12px)] [min-height:clamp(52px,13vw,60px)] rounded-lg border text-left [gap:clamp(6px,2vw,10px)] w-full transition-all duration-150 ease-out outline-none overflow-hidden ${
+              className={`group relative flex items-center justify-between p-2.5 sm:p-3 min-h-[50px] sm:min-h-[56px] rounded-lg border text-left gap-1.5 sm:gap-2.5 w-full transition-all duration-150 ease-out outline-none overflow-hidden ${
                 isStockOut
                   ? "bg-white cursor-not-allowed select-none"
                   : isSelected
-                  ? ""
-                  : "border-slate-200 bg-white hover:border-slate-300 cursor-pointer active:scale-[0.97]"
+                  ? "shadow-2xs"
+                  : "border-slate-200 bg-white hover:border-slate-300 cursor-pointer active:scale-[0.98]"
               }`}
             >
               {/* 🔴 কোণাকুণি দাগ (স্টক আউট হলে) */}
@@ -177,34 +178,34 @@ export default function VariationSelector({
               {/* 🔴 "STOCK OUT" ব্যাজ */}
               {isStockOut && (
                 <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                  <span className="bg-[#ff8a8a] text-white [font-size:clamp(8px,1.8vw,10px)] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-sm">
+                  <span className="bg-[#ff8a8a] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shadow-xs">
                     STOCK OUT
                   </span>
                 </div>
               )}
 
-              {/* বাম পাশের কন্টেনার: আইকন/ডট এবং টেক্সট */}
-              <div className="flex items-center [gap:clamp(6px,2vw,8px)] min-w-0 z-10 flex-1">
+              {/* বাম পাশের কন্টেনার: আইকন/ডট এবং টাইটেল */}
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 z-10 flex-1">
                 {variationIcon ? (
                   <img
                     src={variationIcon}
                     alt="icon"
-                    className={`[width:clamp(14px,3.5vw,16px)] [height:clamp(14px,3.5vw,16px)] object-contain flex-shrink-0 rounded-md ${
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0 rounded-md ${
                       isStockOut ? "grayscale opacity-30" : ""
                     }`}
                   />
                 ) : isSelected && !isStockOut ? (
                   <span
                     style={{ backgroundColor: primaryColor, borderColor: primaryColor }}
-                    className="[width:clamp(10px,2.5vw,12px)] [height:clamp(10px,2.5vw,12px)] rounded-full flex-shrink-0 border transition-all duration-150"
+                    className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 border transition-all duration-150"
                   />
                 ) : null}
 
-                <div className="flex flex-wrap items-center [gap:clamp(4px,1.2vw,6px)] min-w-0 [font-size:clamp(11px,3vw,14px)] font-medium font-sans">
+                <div className="flex flex-wrap items-center gap-1 min-w-0 [font-size:clamp(11px,2.8vw,13.5px)] font-medium font-sans">
                   <span
                     style={isSelected && !isStockOut ? { color: primaryColor } : {}}
-                    className={`transition-colors leading-tight ${
-                      isStockOut ? "text-slate-400/50 font-normal" : isSelected ? "font-semibold" : "text-slate-500"
+                    className={`transition-colors leading-tight truncate ${
+                      isStockOut ? "text-slate-400/50 font-normal" : isSelected ? "font-bold" : "text-slate-600"
                     }`}
                   >
                     {item.title}
@@ -212,7 +213,7 @@ export default function VariationSelector({
 
                   {item.bonus && item.bonus > 0 ? (
                     <span
-                      className={`font-medium flex-shrink-0 [font-size:clamp(10px,2.6vw,12px)] ${
+                      className={`font-semibold flex-shrink-0 [font-size:clamp(9.5px,2.4vw,11.5px)] ${
                         isStockOut ? "text-slate-400/40" : "text-orange-500"
                       }`}
                     >
@@ -225,26 +226,26 @@ export default function VariationSelector({
               {/* ⚡ প্রাইস কন্টেনার */}
               <div
                 className={`flex items-center justify-end flex-shrink-0 select-none transition-all duration-200 ease-out z-10 whitespace-nowrap ${
-                  isSelected && !isStockOut ? "[margin-right:clamp(16px,4.5vw,20px)]" : "mr-0"
+                  isSelected && !isStockOut ? "mr-3.5 sm:mr-4" : "mr-0"
                 }`}
               >
-                <div className="flex items-center gap-1.5">
-                  {/* অফার প্রাইস থাকলে মূল (crossed-out) প্রাইসটি বামে থাকবে */}
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  {/* অফার প্রাইস থাকলে মূল প্রাইস কেটে দেখানো */}
                   {hasDiscount && (
-                    <span className="text-slate-400 [font-size:clamp(9px,2.2vw,11px)] font-medium line-through decoration-red-500/60 leading-none">
+                    <span className="text-slate-400 text-[9.5px] sm:text-[11px] font-medium line-through decoration-red-500/60 leading-none">
                       {originalPrice}
                     </span>
                   )}
 
-                  {/* মেইন অফার প্রাইস */}
+                  {/* মেইন প্রাইস */}
                   <span
-                    className={`[font-size:clamp(11px,2.8vw,14px)] font-bold flex items-center space-x-0.5 font-sans leading-none ${
+                    className={`[font-size:clamp(11px,2.8vw,13.5px)] font-bold flex items-center space-x-0.5 font-sans leading-none ${
                       isStockOut ? "text-yellow-500/40" : "text-orange-500"
                     }`}
                   >
                     <span>{currentPrice}</span>
                     <TakaSvg
-                      className={`[height:clamp(9px,2.2vw,12px)] w-auto ${
+                      className={`h-2.5 sm:h-3 w-auto ${
                         isStockOut ? "fill-yellow-500/40" : "fill-orange-500"
                       }`}
                     />
@@ -255,7 +256,7 @@ export default function VariationSelector({
               {/* সিলেক্টেড টিক মার্ক ব্যাজ */}
               <div
                 style={isSelected && !isStockOut ? { backgroundColor: primaryColor } : {}}
-                className={`absolute top-0 right-0 [width:clamp(20px,5.5vw,24px)] [height:clamp(20px,5.5vw,24px)] flex items-center justify-center transition-all duration-150 transform origin-top-right rounded-bl-xl ${
+                className={`absolute top-0 right-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center transition-all duration-150 transform origin-top-right rounded-bl-lg ${
                   isSelected && !isStockOut ? "scale-100 opacity-100" : "scale-0 opacity-0 pointer-events-none"
                 }`}
               >
@@ -265,7 +266,7 @@ export default function VariationSelector({
                   viewBox="0 0 24 24"
                   strokeWidth="3.5"
                   stroke="white"
-                  className="w-3 h-3"
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
@@ -277,9 +278,9 @@ export default function VariationSelector({
 
       {/* 2. 🔴 অপর্যাপ্ত ব্যালেন্স অ্যালার্ট বক্স */}
       {isBalanceInsufficient && (
-        <div className="mt-4 rounded-md border border-red-200 overflow-hidden bg-[#fff5f5]">
-          <div className="bg-[#f04438] text-white px-4 py-2 flex items-center gap-2 text-sm font-bold">
-            <svg className="w-4 h-4 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <div className="mt-3.5 sm:mt-4 rounded-lg border border-red-200 overflow-hidden bg-[#fff5f5] shadow-xs">
+          <div className="bg-[#f04438] text-white px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
                 d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
@@ -289,9 +290,9 @@ export default function VariationSelector({
             <span>Insufficient balance</span>
           </div>
 
-          <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-red-700">
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-              <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <div className="p-2.5 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 text-red-700">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium">
+              <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -306,7 +307,7 @@ export default function VariationSelector({
             <button
               type="button"
               onClick={onAddBalance}
-              className="w-full sm:w-auto bg-[#f04438] hover:bg-red-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
+              className="w-full sm:w-auto bg-[#f04438] hover:bg-red-600 active:scale-95 text-white font-bold text-xs px-3.5 py-2 rounded-md transition-all flex items-center justify-center gap-1 whitespace-nowrap shadow-xs cursor-pointer"
             >
               <span>+</span>
               <span>Add Money</span>
@@ -314,6 +315,7 @@ export default function VariationSelector({
           </div>
         </div>
       )}
+
     </div>
   );
 }
