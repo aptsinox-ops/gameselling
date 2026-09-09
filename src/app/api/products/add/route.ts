@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const variationsDesign = body.variationsDesign || "Grid";
     const description = body.description || "";
 
-    // অপショナル ও বুলিয়ান ফিল্ডস ম্যাপ করা
+    // অপশনাল ও বুলিয়ান ফিল্ডস ম্যাপ করা
     const isFreeFireAuto = Boolean(body.isFreeFireAuto);
     const isCoinSystem = Boolean(body.isCoinSystem);
     const isPremiumUser = Boolean(body.isPremiumUser);
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const bannerImagePath = body.bannerImage || null;
     const tagIconPath = body.tagIcon || null;
 
-    // 🟢 FIXED: dynamicFields যেন ফ্রন্টঅ্যান্ড পার্সিং এবং কন্ডিশনের সাথে ১০০% মিলে যায়
+    // 🟢 FIXED: dynamicFields যেন ফ্রন্টঅ্যান্ড পার্সিং এবং কন্ডিশনের সাথে ১০০% মিলে যায়
     let finalDynamicFields: any = ["Player UID"];
 
     // যদি ফ্রন্টঅ্যান্ডে অথবা ক্যাটাগরিতে নেম চেকার একটিভ করা থাকে, তবে ফিল্ডস অটোমেটিক "Player UID" সেট হবে
@@ -47,11 +47,9 @@ export async function POST(req: Request) {
     } else if (body.dynamicFields) {
       if (typeof body.dynamicFields === "string") {
         try {
-          // যদি ফ্রন্টএন্ড থেকে স্ট্রিংফাইড জেসন (JSON.stringify) আসে
           const parsed = JSON.parse(body.dynamicFields);
           finalDynamicFields = Array.isArray(parsed) ? parsed : [parsed];
         } catch (_) {
-          // যদি কমা দিয়ে আলাদা করা সাধারণ স্ট্রিং আসে (যেমন: "Player UID, Player Name")
           if (body.dynamicFields.includes(",")) {
             finalDynamicFields = body.dynamicFields.split(",").map((s: string) => s.trim());
           } else {
@@ -59,10 +57,8 @@ export async function POST(req: Request) {
           }
         }
       } else if (Array.isArray(body.dynamicFields)) {
-        // যদি ফ্রন্টএন্ড থেকে সরাসরি পিওর অ্যারে আসে
         finalDynamicFields = body.dynamicFields;
       } else if (typeof body.dynamicFields === "object" && body.dynamicFields !== null) {
-        // যদি ভুলবশত একক কোনো অবজেক্ট চলে আসে
         finalDynamicFields = [body.dynamicFields];
       }
     }
@@ -89,7 +85,7 @@ export async function POST(req: Request) {
         resellerPercentage,
         tutorialLink,
         isFreeFireAuto,
-        isUidNameChecker, // 👈 ফ্রন্টঅ্যান্ড শো চেকার এখন এই ডেটার ওপর নির্ভর করবে
+        isUidNameChecker,
         isCoinSystem,
         isPremiumUser,
         isBanner,
@@ -103,7 +99,7 @@ export async function POST(req: Request) {
         tagColor,
         tagBgColor,
         tagIcon: tagIconPath,
-        dynamicFields: finalDynamicFields // 👈 ব্যাকঅ্যান্ড ক্লিনিং শেষে সলিড অ্যারে হিসেবে সেভ হচ্ছে
+        dynamicFields: finalDynamicFields
       }
     });
 

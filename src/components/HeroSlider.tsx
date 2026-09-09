@@ -163,37 +163,46 @@ export default function HeroSlider({
       />
 
       {/* 🔵 নোটিশ বক্স */}
-      {showNotice && (
-        <div
-          style={{ backgroundColor: primaryColor }}
-          className="relative text-white p-4 pr-9 rounded-md text-left shadow-sm"
-        >
-          <button
-            onClick={() => setShowNotice(false)}
-            aria-label="Close notice"
-            className="absolute top-3 right-3 w-5 h-5 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              className="w-3 h-3"
-            >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
+{showNotice && (
+  <div
+    style={{ 
+      backgroundColor: primaryColor,
+      borderColor: 'rgba(255, 255, 255, 0.2)' 
+    }}
+    className="relative text-white p-2.5 pr-8 xs:p-3 xs:pr-9 sm:p-3.5 sm:pr-10 rounded-lg border text-left transition-all backdrop-blur-sm"
+  >
+    {/* Close Button */}
+    <button
+      onClick={() => setShowNotice(false)}
+      aria-label="Close notice"
+      className="absolute top-2.5 right-2.5 xs:top-3 xs:right-3 w-5 h-5 flex items-center justify-center rounded-md bg-white/10 hover:bg-white/20 active:scale-95 transition-all shrink-0"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        className="w-3 h-3 text-white"
+      >
+        <path d="M18 6L6 18M6 6l12 12" />
+      </svg>
+    </button>
 
-          <h2 className="font-hind text-[14px] sm:text-base font-bold mb-1.5 text-white">
-            Notice
-          </h2>
-          <p className="noto-sans-bengali text-[12px] sm:text-[13px] leading-relaxed text-white/95">
-            {finalNoticeText}
-          </p>
-        </div>
-      )}
+    {/* Header with Info Icon */}
+    <div className="flex items-center gap-1.5 mb-1">
+      <h2 className="font-hind text-xs xs:text-[13px] sm:text-sm font-bold text-white leading-none uppercase tracking-wide">
+        Notice
+      </h2>
+    </div>
+
+    {/* Notice Content */}
+    <p className="noto-sans-bengali text-[11px] xs:text-[12px] sm:text-[13px] leading-relaxed text-white/90 break-words font-normal">
+      {finalNoticeText}
+    </p>
+  </div>
+)}
 
       {/* Hero Slider Container */}
       <div className="w-full aspect-[1080/512] sm:aspect-[2.4/1] rounded-xl sm:rounded-2xl relative overflow-hidden bg-slate-900 shadow-sm">
@@ -252,7 +261,7 @@ export default function HeroSlider({
                     />
                     <div
                       style={{ backgroundColor: primaryColor }}
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn-animate px-3.5 py-2 sm:px-6 sm:py-3.5 rounded-lg flex items-center justify-center gap-2 text-white shadow-md border border-white/30 cursor-pointer"
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn-animate px-3.5 py-3.5 sm:px-6 sm:py-6 rounded-full flex items-center justify-center gap-2 text-white shadow-md border border-white/30 cursor-pointer"
                     >
                       <svg className="w-5 h-5 sm:w-8 sm:h-8 fill-current" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
@@ -330,7 +339,7 @@ export default function HeroSlider({
               style={{ backgroundColor: primaryColor }}
               className="flex items-center gap-1.5 sm:gap-2 text-white rounded-md hover:opacity-90 transition"
             >
-              <div className="[width:clamp(110px,32vw,225px)] [height:clamp(38px,10vw,47px)] flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2">
+              <div className="[width:clamp(110px,32vw,225px)] [height:clamp(37px,10vw,47px)] flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2">
                 {renderIcon(siteSettings?.heroBtn1Svg, siteSettings?.heroBtn1ImageUrl)}
                 <div className="flex flex-col leading-tight overflow-hidden">
                   <span className="[font-size:clamp(8px,2.2vw,10px)] font-light opacity-80 uppercase p-0 truncate">
