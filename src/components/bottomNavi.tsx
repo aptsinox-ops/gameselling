@@ -73,10 +73,19 @@ export default function BottomNav() {
     }
   }, [authStatus, session]);
 
-  // Dynamic Icon Renderer Function
+  // Dynamic Icon Renderer Function with responsive scaling
   const renderIcon = (iconStr: string, isActive: boolean) => {
     const currentColor = isActive ? primaryColor : "#64748b";
-    if (!iconStr) return <LucideIcons.Circle className="w-5 h-5" style={{ color: currentColor }} />;
+    
+    // Default Fallback
+    if (!iconStr) {
+      return (
+        <LucideIcons.Circle
+          className="w-[18px] h-[18px] xs:w-5 xs:h-5 sm:w-6 sm:h-6 transition-transform duration-200"
+          style={{ color: currentColor }}
+        />
+      );
+    }
 
     const trimmed = iconStr.trim();
 
@@ -84,7 +93,7 @@ export default function BottomNav() {
     if (trimmed.toLowerCase().includes("<svg")) {
       return (
         <div
-          className="w-5 h-5 flex items-center justify-center [&>svg]:w-5 [&>svg]:h-5 [&_svg_*]:fill-current [&_svg_*]:stroke-current"
+          className="w-[18px] h-[18px] xs:w-5 xs:h-5 sm:w-6 sm:h-6 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&_svg_*]:fill-current [&_svg_*]:stroke-current transition-transform duration-200"
           style={{ color: currentColor }}
           dangerouslySetInnerHTML={{ __html: trimmed }}
         />
@@ -105,23 +114,38 @@ export default function BottomNav() {
         maskPosition: "center",
       };
 
-      return <div className="w-5 h-5 transition-colors duration-200" style={maskStyle} />;
+      return (
+        <div
+          className="w-[18px] h-[18px] xs:w-5 xs:h-5 sm:w-6 sm:h-6 transition-colors duration-200"
+          style={maskStyle}
+        />
+      );
     }
 
     // Option C: Lucide Icon
     const IconComponent = (LucideIcons as unknown as Record<string, React.ElementType>)[trimmed];
 
     if (IconComponent) {
-      return <IconComponent className="w-5 h-5 stroke-[2]" style={{ color: currentColor }} />;
+      return (
+        <IconComponent
+          className="w-[18px] h-[18px] xs:w-5 xs:h-5 sm:w-6 sm:h-6 stroke-[2] transition-transform duration-200"
+          style={{ color: currentColor }}
+        />
+      );
     }
 
-    return <LucideIcons.LayoutGrid className="w-5 h-5" style={{ color: currentColor }} />;
+    return (
+      <LucideIcons.LayoutGrid
+        className="w-[18px] h-[18px] xs:w-5 xs:h-5 sm:w-6 sm:h-6 transition-transform duration-200"
+        style={{ color: currentColor }}
+      />
+    );
   };
 
   if (loading || navList.length === 0) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 h-17 px-1 flex items-center justify-around z-50 md:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.04)] select-none">
+    <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 h-14 xs:h-16 sm:h-17 pb-[env(safe-area-inset-bottom)] px-0.5 sm:px-2 flex items-center justify-around z-50 md:hidden shadow-[0_-2px_12px_rgba(0,0,0,0.05)] select-none">
       {navList.map((item) => {
         const isActive: boolean = Boolean(
           pathname &&
@@ -136,29 +160,31 @@ export default function BottomNav() {
 
         const navContent = (
           <div
-            className="flex flex-col items-center justify-center gap-0.5 w-full h-full relative transition-all duration-200 active:scale-95 cursor-pointer"
+            className="flex flex-col items-center justify-center gap-[2px] xs:gap-1 w-full h-full relative transition-all duration-200 active:scale-95 cursor-pointer py-1 px-0.5"
             style={{ color: activeColor }}
           >
-            {/* Icon */}
-            <div className="flex items-center justify-center">
+            {/* Icon Wrapper */}
+            <div className={`flex items-center justify-center transition-transform duration-200 ${isActive ? "scale-105" : "scale-100"}`}>
               {renderIcon(item.icon, isActive)}
             </div>
 
             {/* Label */}
             <span
-              className={`text-[10px] leading-tight tracking-tight ${
+              className={`text-[9px] xs:text-[10px] sm:text-xs leading-tight tracking-tight truncate max-w-full text-center px-0.5 ${
                 isActive ? "font-bold" : "font-medium"
               }`}
             >
               {item.name}
             </span>
 
-            {/* Active Indicator Bar (Text er thik niche) */}
-            {isActive && (
+            {/* Active Indicator Bar */}
+            {isActive ? (
               <span
-                className="w-3.5 h-[2.5px] rounded-full mt-0.5 transition-all duration-300"
+                className="w-3 xs:w-4 sm:w-5 h-[2px] xs:h-[2.5px] rounded-full transition-all duration-300 shrink-0"
                 style={{ backgroundColor: primaryColor }}
               />
+            ) : (
+              <span className="w-3 xs:w-4 sm:w-5 h-[2px] xs:h-[2.5px] bg-transparent shrink-0" />
             )}
           </div>
         );
@@ -170,7 +196,7 @@ export default function BottomNav() {
               href={item.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex justify-center items-center h-full"
+              className="flex-1 min-w-0 flex justify-center items-center h-full"
             >
               {navContent}
             </a>
@@ -181,7 +207,7 @@ export default function BottomNav() {
           <Link
             key={item.id}
             href={item.href || "/"}
-            className="flex-1 flex justify-center items-center h-full"
+            className="flex-1 min-w-0 flex justify-center items-center h-full"
           >
             {navContent}
           </Link>

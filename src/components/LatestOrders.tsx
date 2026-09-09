@@ -1,4 +1,7 @@
-import Image from "next/image";
+"use client";
+
+import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface OrderItem {
   id: string;
@@ -30,7 +33,6 @@ export default function LatestOrders({
 }: LatestOrdersProps) {
   if (!orders || orders.length === 0) return null;
 
-  // তারিখ ফরম্যাট করার হেলপার ফাংশন
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date
@@ -45,7 +47,6 @@ export default function LatestOrders({
       .replace(",", "");
   };
 
-  // স্ট্যাটাস অনুযায়ী ব্যাজের নাম, ব্যাকগ্রাউন্ড কালার ও টিকচিহ্ন নির্ধারণ
   const getStatusInfo = (status: string) => {
     const s = status?.toUpperCase() || "";
 
@@ -56,21 +57,13 @@ export default function LatestOrders({
         showCheckmark: true,
       };
     }
-    if (s === "CANCELLED") {
+    if (s === "CANCELLED" || s === "FAILED") {
       return {
-        label: "Cancelled",
+        label: s === "CANCELLED" ? "Cancelled" : "Failed",
         bgClass: "bg-rose-500 text-white",
         showCheckmark: false,
       };
     }
-    if (s === "FAILED") {
-      return {
-        label: "Failed",
-        bgClass: "bg-rose-500 text-white",
-        showCheckmark: false,
-      };
-    }
-    // Default: PENDING বা PROCESSING হলে
     return {
       label: "Processing",
       bgClass: "bg-amber-500 text-white",
@@ -86,7 +79,6 @@ export default function LatestOrders({
           Latest Orders
         </h2>
 
-        {/* Custom HR Divider Line */}
         <div className="flex items-center justify-center gap-2 max-w-[200px] sm:max-w-xs mx-auto my-1.5 sm:my-2">
           <div
             className="h-[1.5px] flex-1 opacity-70"
@@ -115,7 +107,7 @@ export default function LatestOrders({
       <div className="space-y-2.5 sm:space-y-3">
         {orders.map((order) => {
           const userName = order.user?.name || "Customer";
-          const initial = userName.charAt(0).toUpperCase();
+          const firstLetter = userName.trim() ? userName.trim().charAt(0).toUpperCase() : "C";
           const itemTitle =
             order.variation?.title || order.product?.name || "Topup";
           const bonus = order.variation?.bonus || 0;
@@ -128,22 +120,20 @@ export default function LatestOrders({
             >
               {/* Left Side: Avatar & Info */}
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                {order.user?.image ? (
-                  <Image
-                    src={order.user.image}
+                {/* Header এর মতই Avatar কম্পোনেন্ট যা সুন্দরভাবে Google/Profile পিকচার লোড করবে */}
+                <Avatar className="w-9 h-9 sm:w-11 sm:h-11 border border-slate-100 shrink-0">
+                  <AvatarImage
+                    src={order.user?.image || ""}
                     alt={userName}
-                    width={44}
-                    height={44}
-                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover shrink-0 border border-slate-100"
+                    className="object-cover"
                   />
-                ) : (
-                  <div
-                    className="w-9 h-9 sm:w-11 sm:h-11 rounded-full text-white font-bold flex items-center justify-center shrink-0 text-sm sm:text-lg shadow-none"
+                  <AvatarFallback
                     style={{ backgroundColor: primaryColor }}
+                    className="text-white font-bold text-sm sm:text-base uppercase"
                   >
-                    {initial}
-                  </div>
-                )}
+                    {firstLetter}
+                  </AvatarFallback>
+                </Avatar>
 
                 <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-slate-800 text-xs sm:text-base truncate leading-tight sm:leading-snug">
@@ -187,7 +177,7 @@ export default function LatestOrders({
                   {statusInfo.label}
                 </span>
                 <span className="text-[8px] sm:text-xs text-slate-400 mt-1 sm:mt-0 text-right whitespace-nowrap">
-                 {formatDate(order.updatedAt || order.createdAt)}
+                  {formatDate(order.updatedAt || order.createdAt)}
                 </span>
               </div>
             </div>

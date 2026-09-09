@@ -146,42 +146,77 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         backgroundColor: backgroundColor
       } as React.CSSProperties}
     >
-      <style dangerouslySetInnerHTML={{__html: `
-        :root {
-          --primary-color: ${primaryColor};
-          --bg-color: ${backgroundColor};
-        }
-        .font-bengali {
-          font-family: var(--font-bengali), ${urbanistFont};
-        }
+<style dangerouslySetInnerHTML={{__html: `
+  :root {
+    --primary-color: ${primaryColor};
+    --bg-color: ${backgroundColor};
+    --button-bg: ${buttonBgColor};
+  }
 
-        @keyframes fabPulse {
-          0% { box-shadow: 0 0 0 0 ${pulseShadowColor}, 0 10px 25px -5px rgba(0,0,0,0.3); transform: scale(1); }
-          70% { box-shadow: 0 0 0 20px rgba(0, 0, 0, 0), 0 20px 35px -5px rgba(0,0,0,0.2); transform: scale(1.04); }
-          100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0), 0 10px 25px -5px rgba(0,0,0,0.3); transform: scale(1); }
-        }
-        @keyframes bubbleFloat {
-          0% { transform: translateY(0) scale(0.6); opacity: 0; }
-          20% { opacity: 0.9; }
-          80% { opacity: 0.8; }
-          100% { transform: translateY(-40px) scale(1); opacity: 0; }
-        }
-        .iconic-fab-animate {
-          animation: fabPulse 2.5s infinite ease-in-out;
-        }
-        .sms-bubble {
-          position: absolute;
-          background: ${buttonBgColor};
-          border: 1.5px solid rgba(255,255,255,0.8);
-          border-radius: 50%;
-          pointer-events: none;
-          opacity: 0;
-        }
-        .bubble-1 { width: 10px; height: 10px; bottom: 10px; left: -8px; animation: bubbleFloat 3s infinite ease-in-out 0s; }
-        .bubble-2 { width: 14px; height: 14px; top: -5px; right: 2px; animation: bubbleFloat 3.5s infinite ease-in-out 0.8s; }
-        .bubble-3 { width: 8px; height: 8px; bottom: 2px; right: -10px; animation: bubbleFloat 2.8s infinite ease-in-out 1.5s; }
-        .bubble-4 { width: 11px; height: 11px; top: 15px; left: -12px; animation: bubbleFloat 3.2s infinite ease-in-out 2.2s; }
-      `}} />
+  .font-bengali {
+    font-family: var(--font-bengali), ${urbanistFont}, sans-serif;
+  }
+
+  /* প্রফেশনাল এবং স্মুথ পালস এনিমেশন (নো বাবুল) */
+  @keyframes proFabPulse {
+    0% {
+      box-shadow: 0 0 0 0 ${pulseShadowColor}, 0 8px 20px -4px rgba(0, 0, 0, 0.25);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 14px rgba(0, 0, 0, 0), 0 12px 28px -4px rgba(0, 0, 0, 0.2);
+      transform: scale(1.03);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0), 0 8px 20px -4px rgba(0, 0, 0, 0.25);
+      transform: scale(1);
+    }
+  }
+
+  /* রিফ্লেকশন শাইন এনিমেশন */
+  @keyframes shineEffect {
+    0% { left: -100%; }
+    20% { left: 200%; }
+    100% { left: 200%; }
+  }
+
+  /* মেইন FAB বাটন স্টাইল */
+  .iconic-fab-animate {
+    animation: proFabPulse 3s infinite ease-in-out;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* মাউস হোভার ইফেক্ট */
+  .iconic-fab-animate:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 14px 30px -5px ${pulseShadowColor}, 0 8px 15px -5px rgba(0,0,0,0.3) !important;
+  }
+
+  .iconic-fab-animate:active {
+    transform: translateY(0) scale(0.97) !important;
+  }
+
+  /* প্রফেশনাল লাইট গ্লাস ও শাইন কাভার */
+  .iconic-fab-animate::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transform: skewX(-25deg);
+    animation: shineEffect 4s infinite ease-in-out;
+    pointer-events: none;
+  }
+`}} />
 
       {/* 🔴 SITE CLOSED DIALOG */}
       {showSiteClosedModal && (
@@ -249,33 +284,29 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       {settings?.isFooterVisible !== false && <Footer settings={settings} />}
 
       {/* FAB Floating Action Button */}
-      {settings?.activeFloatingButton && (settings?.whatsappNumber || settings?.telegramUsername) && (
-        <div className="fixed bottom-20 md:bottom-8 right-6 z-50 flex items-center justify-center">
-          <div className="sms-bubble bubble-1"></div>
-          <div className="sms-bubble bubble-2"></div>
-          <div className="sms-bubble bubble-3"></div>
-          <div className="sms-bubble bubble-4"></div>
-
-          <a
-            href={getFloatingLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-16 h-16 rounded-full text-white flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 iconic-fab-animate border border-white/20 select-none cursor-pointer"
-            style={{ backgroundColor: buttonBgColor }}
-          >
-            {isWhatsapp && (
-              <svg className="w-9 h-9 fill-current drop-shadow-md" viewBox="0 0 24 24">
-                <path d="M12.004 2c-5.517 0-9.994 4.476-9.994 9.994 0 1.764.46 3.422 1.265 4.877L2 22l5.308-1.393c1.4.76 2.99 1.192 4.69 1.192 5.52 0 10.003-4.476 10.003-9.994S17.522 2 12.004 2zm5.735 14.331c-.247.694-1.428 1.325-1.996 1.41-.51.077-1.155.11-1.724-.117-.342-.136-.9-.319-1.606-.624-2.97-1.283-4.912-4.48-5.06-4.678-.148-.198-1.209-1.607-1.209-3.067 0-1.459.761-2.176 1.033-2.472.272-.297.593-.371.79-.371.198 0 .396.002.57.01.182.01.427-.072.668.506.248.594.843 2.053.918 2.202.075.149.124.321.025.52-.099.197-.149.32-.297.495-.149.173-.311.385-.445.518-.149.149-.304.312-.13.61.173.297.767 1.264 1.645 2.048.17.151.343.3.514.444.821.688 1.455.918 1.751 1.066.297.148.471.124.644-.074.173-.198.767-.89 1.04-1.287.272-.396.544-.321.916-.173.371.148 2.355 1.11 2.479 1.259.124.148.124.742.025 1.436z"/>
-              </svg>
-            )}
-            {isTelegram && (
-              <svg className="w-9 h-9 fill-current drop-shadow-md pr-1" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.75-1.41 6.63-1.41 6.63-.1.46-.37.57-.76.35l-2.15-1.58-1.04 1c-.11.11-.21.21-.43.21l.15-2.2 4.01-3.62c.17-.16-.04-.24-.26-.1l-4.96 3.12-2.13-.67c-.46-.14-.47-.46.1-.68l8.32-3.21c.39-.14.72.1.57.75z"/>
-              </svg>
-            )}
-          </a>
-        </div>
+{settings?.activeFloatingButton && (settings?.whatsappNumber || settings?.telegramUsername) && (
+  <div className="fixed bottom-16 sm:bottom-20 md:bottom-8 right-4 sm:right-6 z-50 flex items-center justify-center">
+    <a
+      href={getFloatingLink()}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 rounded-full text-white flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 iconic-fab-animate border border-white/20 select-none cursor-pointer shrink-0"
+      style={{ backgroundColor: buttonBgColor }}
+      aria-label="Contact Support"
+    >
+      {isWhatsapp && (
+        <svg className="w-7 h-7 xs:w-8 xs:h-8 md:w-9 md:h-9 fill-current" viewBox="0 0 24 24">
+          <path d="M12.004 2c-5.517 0-9.994 4.476-9.994 9.994 0 1.764.46 3.422 1.265 4.877L2 22l5.308-1.393c1.4.76 2.99 1.192 4.69 1.192 5.52 0 10.003-4.476 10.003-9.994S17.522 2 12.004 2zm5.735 14.331c-.247.694-1.428 1.325-1.996 1.41-.51.077-1.155.11-1.724-.117-.342-.136-.9-.319-1.606-.624-2.97-1.283-4.912-4.48-5.06-4.678-.148-.198-1.209-1.607-1.209-3.067 0-1.459.761-2.176 1.033-2.472.272-.297.593-.371.79-.371.198 0 .396.002.57.01.182.01.427-.072.668.506.248.594.843 2.053.918 2.202.075.149.124.321.025.52-.099.197-.149.32-.297.495-.149.173-.311.385-.445.518-.149.149-.304.312-.13.61.173.297.767 1.264 1.645 2.048.17.151.343.3.514.444.821.688 1.455.918 1.751 1.066.297.148.471.124.644-.074.173-.198.767-.89 1.04-1.287.272-.396.544-.321.916-.173.371.148 2.355 1.11 2.479 1.259.124.148.124.742.025 1.436z"/>
+        </svg>
       )}
+      {isTelegram && (
+        <svg className="w-7 h-7 xs:w-8 xs:h-8 md:w-9 md:h-9 fill-current pr-0.5" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.75-1.41 6.63-1.41 6.63-.1.46-.37.57-.76.35l-2.15-1.58-1.04 1c-.11.11-.21.21-.43.21l.15-2.2 4.01-3.62c.17-.16-.04-.24-.26-.1l-4.96 3.12-2.13-.67c-.46-.14-.47-.46.1-.68l8.32-3.21c.39-.14.72.1.57.75z"/>
+        </svg>
+      )}
+    </a>
+  </div>
+)}
 
       <BottomNav />
     </div>
