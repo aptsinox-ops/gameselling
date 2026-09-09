@@ -54,13 +54,13 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
 
           {/* Category Title Header - Clean Black Text */}
           <div className="text-center">
-            <h2 className="inline-block font-extrabold text-black tracking-tight text-xl xs:text-2xl sm:text-3xl md:text-4xl">
+            <h2 className="inline-block font-extrabold text-black tracking-tight text-xl xs:text-2xl sm:text-2xl md:text-4xl">
               {category.name}
             </h2>
           </div>
 
           {/* Product Grid - Mobile: 3 columns | PC: 7 columns */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2.5 sm:gap-4 md:gap-5 justify-center">
+          <div className="p-5 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 gap-15 sm:gap-25 md:gap-25 justify-center">
             {category.products?.map((product) => (
               <Link 
                 key={product.id}
@@ -68,11 +68,11 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                 className="group flex flex-col items-center text-center cursor-pointer transition-transform duration-200 active:scale-95 w-full"
               >
                 {/* Image Container - Full Column Width Auto-Scaling */}
-                <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gray-100">
+                <div className="relative aspect-square w-full rounded-md overflow-hidden bg-gray-100">
                   <img 
                     src={product.image || "https://placehold.co/400x400/262626/ffffff?text=Game"} 
                     alt={product.name} 
-                    className="w-full h-full object-cover object-center rounded-2xl transition-transform duration-300 ease-out group-hover:scale-105"
+                    className="w-full h-full object-cover object-center rounded-md transition-transform duration-300 ease-out group-hover:scale-105"
                     onError={(e) => {
                       e.currentTarget.src = `https://placehold.co/400x400/1e1e2e/ffffff?text=${encodeURIComponent(product.name)}`;
                     }}
@@ -113,8 +113,8 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                 </div>
 
                 {/* Product Title - Scaled Font */}
-                <div className="mt-1.5 xs:mt-2 px-0.5 w-full flex items-center justify-center">
-                  <p className="text-[11px] xs:text-[12px] sm:text-[13.5px] md:text-[14px] font-medium text-black tracking-tight line-clamp-2 leading-tight sm:leading-snug group-hover:opacity-80 transition-opacity">
+                <div className="mt-3 xs:mt-4 px-0.5 w-full flex items-center justify-center">
+                  <p className="text-[12px] xs:text-[13px] sm:text-[14.5px] md:text-[14px] font-semibold text-black tracking-tight line-clamp-2 leading-tight sm:leading-snug group-hover:opacity-80 transition-opacity">
                     {product.name}
                   </p>
                 </div>
