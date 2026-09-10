@@ -64,7 +64,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
     : "#000000";
 
   return (
-    <div className="space-y-8 sm:space-y-12 py-6 max-w-[1400px] mx-auto px-2.5 sm:px-6">
+    <div className="space-y-4 sm:space-y-6 py-6 max-w-[1400px] mx-auto px-2.5 sm:px-6">
       {sortedCategories.map((category, index) => (
         <div key={index} className="space-y-4 sm:space-y-6">
 
