@@ -276,13 +276,13 @@ export default function HeroSlider({
                           style={{
                             background: `linear-gradient(to bottom, ${footerTopColor}, ${footerBottomColor})`,
                           }}
-                          className="relative w-[44px] h-[44px] xs:w-[50px] xs:h-[50px] sm:w-[68px] sm:h-[68px] rounded-full flex items-center justify-center text-white shadow-xl cursor-pointer transition-transform duration-200 group-hover:scale-105 shrink-0"
+                          className="relative w-[50px] h-[50px] xs:w-[50px] xs:h-[50px] sm:w-[68px] sm:h-[68px] rounded-full flex items-center justify-center text-white shadow-xl cursor-pointer transition-transform duration-200 group-hover:scale-105 shrink-0"
                         >
                           <svg
                             viewBox="0 0 448 512"
                             xmlns="http://www.w3.org/2000/svg"
                             aria-hidden="true"
-                            className="w-[14px] h-[16px] xs:w-[16px] xs:h-[18px] sm:w-[22px] sm:h-[25px] fill-current text-white translate-x-[1.5px] shrink-0"
+                            className="w-[18px] h-[20px] xs:w-[20px] xs:h-[22px] sm:w-[22px] sm:h-[25px] fill-current text-white translate-x-[1.5px] shrink-0"
                           >
                             <path d="M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z" />
                           </svg>
