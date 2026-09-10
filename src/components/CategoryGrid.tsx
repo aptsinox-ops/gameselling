@@ -76,7 +76,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
           </div>
 
           {/* Product Grid - Mobile: 3 columns | PC: 7 columns */}
-          <div className="p-5 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 gap-15 sm:gap-25 md:gap-25 justify-center">
+          <div className="p-0 sm:p-5 md:p-5 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 gap-5 sm:gap-10 md:gap-25 justify-center">
             {category.products?.map((product) => (
               <Link 
                 key={product.id}
