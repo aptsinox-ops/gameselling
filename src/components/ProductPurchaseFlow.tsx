@@ -140,11 +140,37 @@ export default function ProductPurchaseFlow({
     }
   }, [basePrice]);
 
+  /* ⏱️ ১০ সেকেন্ডে ১-১০০% প্রোগ্রেস বার ও সমাপ্তির useEffect */
+  useEffect(() => {
+    if (isDialogOpen && dialogStep === "loading") {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 1; // ১০০ms পর পর ১% বাড়বে (১০০ * ১০০ms = ১০,০০০ms = ১০ সেকেন্ড)
+        });
+      }, 100);
+
+      return () => clearInterval(interval);
+    }
+  }, [isDialogOpen, dialogStep]);
+
+  /* 🎯 ১০ সেকেন্ড পর প্রোগ্রেস ১০০% হলে সাকসেস স্টেপ সেট করা */
+  useEffect(() => {
+    if (progress >= 100 && dialogStep === "loading" && apiResponse) {
+      setDialogStep("success");
+      setIsSubmitting(false);
+    }
+  }, [progress, dialogStep, apiResponse]);
+
   const showNameChecker = useMemo(() => {
     return product?.productType === "UID" || product?.isUidNameChecker === true;
   }, [product]);
 
-  /* 🧹 ক্লিন ফিল্ড নেম (অতিরিক্ত "Enter " টেক্সট বাদ দেওয়া) */
+  /* 🧹 ক্লিন ফিল্ড নেম (অতিরিক্ত "Enter " টেক্সট বাদ দেওয়া) */
   const cleanFields = useMemo(() => {
     let rawFields: string[] = [];
     if (fields && Array.isArray(fields) && fields.length > 0) {
@@ -249,33 +275,6 @@ export default function ProductPurchaseFlow({
     handleBuyNowSubmit();
   };
 
-  /* ⚡ 120 FPS Ultra Smooth Progress Bar Animation Helper */
-  const startSmoothProgress = (targetPercent: number, durationMs: number, onComplete?: () => void) => {
-    let startVal = progress;
-    let startTime: number | null = null;
-
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      const progressRatio = Math.min(timeElapsed / durationMs, 1);
-
-      // Smooth Ease-Out Cubic Curve for 120 FPS
-      const easeValue = 1 - Math.pow(1 - progressRatio, 3);
-      const currentVal = Math.min(startVal + (targetPercent - startVal) * easeValue, 100);
-
-      setProgress(currentVal);
-
-      if (timeElapsed < durationMs) {
-        animFrameRef.current = requestAnimationFrame(animate);
-      } else if (onComplete) {
-        onComplete();
-      }
-    };
-
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    animFrameRef.current = requestAnimationFrame(animate);
-  };
-
   const handleBuyNowSubmit = async () => {
     if (isSubmitting) return;
 
@@ -299,7 +298,6 @@ export default function ProductPurchaseFlow({
     setIsSubmitting(true);
     setIsDialogOpen(true);
     setDialogStep("loading");
-    setProgress(5);
 
     const calculatedTotalPrice = Math.round(basePrice * paymentDetails.quantity * 100) / 100;
     const validUserId = userId ? Number(userId) : null;
@@ -334,8 +332,6 @@ export default function ProductPurchaseFlow({
     }
 
     // ২. Wallet Payment Flow
-    startSmoothProgress(75, 800);
-
     try {
       const response = await fetch("/api/order", {
         method: "POST",
@@ -374,13 +370,7 @@ export default function ProductPurchaseFlow({
       });
       setOrderTime(bdFormattedTime);
 
-      // Smooth progress to 100% and show success dialog without auto redirecting
-      startSmoothProgress(100, 400, () => {
-        setTimeout(() => {
-          setDialogStep("success");
-          setIsSubmitting(false);
-        }, 150);
-      });
+      // ১০ সেকেন্ড প্রোগ্রেস শেষ হওয়া পর্যন্ত অপেক্ষা করবে, তারপর useEffect নিজে থেকেই success স্টেপে পরিবর্তন করে নেবে।
 
     } catch (err: any) {
       console.error("Order submission error:", err);
@@ -576,252 +566,237 @@ export default function ProductPurchaseFlow({
         </section>
       )}
 
-      {/* 🚀 120 FPS ULTRA-SMOOTH PROCESS & RESULT DIALOG MODAL */}
-      {isDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-[380px] sm:max-w-md bg-white rounded-2xl p-5 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto scale-95 sm:scale-100 origin-center">
+{/* 🚀 ULTRA-SMOOTH PROCESS & RESULT DIALOG MODAL */}
+{isDialogOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="relative w-full max-w-[380px] sm:max-w-md bg-white rounded-2xl p-5 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto scale-95 sm:scale-100 origin-center">
+      
+      {/* ক্লোজ বাটন */}
+      <button 
+        onClick={() => { if (!isSubmitting) setIsDialogOpen(false); }}
+        disabled={isSubmitting}
+        className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-20 z-10"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      {/* ১. প্রোগ্রেস ও অ্যানিমেটেড লোডিং স্ক্রিন */}
+      {dialogStep === "loading" && (
+        <div className="py-4 flex flex-col items-center justify-center text-center">
+          
+          <h3 className="text-lg font-extrabold text-slate-900 tracking-tight mt-2">Processing Order</h3>
+          <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-6 leading-relaxed">
+            Please wait a moment while we process your request securely.
+          </p>
+          
+          {/* 🚀 Smooth Progress Bar Line */}
+          <div className="w-full px-1 relative flex items-center justify-between mb-6">
             
-            {/* ক্লোজ বাটন */}
-            <button 
-              onClick={() => { if (!isSubmitting) setIsDialogOpen(false); }}
-              disabled={isSubmitting}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-20 z-10"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
+            {/* Background Track & Animated Fill Bar */}
+            <div className="absolute left-5 right-5 top-3.5 h-1.5 bg-slate-100 rounded-full z-0 overflow-hidden">
+              <div 
+                style={{ 
+                  width: `${Math.min(Math.max(progress, 0), 100)}%`,
+                  transition: "width 100ms linear"
+                }}
+                className="h-full bg-emerald-500 rounded-full shadow-xs"
+              />
+            </div>
 
-            {/* ১. প্রোগ্রেস ও অ্যানিমেটেড লোডিং স্ক্রিন */}
-            {dialogStep === "loading" && (
-              <div className="py-4 flex flex-col items-center justify-center text-center">
-                
-                {/* 🌀 অ্যানিমেটেড টপ আইকন */}
-                <div className="relative mb-4 flex items-center justify-center min-h-[64px]">
-
-                <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Processing Order</h3>
-                <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-6 leading-relaxed">
-                  Please wait a moment while we process your request securely.
-                </p>
-                
-                {/* 🚀 Ultra 120 FPS Hardware-Accelerated Smooth Progress Bar */}
-                <div className="w-full px-1 relative flex items-center justify-between mb-6">
-                  <div className="absolute left-5 right-5 top-3.5 h-1.5 bg-slate-100 rounded-full z-0" />
-                  
-                  <div 
-                    style={{ 
-                      width: `calc(${Math.min(Math.max(progress, 0), 100)}% - 20px)`,
-                      transition: "width 120ms cubic-bezier(0.25, 0.1, 0.25, 1)"
-                    }}
-                    className="absolute left-5 top-3.5 h-1.5 bg-emerald-500 rounded-full z-0 origin-left shadow-xs"
-                  />
-
-                  {/* Step 1 */}
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
-                      progress >= 0 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
-                    }`}>
-                      {progress > 15 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      ) : "1"}
-                    </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 0 ? "text-emerald-600" : "text-slate-400"}`}>Select</span>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
-                      progress >= 50 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
-                    }`}>
-                      {progress > 65 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      ) : "2"}
-                    </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 50 ? "text-emerald-600" : "text-slate-400"}`}>Review</span>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
-                      progress >= 95 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
-                    }`}>
-                      3
-                    </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 95 ? "text-emerald-600" : "text-slate-400"}`}>Payment</span>
-                  </div>
-                </div>
-
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[11px] font-semibold text-slate-600">
-                    {progress < 40 && "Processing account info..."}
-                    {progress >= 40 && progress < 80 && "Packaging variation items..."}
-                    {progress >= 80 && "Finalizing wallet payment..."}
-                  </span>
-                </div>
+            {/* Step 1 */}
+            <div className="flex flex-col items-center relative z-10">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
+                progress >= 0 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
+              }`}>
+                {progress > 15 ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : "1"}
               </div>
-            )}
+              <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 0 ? "text-emerald-600" : "text-slate-400"}`}>Select</span>
+            </div>
 
-            {/* ২. এরর স্ক্রিন */}
-            {dialogStep === "insufficient" && (
-              <div className="py-4 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 ring-8 ring-rose-50/50 shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="18" y2="18"></line></svg>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-                    {errorMessage === "This Method are not allow This Time" ? "Action Blocked" : "Order Failed"}
-                  </h3>
-                  <div className="mt-1.5 inline-block bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold px-3 py-1 rounded-full">
-                    {errorMessage === "Insufficient Balance" ? "Insufficient Wallet Balance" : errorMessage === "Out of Stock" ? "Product Out of Stock" : errorMessage}
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                  {errorMessage === "Insufficient Balance" 
-                    ? "আপনার ওয়ালেট ব্যালেন্স পর্যাপ্ত নয়। দয়া করে অ্যাকাউন্টে ব্যালেন্স রিচার্জ করে পুনরায় চেষ্টা করুন।" 
-                    : errorMessage === "Out of Stock" 
-                    ? "দুঃখিত, এই ভ্যারিয়েশনটি বর্তমানে স্টকআউট! অ্যাডমিন প্যানেল থেকে এর স্টক বাড়িয়ে পুনরায় চেষ্টা করুন।" 
-                    : errorMessage === "This Method are not allow This Time"
-                    ? "This Method are not allow This Time"
-                    : "অর্ডারটি সম্পন্ন করা সম্ভব হয়নি। দয়া করে ব্যালেন্স রিচার্জ অথবা পুনরায় চেষ্টা করুন।"}
-                </p>
-
-                <button 
-                  onClick={() => setIsDialogOpen(false)}
-                  className="w-full mt-2 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs tracking-wide transition shadow-sm active:scale-[0.98]"
-                >
-                  Close & Retry
-                </button>
+            {/* Step 2 */}
+            <div className="flex flex-col items-center relative z-10">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
+                progress >= 50 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
+              }`}>
+                {progress > 65 ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : "2"}
               </div>
-            )}
+              <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 50 ? "text-emerald-600" : "text-slate-400"}`}>Review</span>
+            </div>
 
-            {/* ৩. সফল পারচেজ ও ইনভয়েস স্ক্রিন (No BG, No Border Layout) */}
-            {dialogStep === "success" && (
-              <div className="flex flex-col items-center text-center pt-2">
-                
-                {/* 🎯 dynamic Icon & Color (Voucher vs Non-Voucher) */}
-                <div className="my-1 flex items-center justify-center">
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white ring-8 shadow-lg transition-all duration-300 animate-in zoom-in-75 ${
-                    isVoucherProduct 
-                      ? "bg-emerald-500 ring-emerald-50 shadow-emerald-500/20" 
-                      : "bg-amber-500 ring-amber-50 shadow-amber-500/20"
-                  }`}>
-                    {isVoucherProduct ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <ClockTimerIcon />
-                    )}
-                  </div>
-                </div>
-
-                {/* 🎯 Title (Order Processing / Order Complete) */}
-                <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-3">
-                  {isVoucherProduct ? "Order Complete" : "Order Processing"}
-                </h2>
-
-                {/* 🎯 "Check Your Order History" Link */}
-                <div className="mt-1">
-                  <Link 
-                    href={isVoucherProduct ? "/code" : "/myorder"} 
-                    className="text-xs text-slate-500 hover:text-blue-600 hover:underline font-semibold transition-colors duration-150 inline-block cursor-pointer"
-                  >
-                    Check Your Order History
-                  </Link>
-                </div>
-
-                {/* 📄 Clean Invoice Content Area (No Outer BG, No Border) */}
-                <div className="w-full my-5 text-left text-xs sm:text-sm space-y-2.5 text-slate-700 font-medium">
-                  
-                  {/* Order ID */}
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Order ID:</span>
-                    <span className="font-mono font-bold text-slate-800 break-all select-all">
-                      {apiResponse?.orderId || apiResponse?.receiptNo || apiResponse?.order?.id || "N/A"}
-                    </span>
-                  </div>
-
-                  {/* Product */}
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Product:</span>
-                    <span className="font-bold text-slate-800">{product?.name || "N/A"}</span>
-                  </div>
-
-                  {/* Item */}
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Item:</span>
-                    <span className="font-bold text-slate-800">
-                      {selectedVariation?.title || selectedVariation?.name || "N/A"}
-                      {paymentDetails.quantity > 1 ? ` x ${paymentDetails.quantity}` : ""}
-                    </span>
-                  </div>
-
-                  {/* Amount */}
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Amount:</span>
-                    <span className="font-extrabold text-slate-900">
-                      ৳{apiResponse?.totalPrice || paymentDetails.totalPrice || (basePrice * paymentDetails.quantity)}
-                    </span>
-                  </div>
-
-                  {/* Payment by */}
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Payment by:</span>
-                    <span className="font-semibold text-slate-800">{paymentDetails.paymentMethod}</span>
-                  </div>
-
-                  {/* Voucher Code ( if Voucher ) OR JSON Input Values ( if Non-Voucher ) */}
-                  {isVoucherProduct ? (
-                    <div className="flex justify-between items-center py-0.5">
-                      <span className="text-slate-500">Voucher Code:</span>
-                      <span className="font-mono font-bold text-emerald-600 break-all select-all">
-                        {apiResponse?.voucherCode || apiResponse?.code || "N/A"}
-                      </span>
-                    </div>
-                  ) : (
-                    inputValues && Object.keys(inputValues).length > 0 && (
-                      Object.entries(inputValues).map(([key, val]) => (
-                        <div key={key} className="flex justify-between items-center py-0.5">
-                          <span className="text-slate-500 capitalize">{key}:</span>
-                          <span className="font-bold text-slate-800 break-all">{String(val)}</span>
-                        </div>
-                      ))
-                    )
-                  )}
-
-                  {/* Date */}
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Date:</span>
-                    <span className="text-slate-700">{orderTime}</span>
-                  </div>
-
-                </div>
-
-                {/* 🔘 Bottom Action Buttons */}
-                <div className="w-full grid grid-cols-2 gap-3 pt-2">
-                  <Link
-                    href="/"
-                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition active:scale-[0.98]"
-                  >
-                    <HomeIcon /> Back to Home
-                  </Link>
-
-                  <Link
-                    href={isVoucherProduct ? "/code" : "/myorder"}
-                    style={{ backgroundColor: isVoucherProduct ? "#10b981" : (primaryColor || "#f59e0b") }}
-                    className="w-full py-2.5 text-white font-semibold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center gap-1 hover:opacity-90 transition shadow-sm active:scale-[0.98]"
-                  >
-                    Order List
-                  </Link>
-                </div>
-
+            {/* Step 3 */}
+            <div className="flex flex-col items-center relative z-10">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
+                progress >= 95 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
+              }`}>
+                3
               </div>
-            )}
+              <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 95 ? "text-emerald-600" : "text-slate-400"}`}>Payment</span>
+            </div>
+          </div>
 
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-semibold text-slate-600">
+              {progress < 40 && "Processing account info..."}
+              {progress >= 40 && progress < 80 && "Packaging variation items..."}
+              {progress >= 80 && "Finalizing wallet payment..."}
+            </span>
           </div>
         </div>
       )}
+
+      {/* ২. এরর স্ক্রিন */}
+      {dialogStep === "insufficient" && (
+        <div className="py-4 flex flex-col items-center justify-center text-center space-y-4">
+          <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 ring-8 ring-rose-50/50 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="18" y2="18"></line></svg>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+              {errorMessage === "This Method are not allow This Time" ? "Action Blocked" : "Order Failed"}
+            </h3>
+            <div className="mt-1.5 inline-block bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold px-3 py-1 rounded-full">
+              {errorMessage === "Insufficient Balance" ? "Insufficient Wallet Balance" : errorMessage === "Out of Stock" ? "Product Out of Stock" : errorMessage}
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+            {errorMessage === "Insufficient Balance" 
+              ? "আপনার ওয়ালেট ব্যালেন্স পর্যাপ্ত নয়। দয়া করে অ্যাকাউন্টে ব্যালেন্স রিচার্জ করে পুনরায় চেষ্টা করুন।" 
+              : errorMessage === "Out of Stock" 
+              ? "দুঃখিত, এই ভ্যারিয়েশনটি বর্তমানে স্টকআউট! অ্যাডমিন প্যানেল থেকে এর স্টক বাড়িয়ে পুনরায় চেষ্টা করুন।" 
+              : errorMessage === "This Method are not allow This Time"
+              ? "This Method are not allow This Time"
+              : "অর্ডারটি সম্পন্ন করা সম্ভব হয়নি। দয়া করে ব্যালেন্স রিচার্জ অথবা পুনরায় চেষ্টা করুন।"}
+          </p>
+
+          <button 
+            onClick={() => setIsDialogOpen(false)}
+            className="w-full mt-2 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs tracking-wide transition shadow-sm active:scale-[0.98]"
+          >
+            Close & Retry
+          </button>
+        </div>
+      )}
+
+      {/* ৩. সফল পারচেজ ও ইনভয়েস স্ক্রিন */}
+      {dialogStep === "success" && (
+        <div className="flex flex-col items-center text-center pt-2">
+          
+          <div className="my-1 flex items-center justify-center">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white ring-8 shadow-lg transition-all duration-300 animate-in zoom-in-75 ${
+              isVoucherProduct 
+                ? "bg-emerald-500 ring-emerald-50 shadow-emerald-500/20" 
+                : "bg-amber-500 ring-amber-50 shadow-amber-500/20"
+            }`}>
+              {isVoucherProduct ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <ClockTimerIcon />
+              )}
+            </div>
+          </div>
+
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-3">
+            {isVoucherProduct ? "Order Complete" : "Order Processing"}
+          </h2>
+
+          <div className="mt-1">
+            <Link 
+              href={isVoucherProduct ? "/code" : "/myorder"} 
+              className="text-xs text-slate-500 hover:text-blue-600 hover:underline font-semibold transition-colors duration-150 inline-block cursor-pointer"
+            >
+              Check Your Order History
+            </Link>
+          </div>
+
+          <div className="w-full my-5 text-left text-xs sm:text-sm space-y-2.5 text-slate-700 font-medium">
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-slate-500">Order ID:</span>
+              <span className="font-mono font-bold text-slate-800 break-all select-all">
+                {apiResponse?.orderId || apiResponse?.receiptNo || apiResponse?.order?.id || "N/A"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-slate-500">Product:</span>
+              <span className="font-bold text-slate-800">{product?.name || "N/A"}</span>
+            </div>
+
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-slate-500">Item:</span>
+              <span className="font-bold text-slate-800">
+                {selectedVariation?.title || selectedVariation?.name || "N/A"}
+                {paymentDetails.quantity > 1 ? ` x ${paymentDetails.quantity}` : ""}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-slate-500">Amount:</span>
+              <span className="font-extrabold text-slate-900">
+                ৳{apiResponse?.totalPrice || paymentDetails.totalPrice || (basePrice * paymentDetails.quantity)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-slate-500">Payment by:</span>
+              <span className="font-semibold text-slate-800">{paymentDetails.paymentMethod}</span>
+            </div>
+
+            {isVoucherProduct ? (
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-slate-500">Voucher Code:</span>
+                <span className="font-mono font-bold text-emerald-600 break-all select-all">
+                  {apiResponse?.voucherCode || apiResponse?.code || "N/A"}
+                </span>
+              </div>
+            ) : (
+              inputValues && Object.keys(inputValues).length > 0 && (
+                Object.entries(inputValues).map(([key, val]) => (
+                  <div key={key} className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500 capitalize">{key}:</span>
+                    <span className="font-bold text-slate-800 break-all">{String(val)}</span>
+                  </div>
+                ))
+              )
+            )}
+
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-slate-500">Date:</span>
+              <span className="text-slate-700">{orderTime}</span>
+            </div>
+          </div>
+
+          <div className="w-full grid grid-cols-2 gap-3 pt-2">
+            <Link
+              href="/"
+              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition active:scale-[0.98]"
+            >
+              <HomeIcon /> Back to Home
+            </Link>
+
+            <Link
+              href={isVoucherProduct ? "/code" : "/myorder"}
+              style={{ backgroundColor: isVoucherProduct ? "#10b981" : (primaryColor || "#f59e0b") }}
+              className="w-full py-2.5 text-white font-semibold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center gap-1 hover:opacity-90 transition shadow-sm active:scale-[0.98]"
+            >
+              Order List
+            </Link>
+          </div>
+
+        </div>
+      )}
+
+    </div>
+  </div>
+)}
     </div>
   );
 }
