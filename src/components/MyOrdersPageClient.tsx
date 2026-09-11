@@ -103,7 +103,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
   }, [filteredOrders, currentPage]);
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-2 sm:p-6 font-sans">
+    <div className="w-full min-h-screen text-slate-800 p-2 sm:p-6 font-sans">
       <div className="max-w-5xl mx-auto">
 
         {/* MAIN SINGLE CARD WRAPPER */}
@@ -184,6 +184,8 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
             </div>
           </div>
 
+          <hr className="mt-2.5 border-slate-200 w-full" />
+          
           {/* ORDER CARDS LIST */}
           <div className="space-y-4 pt-2">
             {filteredOrders.length === 0 ? (

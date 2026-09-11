@@ -228,6 +228,8 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                       </span>
                     </div>
 
+                    <hr className="mt-2.5 border-slate-200 w-full" />
+
                     {/* Details list: PC te Horizontal / Mobile te Vertical */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm pt-1">
                       <div>
