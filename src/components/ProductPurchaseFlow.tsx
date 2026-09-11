@@ -152,7 +152,7 @@ export default function ProductPurchaseFlow({
           }
           return prev + 1; // ৩০ms পর পর ১% বাড়াব (১০০ * ৩০ms = ৩,০০০ms = ৩ সেকেন্ড)
         });
-      }, 30);
+      }, 20);
 
       return () => clearInterval(interval);
     }
