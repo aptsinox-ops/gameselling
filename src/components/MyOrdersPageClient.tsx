@@ -19,6 +19,7 @@ interface MyOrdersClientProps {
   primaryColor: string;
 }
 
+// 🔹 ৩টি করে আইটেম দেখানোর জন্য সেট করা হয়েছে
 const ITEMS_PER_PAGE = 3;
 
 export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersClientProps) {
@@ -62,7 +63,6 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // Fix Search Logic for Order ID / Receipt No
       if (searchOrderId.trim()) {
         const cleanQuery = searchOrderId.trim().toLowerCase().replace(/^#/, "");
         const rawId = String(order.id || "").toLowerCase();
@@ -107,178 +107,185 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
   }, [filteredOrders, currentPage]);
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-3 sm:p-6 font-sans">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-2 sm:p-6 font-sans">
+      <div className="max-w-3xl mx-auto">
 
-        {/* BREADCRUMB */}
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <span className="text-slate-400">Home</span>
-          <span className="text-slate-300">/</span>
-          <span className="font-semibold text-lg pb-0.5 border-b-2" style={{ color: primaryColor, borderColor: primaryColor }}>
-            Orders
-          </span>
-        </div>
+        {/* 🔹 MAIN SINGLE CARD WRAPPER */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
 
-        {/* FILTER SECTION */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-5 shadow-none space-y-3">
-          <h2 className="text-sm font-bold text-slate-700 tracking-wide uppercase">Filter Orders</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          {/* Title Header */}
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">My Orders</h1>
+
+          {/* FILTER SECTION */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold text-slate-700 tracking-wide uppercase">Filter Orders</h2>
             
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Order ID</label>
-              <input
-                type="text"
-                placeholder="Order ID"
-                value={searchOrderId}
-                onChange={(e) => setSearchOrderId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400"
-              />
-            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Order ID</label>
+                <input
+                  type="text"
+                  placeholder="Order ID"
+                  value={searchOrderId}
+                  onChange={(e) => setSearchOrderId(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
 
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Package</label>
-              <input
-                type="text"
-                placeholder="Package"
-                value={searchPackage}
-                onChange={(e) => setSearchPackage(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400"
-              />
-            </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Package</label>
+                <input
+                  type="text"
+                  placeholder="Package"
+                  value={searchPackage}
+                  onChange={(e) => setSearchPackage(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
 
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
-              <select
-                value={searchStatus}
-                onChange={(e) => setSearchStatus(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400"
-              >
-                <option value="All Status">All Status</option>
-                <option value="Complete">Complete</option>
-                <option value="Processing">Processing</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">From Date</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">To Date</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
-              />
-            </div>
-
-          </div>
-        </div>
-
-        {/* ORDER CARDS LIST */}
-        <div className="space-y-4">
-          {filteredOrders.length === 0 ? (
-            <div className="text-center py-12 bg-white border border-slate-200 rounded-lg text-slate-400 text-sm">
-              No orders found.
-            </div>
-          ) : (
-            paginatedOrders.map((order) => {
-              const statusMeta = getStatusMeta(order.status);
-              const orderQuantity = order.quantity || 1;
-
-              return (
-                <div
-                  key={order.id}
-                  className="w-full bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-none transition-all space-y-4"
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
+                <select
+                  value={searchStatus}
+                  onChange={(e) => setSearchStatus(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400"
                 >
-                  {/* Card Top Line */}
-                  <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-sm sm:text-base">
-                        Order ID: #{order.receiptNo || order.id.substring(0, 8)}
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5 font-medium">
-                        {formatDateTimeBD(order.createdAt)}
-                      </p>
-                    </div>
+                  <option value="All Status">All Status</option>
+                  <option value="Complete">Complete</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
 
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusMeta.bg} ${statusMeta.textCol}`}>
-                      {statusMeta.text}
-                    </span>
-                  </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
+                />
+              </div>
 
-                  {/* Card Details Grid */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">PACKAGE:</span>
-                      <span className="font-bold text-slate-700">
-                        {order.variation?.title || order.product?.name || "Item Package"}
-                      </span>
-                    </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
+                />
+              </div>
 
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">QUANTITY:</span>
-                      <span className="font-bold text-slate-700">{orderQuantity}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">PRICE:</span>
-                      <span className="font-bold" style={{ color: primaryColor }}>
-                        {order.totalPrice} TK
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Account / Input Details (UID, User Name, etc.) */}
-                  {order.inputValues && typeof order.inputValues === "object" && (
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3 space-y-1">
-                      {Object.entries(order.inputValues).map(([key, value]) => (
-                        <p key={key} className="text-xs font-medium text-slate-600 break-all">
-                          <span className="font-bold text-slate-700 uppercase">{key}:</span> {String(value)}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* PAGINATION CONTROL */}
-        {filteredOrders.length > 0 && (
-          <div className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 rounded-lg text-xs font-medium text-slate-600">
-            <div>
-              Page {currentPage} of {totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Previous
-              </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-              </button>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  style={{ backgroundColor: primaryColor }}
+                  className="w-full py-2 px-4 text-xs font-semibold text-white rounded-xl transition-opacity hover:opacity-90"
+                >
+                  Filter
+                </button>
+              </div>
             </div>
           </div>
-        )}
 
+          {/* ORDER CARDS LIST */}
+          <div className="space-y-4 pt-2">
+            {filteredOrders.length === 0 ? (
+              <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs">
+                No orders found.
+              </div>
+            ) : (
+              paginatedOrders.map((order) => {
+                const statusMeta = getStatusMeta(order.status);
+                const orderQuantity = order.quantity || 1;
+
+                return (
+                  <div
+                    key={order.id}
+                    className="w-full bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5"
+                  >
+                    {/* Card Top Line */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                          Serial NO: #{order.receiptNo || order.id.substring(0, 8)}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                          {formatDateTimeBD(order.createdAt)}
+                        </p>
+                      </div>
+
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusMeta.bg} ${statusMeta.textCol}`}>
+                        {statusMeta.text}
+                      </span>
+                    </div>
+
+                    {/* Card Details */}
+                    <div className="space-y-2 text-xs sm:text-sm pt-1">
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase block">PACKAGE:</span>
+                        <span className="font-bold text-slate-800">
+                          {order.variation?.title || order.product?.name || "Item Package"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase block">QUANTITY:</span>
+                        <span className="font-bold text-slate-800">{orderQuantity}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase block">PRICE:</span>
+                        <span className="font-bold" style={{ color: primaryColor }}>
+                          {order.totalPrice} TK
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Account / Input Details */}
+                    {order.inputValues && typeof order.inputValues === "object" && (
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-1">
+                        {Object.entries(order.inputValues).map(([key, value]) => (
+                          <p key={key} className="text-xs font-medium text-slate-600 break-all">
+                            <span className="font-bold text-slate-700 uppercase">{key}:</span> {String(value)}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* PAGINATION CONTROL */}
+          {filteredOrders.length > 0 && (
+            <div className="flex items-center justify-between pt-2 text-xs font-medium text-slate-500">
+              <div>
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  className="px-3.5 py-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  className="px-3.5 py-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );

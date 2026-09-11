@@ -20,6 +20,7 @@ interface CodePageClientProps {
   primaryColor: string;
 }
 
+// 🔹 ৩টি করে আইটেম দেখানোর জন্য সেট করা হয়েছে
 const ITEMS_PER_PAGE = 3;
 
 export default function CodePageClient({ orders, primaryColor }: CodePageClientProps) {
@@ -65,7 +66,6 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
   // Filter Logic
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // Fix Search Logic for Order ID / Receipt No
       if (searchOrderId.trim()) {
         const cleanQuery = searchOrderId.trim().toLowerCase().replace(/^#/, "");
         const rawId = String(order.id || "").toLowerCase();
@@ -118,221 +118,228 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-3 sm:p-6 font-sans">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-2 sm:p-6 font-sans">
+      <div className="max-w-3xl mx-auto">
+        
+        {/* 🔹 MAIN SINGLE CARD WRAPPER */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
+          
+          {/* Header Title */}
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">My Orders</h1>
 
-        {/* 🔹 BREADCRUMB / TITLE */}
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <span className="text-slate-400">Home</span>
-          <span className="text-slate-300">/</span>
-          <span className="font-semibold text-lg pb-0.5 border-b-2" style={{ color: primaryColor, borderColor: primaryColor }}>
-            Codes
-          </span>
-        </div>
-
-        {/* 🔹 FILTER SECTION */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-5 shadow-none space-y-3">
-          <h2 className="text-sm font-bold text-slate-700 tracking-wide uppercase">Filter Orders</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          {/* 🔹 FILTER SECTION */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold text-slate-700 tracking-wide uppercase">Filter Orders</h2>
             
-            {/* Order ID Input */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Order ID</label>
-              <input
-                type="text"
-                placeholder="Order ID"
-                value={searchOrderId}
-                onChange={(e) => setSearchOrderId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400"
-              />
-            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Order ID</label>
+                <input
+                  type="text"
+                  placeholder="Order ID"
+                  value={searchOrderId}
+                  onChange={(e) => setSearchOrderId(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
 
-            {/* Package Input */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Package</label>
-              <input
-                type="text"
-                placeholder="Package"
-                value={searchPackage}
-                onChange={(e) => setSearchPackage(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400"
-              />
-            </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Package</label>
+                <input
+                  type="text"
+                  placeholder="Package"
+                  value={searchPackage}
+                  onChange={(e) => setSearchPackage(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
 
-            {/* Status Dropdown */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
-              <select
-                value={searchStatus}
-                onChange={(e) => setSearchStatus(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400"
-              >
-                <option value="All Status">All Status</option>
-                <option value="Complete">Complete</option>
-                <option value="Processing">Processing</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-
-            {/* From Date */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">From Date</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
-              />
-            </div>
-
-            {/* To Date */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">To Date</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
-              />
-            </div>
-
-          </div>
-        </div>
-
-        {/* 🔹 ORDER CARDS LIST */}
-        <div className="space-y-4">
-          {filteredOrders.length === 0 ? (
-            <div className="text-center py-12 bg-white border border-slate-200 rounded-lg text-slate-400 text-sm">
-              No voucher codes found.
-            </div>
-          ) : (
-            paginatedOrders.map((order) => {
-              const statusMeta = getStatusMeta(order.status);
-              const orderQuantity = order.quantity || 1;
-
-              const codesArray = order.voucherCode
-                ? order.voucherCode.split(/\r?\n|,/).map((c) => c.trim()).filter(Boolean)
-                : [];
-
-              return (
-                <div
-                  key={order.id}
-                  className="w-full bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-none transition-all space-y-4"
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
+                <select
+                  value={searchStatus}
+                  onChange={(e) => setSearchStatus(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400"
                 >
-                  <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-sm sm:text-base">
-                        Order ID: #{order.receiptNo || order.id.substring(0, 8)}
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5 font-medium">
-                        {formatDateTimeBD(order.createdAt)}
-                      </p>
-                    </div>
+                  <option value="All Status">All Status</option>
+                  <option value="Complete">Complete</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
 
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusMeta.bg} ${statusMeta.textCol}`}>
-                      {statusMeta.text}
-                    </span>
-                  </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
+                />
+              </div>
 
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">PACKAGE:</span>
-                      <span className="font-bold text-slate-700">
-                        {order.variation?.title || order.product?.name || "Voucher Pack"}
-                      </span>
-                    </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-slate-400 text-slate-600"
+                />
+              </div>
 
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">QUANTITY:</span>
-                      <span className="font-bold text-slate-700">{orderQuantity}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">PRICE:</span>
-                      <span className="font-bold" style={{ color: primaryColor }}>
-                        {order.totalPrice} TK
-                      </span>
-                    </div>
-                  </div>
-
-                  {statusMeta.isComplete && codesArray.length > 0 && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <a
-                        href="https://shop.garena.my/?app=100067"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 text-xs font-semibold text-white rounded-lg transition-opacity hover:opacity-90 inline-flex items-center justify-center"
-                        style={{ backgroundColor: primaryColor }}
-                      >
-                        Redeem
-                      </a>
-
-                      <button
-                        onClick={() => handleCopyCodes(codesArray)}
-                        className="px-4 py-2 text-xs font-semibold text-white rounded-lg transition-opacity hover:opacity-90 inline-flex items-center justify-center"
-                        style={{ backgroundColor: primaryColor }}
-                      >
-                        {codesArray.length > 1 ? "Copy All" : "Copy"}
-                      </button>
-                    </div>
-                  )}
-
-                  {statusMeta.isComplete && codesArray.length > 0 ? (
-                    <div className="bg-slate-50/80 border border-slate-200/80 rounded-lg p-3 space-y-2">
-                      <p className="text-xs font-bold text-slate-600">{codesArray.length} Code:</p>
-                      {codesArray.map((code, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-mono font-medium text-slate-800 break-all"
-                        >
-                          {code}
-                        </div>
-                      ))}
-                    </div>
-                  ) : statusMeta.isProcessing ? (
-                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700 font-medium">
-                      Processing, please wait for code...
-                    </div>
-                  ) : null}
-
-                  {statusMeta.isComplete && codesArray.length > 0 && (
-                    <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-600 font-medium break-all">
-                      <span className="font-bold mr-1">Info:</span>
-                      {codesArray.join(" ")}
-                    </div>
-                  )}
-
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* 🔹 PAGINATION CONTROL */}
-        {filteredOrders.length > 0 && (
-          <div className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 rounded-lg text-xs font-medium text-slate-600">
-            <div>
-              Page {currentPage} of {totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Previous
-              </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-              </button>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  style={{ backgroundColor: primaryColor }}
+                  className="w-full py-2 px-4 text-xs font-semibold text-white rounded-xl transition-opacity hover:opacity-90"
+                >
+                  Filter
+                </button>
+              </div>
             </div>
           </div>
-        )}
 
+          {/* 🔹 ORDER CARDS LIST */}
+          <div className="space-y-4 pt-2">
+            {filteredOrders.length === 0 ? (
+              <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs">
+                No voucher codes found.
+              </div>
+            ) : (
+              paginatedOrders.map((order) => {
+                const statusMeta = getStatusMeta(order.status);
+                const orderQuantity = order.quantity || 1;
+
+                const codesArray = order.voucherCode
+                  ? order.voucherCode.split(/\r?\n|,/).map((c) => c.trim()).filter(Boolean)
+                  : [];
+
+                return (
+                  <div
+                    key={order.id}
+                    className="w-full bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5"
+                  >
+                    {/* Header line inside card */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                          Serial NO: #{order.receiptNo || order.id.substring(0, 8)}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                          {formatDateTimeBD(order.createdAt)}
+                        </p>
+                      </div>
+
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusMeta.bg} ${statusMeta.textCol}`}>
+                        {statusMeta.text}
+                      </span>
+                    </div>
+
+                    {/* Details list */}
+                    <div className="space-y-2 text-xs sm:text-sm pt-1">
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase block">PACKAGE:</span>
+                        <span className="font-bold text-slate-800">
+                          {order.variation?.title || order.product?.name || "Voucher Pack"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase block">QUANTITY:</span>
+                        <span className="font-bold text-slate-800">{orderQuantity}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase block">PRICE:</span>
+                        <span className="font-bold" style={{ color: primaryColor }}>
+                          {order.totalPrice} TK
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    {statusMeta.isComplete && codesArray.length > 0 && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <a
+                          href="https://shop.garena.my/?app=100067"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 text-xs font-semibold text-white rounded-xl transition-opacity hover:opacity-90 inline-flex items-center justify-center"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          Redeem Code
+                        </a>
+
+                        <button
+                          onClick={() => handleCopyCodes(codesArray)}
+                          className="px-4 py-2 text-xs font-semibold text-white rounded-xl transition-opacity hover:opacity-90 inline-flex items-center justify-center"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {codesArray.length > 1 ? "Copy All" : "Copy Code"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Codes Container */}
+                    {statusMeta.isComplete && codesArray.length > 0 ? (
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
+                        <p className="text-xs font-bold text-slate-700">{codesArray.length} Code:</p>
+                        {codesArray.map((code, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono font-medium text-slate-800 break-all"
+                          >
+                            {code}
+                          </div>
+                        ))}
+                      </div>
+                    ) : statusMeta.isProcessing ? (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs text-amber-700 font-medium">
+                        Processing, please wait for code...
+                      </div>
+                    ) : null}
+
+                    {/* Red Info Box */}
+                    {statusMeta.isComplete && codesArray.length > 0 && (
+                      <div className="bg-red-50/80 border border-red-100 rounded-xl p-3 text-xs text-red-600 font-medium break-all leading-relaxed">
+                        <span className="font-bold mr-1">Info:</span>
+                        {codesArray.join(" ")}
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* 🔹 PAGINATION CONTROL */}
+          {filteredOrders.length > 0 && (
+            <div className="flex items-center justify-between pt-2 text-xs font-medium text-slate-500">
+              <div>
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  className="px-3.5 py-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  className="px-3.5 py-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );
