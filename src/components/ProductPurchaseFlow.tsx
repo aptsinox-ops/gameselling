@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,7 +47,23 @@ const FireIcon = () => (
   </svg>
 );
 
-function ProductPurchaseFlow({
+/* 🕒 Timing/Clock Icon Non-Voucher Product এর জন্য */
+const ClockTimerIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+  </svg>
+);
+
+/* 🏠 Home Icon */
+const HomeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+  </svg>
+);
+
+export default function ProductPurchaseFlow({
   dbVariations,
   isListView,
   product,
@@ -83,6 +99,14 @@ function ProductPurchaseFlow({
   const [progress, setProgress] = useState<number>(0);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [orderTime, setOrderTime] = useState<string>("");
+
+  const animFrameRef = useRef<number | null>(null);
+
+  /* 🔹 চেক প্রোডাক্ট টাইপ ভাউচার কিনা */
+  const isVoucherProduct = useMemo(() => {
+    const pType = product?.productType?.toLowerCase() || "";
+    return pType === "voucher" || pType === "vouchers";
+  }, [product]);
 
   /* 🎯 offerPrice ক্যালকুলেশন লজিক */
   const calculateEffectivePrice = useCallback((varObj: any) => {
@@ -120,13 +144,18 @@ function ProductPurchaseFlow({
     return product?.productType === "UID" || product?.isUidNameChecker === true;
   }, [product]);
 
+  /* 🧹 ক্লিন ফিল্ড নেম (অতিরিক্ত "Enter " টেক্সট বাদ দেওয়া) */
   const cleanFields = useMemo(() => {
+    let rawFields: string[] = [];
     if (fields && Array.isArray(fields) && fields.length > 0) {
-      return fields.map(f => (typeof f === "object" && f !== null) ? (f.label || f.name || "Field") : String(f));
+      rawFields = fields.map(f => (typeof f === "object" && f !== null) ? (f.label || f.name || "Field") : String(f));
     } else if (fields && typeof fields === "string") {
-      return [fields];
+      rawFields = [fields];
+    } else {
+      rawFields = ["Player UID"];
     }
-    return ["Player UID"];
+
+    return rawFields.map((f) => f.replace(/^enter\s+/i, "").trim());
   }, [fields]);
 
   const handleInputChange = useCallback((fieldName: string, value: string) => {
@@ -197,9 +226,54 @@ function ProductPurchaseFlow({
 
   const isVariationSelected = basePrice > 0;
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("ভাউচার কোডটি সফলভাবে কপি হয়েছে!");
+  /* 🔴 ব্যালেন্স কম আছে কিনা চেক করার লজিক (Wallet পেমেন্টের ক্ষেত্রে) */
+  const isInsufficientBalance = useMemo(() => {
+    if (!isLoggedIn) return false;
+    if (paymentDetails.paymentMethod === "Instant") return false;
+    if (!isVariationSelected) return false;
+    return paymentDetails.userBalance < paymentDetails.totalPrice;
+  }, [isLoggedIn, paymentDetails.paymentMethod, paymentDetails.userBalance, paymentDetails.totalPrice, isVariationSelected]);
+
+  /* 🎯 বাটনে ক্লিক হ্যান্ডলার */
+  const handleMainButtonClick = () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
+    if (isInsufficientBalance) {
+      router.push("/add-money");
+      return;
+    }
+
+    handleBuyNowSubmit();
+  };
+
+  /* ⚡ 120 FPS Ultra Smooth Progress Bar Animation Helper */
+  const startSmoothProgress = (targetPercent: number, durationMs: number, onComplete?: () => void) => {
+    let startVal = progress;
+    let startTime: number | null = null;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const progressRatio = Math.min(timeElapsed / durationMs, 1);
+
+      // Smooth Ease-Out Cubic Curve for 120 FPS
+      const easeValue = 1 - Math.pow(1 - progressRatio, 3);
+      const currentVal = Math.min(startVal + (targetPercent - startVal) * easeValue, 100);
+
+      setProgress(currentVal);
+
+      if (timeElapsed < durationMs) {
+        animFrameRef.current = requestAnimationFrame(animate);
+      } else if (onComplete) {
+        onComplete();
+      }
+    };
+
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    animFrameRef.current = requestAnimationFrame(animate);
   };
 
   const handleBuyNowSubmit = async () => {
@@ -225,11 +299,12 @@ function ProductPurchaseFlow({
     setIsSubmitting(true);
     setIsDialogOpen(true);
     setDialogStep("loading");
-    setProgress(0);
+    setProgress(5);
 
     const calculatedTotalPrice = Math.round(basePrice * paymentDetails.quantity * 100) / 100;
     const validUserId = userId ? Number(userId) : null;
 
+    // ১. Instant Payment Flow
     if (paymentDetails.paymentMethod === "Instant") {
       try {
         const response = await fetch("/api/instant-payment", {
@@ -255,57 +330,65 @@ function ProductPurchaseFlow({
       }
       setIsDialogOpen(false);
       setIsSubmitting(false);
-      router.push("/myorder");
       return;
     }
 
-    fetch("/api/order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productId: product.id,
-        variationId: selectedVariation.id,
-        unitPrice: basePrice,
-        totalPrice: calculatedTotalPrice,
-        inputValues,
-        quantity: paymentDetails.quantity,
-        userId: validUserId,
-        paymentMethod: "Wallet",
-      }),
-    }).catch((err) => console.error("Background order error:", err));
+    // ২. Wallet Payment Flow
+    startSmoothProgress(75, 800);
 
-    const quickSteps = [30, 65, 100];
-    let i = 0;
-    const quickTimer = setInterval(() => {
-      setProgress(quickSteps[i]);
-      i++;
-      if (i >= quickSteps.length) {
-        clearInterval(quickTimer);
+    try {
+      const response = await fetch("/api/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          variationId: selectedVariation.id,
+          unitPrice: basePrice,
+          totalPrice: calculatedTotalPrice,
+          inputValues,
+          quantity: paymentDetails.quantity,
+          userId: validUserId,
+          paymentMethod: "Wallet",
+        }),
+      });
 
-        setTimeout(() => {
-          const bdTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
-          setOrderTime(bdTime);
-          toast("Order Are Placed!", { icon: <SuccessIcon /> });
+      const resData = await response.json();
 
-          setIsDialogOpen(false);
-          setIsSubmitting(false);
-
-          const redirectPath =
-            product?.productType?.toLowerCase() === "voucher" ||
-            product?.productType?.toLowerCase() === "vouchers"
-              ? "/code"
-              : "/myorder";
-
-          router.push(redirectPath);
-        }, 400);
+      if (!response.ok) {
+        setErrorMessage(resData.message || "Order Failed");
+        setDialogStep("insufficient");
+        setIsSubmitting(false);
+        return;
       }
-    }, 250);
-  };
 
-  const displayProductType = useMemo(() => {
-    if (product?.productType === "UID" || product?.productType === "UID Topup") return "FreeFire";
-    return product?.productType || "Topup";
-  }, [product]);
+      setApiResponse(resData);
+      
+      const bdFormattedTime = new Date().toLocaleString("en-US", { 
+        timeZone: "Asia/Dhaka",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+      setOrderTime(bdFormattedTime);
+
+      // Smooth progress to 100% and show success dialog without auto redirecting
+      startSmoothProgress(100, 400, () => {
+        setTimeout(() => {
+          setDialogStep("success");
+          setIsSubmitting(false);
+        }, 150);
+      });
+
+    } catch (err: any) {
+      console.error("Order submission error:", err);
+      setErrorMessage("অর্ডার প্রসেস করতে ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।");
+      setDialogStep("insufficient");
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8 pt-4 pb-24 lg:pb-8">
@@ -341,95 +424,93 @@ function ProductPurchaseFlow({
         {/* Right Side: Step 2, Step 3 & Buy Now Button */}
         <div className="lg:col-span-5 space-y-6">
           {/* ২. অ্যাকাউন্ট সেকশন */}
-<section className="relative bg-white rounded-md border border-slate-200 pt-5 sm:pt-6">
-  {/* Number Badge */}
-  <div 
-    style={{ backgroundColor: primaryColor }} 
-    className="absolute -top-5 sm:-top-6 left-3.5 sm:left-4 z-10 flex items-center justify-center text-white rounded-full [width:clamp(34px,8vw,44px)] [height:clamp(34px,8vw,44px)] [font-size:clamp(15px,4.5vw,20px)] font-bold"
-  >
-    2
-  </div>
-
-  {/* Header Section */}
-  <div className="w-full pb-2.5 sm:pb-3">
-    <h2 
-      style={{ color: primaryColor }} 
-      className="[font-size:clamp(14px,3.8vw,18px)] mt-0.5 font-bold px-3.5 sm:px-5"
-    >
-      Account Info
-    </h2>
-    <hr className="mt-2.5 border-slate-200 w-full" />
-  </div>
-  
-  {/* Input Fields & Content Area */}
-  <div className="px-3.5 sm:px-5 pb-5 sm:pb-6 space-y-3.5 sm:space-y-4">
-    {cleanFields.map((labelName, index) => (
-      <div key={index} className="space-y-1 sm:space-y-1.5">
-        <label className="[font-size:clamp(11px,2.7vw,13.5px)] font-semibold text-slate-600 block">
-          Enter {labelName}
-        </label>
-        <input 
-          type="text" 
-          value={inputValues[labelName] || ""}
-          onChange={(e) => handleInputChange(labelName, e.target.value)}
-          onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
-          className="w-full px-3.5 py-2.5 sm:py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 [font-size:clamp(12px,3vw,15px)] transition-all bg-slate-50/30 focus:bg-white text-slate-800 placeholder:text-slate-400" 
-          placeholder={`Enter your ${labelName}`}
-        />
-      </div>
-    ))}
-
-    {/* UID Checker Section */}
-    {showNameChecker && (
-      <div className="pt-1">
-        <button
-          type="button"
-          onClick={handleCheckUIDName}
-          disabled={ffNameLoading}
-          style={{ backgroundColor: primaryColor }}
-          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold [font-size:clamp(11px,2.8vw,13.5px)] text-white tracking-wider hover:opacity-90 transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed uppercase shadow-sm flex items-center justify-center"
-        >
-          {ffNameLoading ? "Processing..." : "CLICK TO CHECK"}
-        </button>
-
-        {/* Player Details Result Card */}
-        {playerData && (
-          <div className="mt-3.5 sm:mt-4 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/60 shadow-sm transition-all duration-300">
+          <section className="relative bg-white rounded-md border border-slate-200 pt-5 sm:pt-6">
             <div 
               style={{ backgroundColor: primaryColor }} 
-              className="px-3.5 sm:px-4 py-2 sm:py-2.5 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+              className="absolute -top-5 sm:-top-6 left-3.5 sm:left-4 z-10 flex items-center justify-center text-white rounded-full [width:clamp(34px,8vw,44px)] [height:clamp(34px,8vw,44px)] [font-size:clamp(15px,4.5vw,20px)] font-bold"
             >
-              <FireIcon /> Player Account Details
+              2
+            </div>
+
+            <div className="w-full pb-2.5 sm:pb-3">
+              <h2 
+                style={{ color: primaryColor }} 
+                className="[font-size:clamp(14px,3.8vw,18px)] mt-0.5 font-bold px-3.5 sm:px-5"
+              >
+                Account Info
+              </h2>
+              <hr className="mt-2.5 border-slate-200 w-full" />
             </div>
             
-            <div className="p-3 sm:p-4 grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
-              <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
-                <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-                  Name
-                </span>
-                <span 
-                  style={{ color: primaryColor }} 
-                  className="font-bold [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate"
-                >
-                  {playerData.username}
-                </span>
-              </div>
-              
-              <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
-                <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-                  UID
-                </span>
-                <span className="font-bold text-slate-700 [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate">
-                  {playerData.uid}
-                </span>
-              </div>
+            {/* Input Fields & Content Area */}
+            <div className="px-3.5 sm:px-5 pb-5 sm:pb-6 space-y-3.5 sm:space-y-4">
+              {cleanFields.map((labelName, index) => (
+                <div key={index} className="space-y-1 sm:space-y-1.5">
+                  <label className="[font-size:clamp(11px,2.7vw,13.5px)] font-semibold text-slate-600 block capitalize">
+                    Enter {labelName}
+                  </label>
+                  <input 
+                    type="text" 
+                    value={inputValues[labelName] || ""}
+                    onChange={(e) => handleInputChange(labelName, e.target.value)}
+                    onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
+                    className="w-full px-3.5 py-2.5 sm:py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 [font-size:clamp(12px,3vw,15px)] transition-all bg-slate-50/30 focus:bg-white text-slate-800 placeholder:text-slate-400" 
+                    placeholder={`Enter your ${labelName}`}
+                  />
+                </div>
+              ))}
+
+              {/* UID Checker Section */}
+              {showNameChecker && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleCheckUIDName}
+                    disabled={ffNameLoading}
+                    style={{ backgroundColor: primaryColor }}
+                    className="w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold [font-size:clamp(11px,2.8vw,13.5px)] text-white tracking-wider hover:opacity-90 transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed uppercase shadow-sm flex items-center justify-center"
+                  >
+                    {ffNameLoading ? "Processing..." : "CLICK TO CHECK"}
+                  </button>
+
+                  {/* Player Details Result Card */}
+                  {playerData && (
+                    <div className="mt-3.5 sm:mt-4 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/60 shadow-sm transition-all duration-300">
+                      <div 
+                        style={{ backgroundColor: primaryColor }} 
+                        className="px-3.5 sm:px-4 py-2 sm:py-2.5 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                      >
+                        <FireIcon /> Player Account Details
+                      </div>
+                      
+                      <div className="p-3 sm:p-4 grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
+                        <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
+                          <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                            Name
+                          </span>
+                          <span 
+                            style={{ color: primaryColor }} 
+                            className="font-bold [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate"
+                          >
+                            {playerData.username}
+                          </span>
+                        </div>
+                        
+                        <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
+                          <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                            UID
+                          </span>
+                          <span className="font-bold text-slate-700 [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate">
+                            {playerData.uid}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </div>
-    )}
-  </div>
-</section>
+          </section>
 
           {/* ৩. পেমেন্ট সেকশন */}
           <section className="relative bg-white rounded-md border border-slate-200 pt-5 shadow-none">
@@ -450,7 +531,7 @@ function ProductPurchaseFlow({
           {/* BUY NOW বাটন */}
           <div className="lg:block space-y-3 pt-2">
             <button
-              onClick={handleBuyNowSubmit}
+              onClick={handleMainButtonClick}
               disabled={isSubmitting}
               style={{ backgroundColor: isSubmitting ? "#94a3b8" : primaryColor }}
               className="w-full py-3 rounded-md font-bold transition-all duration-300 tracking-wider text-md text-white uppercase select-none hover:opacity-90 cursor-pointer active:scale-[0.99] flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
@@ -463,6 +544,10 @@ function ProductPurchaseFlow({
                   </svg>
                   <span>Processing</span>
                 </>
+              ) : !isLoggedIn ? (
+                <span>LOGIN</span>
+              ) : isInsufficientBalance ? (
+                <span>ADD MONEY</span>
               ) : (
                 <span>Buy Now</span>
               )}
@@ -490,25 +575,27 @@ function ProductPurchaseFlow({
           />
         </section>
       )}
-     {/* 🟢 ULTRA-SMOOTH DIALOG COMPONENT 🟢 */}
+
+      {/* 🚀 120 FPS ULTRA-SMOOTH PROCESS & RESULT DIALOG MODAL */}
       {isDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-[380px] sm:max-w-md bg-white rounded-2xl p-5 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto scale-95 sm:scale-100 origin-center">
             
+            {/* ক্লোজ বাটন */}
             <button 
               onClick={() => { if (!isSubmitting) setIsDialogOpen(false); }}
               disabled={isSubmitting}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-30 z-10"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-20 z-10"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
-            {/* ১. প্রোগ্রেস ও অ্যানিমেটেড টপ আইকন স্ক্রিন */}
+            {/* ১. প্রোগ্রেস ও অ্যানিমেটেড লোডিং স্ক্রিন */}
             {dialogStep === "loading" && (
-              <div className="py-6 flex flex-col items-center justify-center text-center">
+              <div className="py-4 flex flex-col items-center justify-center text-center">
                 
-                {/* 🌀 টপের ডায়নামিক অ্যানিমেটেড স্ট্রোকড আইকন */}
-                <div className="relative mb-5 flex items-center justify-center min-h-[64px]">
+                {/* 🌀 অ্যানিমেটেড টপ আইকন */}
+                <div className="relative mb-4 flex items-center justify-center min-h-[64px]">
                   {progress < 40 && (
                     <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
                       <svg className="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -535,51 +622,54 @@ function ProductPurchaseFlow({
                 </div>
 
                 <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Processing Order</h3>
-                <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-8 leading-relaxed">
+                <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-6 leading-relaxed">
                   Please wait a moment while we process your request securely.
                 </p>
                 
-                {/* 🚀 Smooth Progress Bar */}
-                <div className="w-full px-2 relative flex items-center justify-between mb-8">
-                  <div className="absolute left-6 right-6 top-3.5 h-1 bg-slate-100 rounded-full z-0" />
+                {/* 🚀 Ultra 120 FPS Hardware-Accelerated Smooth Progress Bar */}
+                <div className="w-full px-1 relative flex items-center justify-between mb-6">
+                  <div className="absolute left-5 right-5 top-3.5 h-1.5 bg-slate-100 rounded-full z-0" />
                   
                   <div 
-                    style={{ width: `calc(${Math.min(progress, 100)}% - 24px)` }}
-                    className="absolute left-6 top-3.5 h-1 bg-emerald-500 rounded-full z-0 transition-[width] duration-150 ease-linear origin-left"
+                    style={{ 
+                      width: `calc(${Math.min(Math.max(progress, 0), 100)}% - 20px)`,
+                      transition: "width 120ms cubic-bezier(0.25, 0.1, 0.25, 1)"
+                    }}
+                    className="absolute left-5 top-3.5 h-1.5 bg-emerald-500 rounded-full z-0 origin-left shadow-xs"
                   />
 
                   {/* Step 1 */}
                   <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ring-4 ring-white ${
-                      progress >= 0 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
+                      progress >= 0 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
                     }`}>
                       {progress > 15 ? (
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       ) : "1"}
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 ${progress >= 0 ? "text-emerald-600" : "text-slate-400"}`}>Select</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 0 ? "text-emerald-600" : "text-slate-400"}`}>Select</span>
                   </div>
 
                   {/* Step 2 */}
                   <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ring-4 ring-white ${
-                      progress >= 50 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
+                      progress >= 50 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
                     }`}>
                       {progress > 65 ? (
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       ) : "2"}
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 ${progress >= 50 ? "text-emerald-600" : "text-slate-400"}`}>Review</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 50 ? "text-emerald-600" : "text-slate-400"}`}>Review</span>
                   </div>
 
                   {/* Step 3 */}
                   <div className="flex flex-col items-center relative z-10">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ring-4 ring-white ${
-                      progress >= 95 ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-400"
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ring-4 ring-white ${
+                      progress >= 95 ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 text-slate-400"
                     }`}>
                       3
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 ${progress >= 95 ? "text-emerald-600" : "text-slate-400"}`}>Payment</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${progress >= 95 ? "text-emerald-600" : "text-slate-400"}`}>Payment</span>
                   </div>
                 </div>
 
@@ -598,7 +688,7 @@ function ProductPurchaseFlow({
             {dialogStep === "insufficient" && (
               <div className="py-4 flex flex-col items-center justify-center text-center space-y-4">
                 <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 ring-8 ring-rose-50/50 shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="18" y2="18"></line></svg>
                 </div>
                 
                 <div>
@@ -617,7 +707,7 @@ function ProductPurchaseFlow({
                     ? "দুঃখিত, এই ভ্যারিয়েশনটি বর্তমানে স্টকআউট! অ্যাডমিন প্যানেল থেকে এর স্টক বাড়িয়ে পুনরায় চেষ্টা করুন।" 
                     : errorMessage === "This Method are not allow This Time"
                     ? "This Method are not allow This Time"
-                    : "অর্ডারটি সম্পন্ন করা সম্ভব হয়নি। দয়া করে ব্যালেন্স রিচার্জ অথবা পুনরায় চেষ্টা করুন।"}
+                    : "অর্ডারটি সম্পন্ন করা সম্ভব হয়নি। দয়া করে ব্যালেন্স রিচার্জ অথবা পুনরায় চেষ্টা করুন।"}
                 </p>
 
                 <button 
@@ -629,114 +719,133 @@ function ProductPurchaseFlow({
               </div>
             )}
 
-            {/* ৩. সফল পারচেজ ও ইনভয়েস স্ক্রিন */}
+            {/* ৩. সফল পারচেজ ও ইনভয়েস স্ক্রিন (No BG, No Border Layout) */}
             {dialogStep === "success" && (
-              <div className="flex flex-col items-center text-center">
-                <div className="my-2 flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white ring-8 ring-emerald-50 shadow-lg shadow-emerald-500/20 animate-in zoom-in-75 duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+              <div className="flex flex-col items-center text-center pt-2">
+                
+                {/* 🎯 dynamic Icon & Color (Voucher vs Non-Voucher) */}
+                <div className="my-1 flex items-center justify-center">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white ring-8 shadow-lg transition-all duration-300 animate-in zoom-in-75 ${
+                    isVoucherProduct 
+                      ? "bg-emerald-500 ring-emerald-50 shadow-emerald-500/20" 
+                      : "bg-amber-500 ring-amber-50 shadow-amber-500/20"
+                  }`}>
+                    {isVoucherProduct ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <ClockTimerIcon />
+                    )}
                   </div>
                 </div>
 
-                <h2 className="text-lg font-extrabold text-slate-900 tracking-tight mt-3">
-                  Payment Successful!
+                {/* 🎯 Title (Order Processing / Order Complete) */}
+                <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-3">
+                  {isVoucherProduct ? "Order Complete" : "Order Processing"}
                 </h2>
-                <p className="text-xs text-slate-500 font-medium px-2 mt-0.5">
-                  Thank you for your purchase. Your order is confirmed.
-                </p>
 
-                <div className="w-full bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4 my-5 text-left text-xs space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
-                    <span className="font-bold text-slate-900 text-xs tracking-wide uppercase">Order Summary</span>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase">
-                      • {apiResponse?.status || "Complete"}
+                {/* 🎯 "Check Your Order History" Link */}
+                <div className="mt-1">
+                  <Link 
+                    href={isVoucherProduct ? "/code" : "/myorder"} 
+                    className="text-xs text-slate-500 hover:text-blue-600 hover:underline font-semibold transition-colors duration-150 inline-block cursor-pointer"
+                  >
+                    Check Your Order History
+                  </Link>
+                </div>
+
+                {/* 📄 Clean Invoice Content Area (No Outer BG, No Border) */}
+                <div className="w-full my-5 text-left text-xs sm:text-sm space-y-2.5 text-slate-700 font-medium">
+                  
+                  {/* Order ID */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500">Order ID:</span>
+                    <span className="font-mono font-bold text-slate-800 break-all select-all">
+                      {apiResponse?.orderId || apiResponse?.receiptNo || apiResponse?.order?.id || "N/A"}
                     </span>
                   </div>
-                  
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-slate-500 font-medium shrink-0">Order ID</span>
-                    <span className="font-mono font-bold text-slate-800 truncate">#{apiResponse?.orderId ? apiResponse.orderId.substring(0, 12).toUpperCase() : "ROOTS-ORDER"}</span>
+
+                  {/* Product */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500">Product:</span>
+                    <span className="font-bold text-slate-800">{product?.name || "N/A"}</span>
                   </div>
 
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-slate-500 font-medium shrink-0">Product Type</span>
-                    <span className="font-bold text-slate-800 bg-slate-200/60 px-2 py-0.5 rounded-md truncate">{displayProductType}</span>
+                  {/* Item */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500">Item:</span>
+                    <span className="font-bold text-slate-800">
+                      {selectedVariation?.title || selectedVariation?.name || "N/A"}
+                      {paymentDetails.quantity > 1 ? ` x ${paymentDetails.quantity}` : ""}
+                    </span>
                   </div>
 
-                  {(product?.productType === "UID" || product?.productType === "UID Topup") && (
-                    <div className="flex justify-between items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 p-2.5 rounded-xl">
-                      <span className="text-slate-600 font-semibold shrink-0">Player UID</span>
-                      <span className="font-bold text-emerald-800 text-xs truncate">{inputValues[cleanFields[0]] || "N/A"}</span>
-                    </div>
-                  )}
-
-                  {product?.productType === "Voucher" && apiResponse?.voucherCode && (
-                    <div className="bg-amber-50/70 border border-amber-200/60 p-2.5 rounded-xl space-y-1.5">
-                      <span className="text-slate-500 font-semibold block text-[11px]">Voucher Code</span>
-                      <div className="flex items-center justify-between gap-2 bg-white border border-amber-200 px-2.5 py-1.5 rounded-lg shadow-2xs">
-                        <span className="font-mono text-xs font-extrabold text-amber-900 tracking-wide select-all truncate">{apiResponse.voucherCode}</span>
-                        <button 
-                          onClick={() => copyToClipboard(apiResponse.voucherCode)}
-                          className="text-amber-700 hover:text-amber-900 p-1 bg-amber-100/80 rounded-md transition shrink-0"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {product?.productType !== "UID" && product?.productType !== "UID Topup" && product?.productType !== "Voucher" && (
-                    <div className="bg-slate-100/80 p-2.5 rounded-xl space-y-1.5">
-                      {cleanFields.map((label, idx) => (
-                        <div key={idx} className="flex justify-between items-center gap-2 text-[11px]">
-                          <span className="text-slate-500 font-medium shrink-0">{label}</span>
-                          <span className="font-bold text-slate-800 truncate max-w-[55%]">{inputValues[label] || "N/A"}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center gap-2 pt-1 border-t border-dashed border-slate-200">
-                    <span className="text-slate-500 font-medium shrink-0">Time</span>
-                    <span className="font-medium text-slate-700 text-[11px] truncate">{orderTime}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
-                    <span className="text-slate-900 font-bold text-xs uppercase tracking-wide">Total Paid</span>
-                    <span style={{ color: primaryColor }} className="font-extrabold text-base">
+                  {/* Amount */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500">Amount:</span>
+                    <span className="font-extrabold text-slate-900">
                       ৳{apiResponse?.totalPrice || paymentDetails.totalPrice || (basePrice * paymentDetails.quantity)}
                     </span>
                   </div>
+
+                  {/* Payment by */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500">Payment by:</span>
+                    <span className="font-semibold text-slate-800">{paymentDetails.paymentMethod}</span>
+                  </div>
+
+                  {/* Voucher Code ( if Voucher ) OR JSON Input Values ( if Non-Voucher ) */}
+                  {isVoucherProduct ? (
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="text-slate-500">Voucher Code:</span>
+                      <span className="font-mono font-bold text-emerald-600 break-all select-all">
+                        {apiResponse?.voucherCode || apiResponse?.code || "N/A"}
+                      </span>
+                    </div>
+                  ) : (
+                    inputValues && Object.keys(inputValues).length > 0 && (
+                      Object.entries(inputValues).map(([key, val]) => (
+                        <div key={key} className="flex justify-between items-center py-0.5">
+                          <span className="text-slate-500 capitalize">{key}:</span>
+                          <span className="font-bold text-slate-800 break-all">{String(val)}</span>
+                        </div>
+                      ))
+                    )
+                  )}
+
+                  {/* Date */}
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-slate-500">Date:</span>
+                    <span className="text-slate-700">{orderTime}</span>
+                  </div>
+
                 </div>
 
-                <div className="w-full grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setIsDialogOpen(false)}
-                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold rounded-xl text-xs transition active:scale-[0.98]"
-                  >
-                    Close
-                  </button>
+                {/* 🔘 Bottom Action Buttons */}
+                <div className="w-full grid grid-cols-2 gap-3 pt-2">
                   <Link
-                    href={
-                      product?.productType?.toLowerCase() === "vouchers" || product?.productType?.toLowerCase() === "voucher"
-                        ? "/code"
-                        : "/myorder"
-                    }
-                    style={{ backgroundColor: primaryColor }}
-                    className="w-full py-2.5 text-white font-semibold rounded-xl text-xs text-center flex items-center justify-center hover:opacity-90 transition shadow-sm active:scale-[0.98]"
+                    href="/"
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition active:scale-[0.98]"
                   >
-                    View Order
+                    <HomeIcon /> Back to Home
+                  </Link>
+
+                  <Link
+                    href={isVoucherProduct ? "/code" : "/myorder"}
+                    style={{ backgroundColor: isVoucherProduct ? "#10b981" : (primaryColor || "#f59e0b") }}
+                    className="w-full py-2.5 text-white font-semibold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center gap-1 hover:opacity-90 transition shadow-sm active:scale-[0.98]"
+                  >
+                    Order List
                   </Link>
                 </div>
+
               </div>
             )}
+
           </div>
         </div>
       )}
     </div>
   );
 }
-
-export default ProductPurchaseFlow;
