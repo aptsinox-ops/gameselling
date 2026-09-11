@@ -596,30 +596,6 @@ export default function ProductPurchaseFlow({
                 
                 {/* 🌀 অ্যানিমেটেড টপ আইকন */}
                 <div className="relative mb-4 flex items-center justify-center min-h-[64px]">
-                  {progress < 40 && (
-                    <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
-                      <svg className="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                    </div>
-                  )}
-
-                  {progress >= 40 && progress < 80 && (
-                    <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
-                      <svg className="w-8 h-8 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    </div>
-                  )}
-
-                  {progress >= 80 && (
-                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 shadow-sm transition-all duration-300 animate-in zoom-in-75">
-                      <svg className="w-8 h-8 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
 
                 <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Processing Order</h3>
                 <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-6 leading-relaxed">
