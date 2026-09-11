@@ -19,7 +19,7 @@ interface MyOrdersClientProps {
   primaryColor: string;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 3;
 
 export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersClientProps) {
   const [searchOrderId, setSearchOrderId] = useState("");

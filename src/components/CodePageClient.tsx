@@ -20,7 +20,7 @@ interface CodePageClientProps {
   primaryColor: string;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 3;
 
 export default function CodePageClient({ orders, primaryColor }: CodePageClientProps) {
   // Filter States
