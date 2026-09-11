@@ -19,7 +19,6 @@ interface MyOrdersClientProps {
   primaryColor: string;
 }
 
-// 🔹 ৩টি করে আইটেম দেখানোর জন্য সেট করা হয়েছে
 const ITEMS_PER_PAGE = 3;
 
 export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersClientProps) {
@@ -29,10 +28,8 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
@@ -99,7 +96,6 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
     });
   }, [orders, searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
 
-  // Pagination Calculation
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
   const paginatedOrders = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -108,19 +104,18 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
 
   return (
     <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-2 sm:p-6 font-sans">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
 
-        {/* 🔹 MAIN SINGLE CARD WRAPPER */}
+        {/* MAIN SINGLE CARD WRAPPER */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
 
-          {/* Title Header */}
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">My Orders</h1>
 
           {/* FILTER SECTION */}
           <div className="space-y-3">
             <h2 className="text-xs font-bold text-slate-700 tracking-wide uppercase">Filter Orders</h2>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 items-end">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-500 mb-1">Order ID</label>
                 <input
@@ -177,7 +172,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
                 />
               </div>
 
-              <div className="flex items-end">
+              <div>
                 <button
                   type="button"
                   style={{ backgroundColor: primaryColor }}
@@ -221,8 +216,8 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
                       </span>
                     </div>
 
-                    {/* Card Details */}
-                    <div className="space-y-2 text-xs sm:text-sm pt-1">
+                    {/* Card Details: PC te Horizontal / Mobile te Vertical */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm pt-1">
                       <div>
                         <span className="text-[11px] font-bold text-slate-400 uppercase block">PACKAGE:</span>
                         <span className="font-bold text-slate-800">

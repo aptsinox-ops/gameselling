@@ -14,12 +14,22 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { productId, variationId, totalPrice, inputValues, quantity, userId, paymentMethod } = body;
 
-    // ১. প্রোডাক্ট ও ভ্যারিয়েশন ডাটা ফেচ (Fix 4: Provider Include রিমুভড)
+    // ১. inputValues সুরক্ষিতভাবে অবজেক্টে পার্স করা
+    let parsedInputValues = {};
+    if (typeof inputValues === "string") {
+      try {
+        parsedInputValues = JSON.parse(inputValues);
+      } catch {
+        parsedInputValues = { input: inputValues };
+      }
+    } else if (inputValues && typeof inputValues === "object") {
+      parsedInputValues = inputValues;
+    }
+
+    // ২. প্রোডাক্ট ও ভ্যারিয়েশন ফেচ
     const variation = await prisma.variation.findUnique({
       where: { id: variationId },
-      include: { 
-        product: true,
-      },
+      include: { product: true },
     });
 
     if (!variation || !variation.product) {
@@ -29,7 +39,7 @@ export async function POST(req: Request) {
     const productType = variation.product.productType?.toLowerCase() || "";
     const redirectUrl = productType === "vouchers" || productType === "voucher" ? "/code" : "/myorder";
 
-    // ২. User ও Balance ভ্যালিডেশন
+    // ৩. ইউজার ও ব্যালেন্স ভ্যালিডেশন
     const parsedUserId = Number(userId);
     if (!userId || isNaN(parsedUserId)) {
       return NextResponse.json({ success: false, message: "Invalid User ID!", redirectUrl }, { status: 200 });
@@ -51,52 +61,36 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Insufficient wallet balance!", redirectUrl }, { status: 200 });
     }
 
-    // ৩. প্লেয়ার UID চেক
-    const playerUid = inputValues ? (Object.values(inputValues)[0] as string) : "";
-    if (!playerUid) {
-      return NextResponse.json({ success: false, message: "Player UID is required!", redirectUrl }, { status: 200 });
-    }
-
+    const orderQty = Math.max(1, Number(quantity) || 1);
     const receiptNo = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const isFreeFireAuto = variation.product.isFreeFireAuto;
 
     // ==========================================
-    // 🅰️ AUTO TOPUP LOGIC (Dynamic 3rd Party Provider API)
+    // 🅰️ AUTO TOPUP LOGIC
     // ==========================================
     if (isFreeFireAuto) {
-      // Fix 1: SiteSettings টেবিল থেকে Credential ফেচ করা
-      const settings = await prisma.siteSettings.findUnique({
-        where: { id: "STATIC" },
-      });
+      const playerUid = Object.values(parsedInputValues)[0] ? String(Object.values(parsedInputValues)[0]).trim() : "";
 
+      if (!playerUid) {
+        return NextResponse.json({ success: false, message: "Player UID is required for Auto Topup!", redirectUrl }, { status: 200 });
+      }
+
+      const settings = await prisma.siteSettings.findUnique({ where: { id: "STATIC" } });
       const providerBaseUrl = settings?.providerBaseUrl || process.env.PROVIDER_BASE_URL;
       const providerApiKey = settings?.providerApiKey || process.env.PROVIDER_API_KEY;
 
       if (!providerBaseUrl || !providerApiKey) {
-        return NextResponse.json({
-          success: false,
-          message: "API Provider configuration missing in Admin Settings!",
-          redirectUrl,
-        }, { status: 200 });
+        return NextResponse.json({ success: false, message: "API Provider configuration missing!", redirectUrl }, { status: 200 });
       }
 
-      // ১. Active Voucher চেক করা
       const activeVoucher = await prisma.voucher.findFirst({
-        where: {
-          variationId: variationId,
-          status: "ACTIVE",
-        },
+        where: { variationId: variationId, status: "ACTIVE" },
       });
 
       if (!activeVoucher) {
-        return NextResponse.json({ 
-          success: false, 
-          message: "Stock out! No active voucher available.", 
-          redirectUrl 
-        }, { status: 200 });
+        return NextResponse.json({ success: false, message: "Stock out! No active voucher available.", redirectUrl }, { status: 200 });
       }
 
-      // ২. ইউজার ব্যালেন্স ডেবিট করা ও Order (PROCESSING) তৈরি করা
       const [_, order] = await prisma.$transaction([
         prisma.user.update({
           where: { id: parsedUserId },
@@ -109,9 +103,9 @@ export async function POST(req: Request) {
             productId,
             variationId,
             totalPrice: orderAmount,
-            quantity: Number(quantity) || 1,
+            quantity: orderQty,
             status: "PROCESSING",
-            inputValues: inputValues || {},
+            inputValues: parsedInputValues,
             voucherCode: activeVoucher.code,
             paymentMethod: paymentMethod || "Wallet",
           },
@@ -120,7 +114,6 @@ export async function POST(req: Request) {
 
       createdOrderId = order.id;
 
-      // Fix 2: Package Number Extraction Safe parsing (NaN ইস্যু ফিক্স করা হলো)
       let finalPackageId: number;
       if (variation.apiPackageId) {
         finalPackageId = Number(variation.apiPackageId);
@@ -129,10 +122,8 @@ export async function POST(req: Request) {
         finalPackageId = extractedDigits ? parseInt(extractedDigits, 10) : 0;
       }
 
-      // Fix 3: URL Trailing Slash Fix
       const cleanBaseUrl = providerBaseUrl.replace(/\/+$/, "");
 
-      // ৩. 3rd Party Provider API Request Call
       const apiRes = await fetch(`${cleanBaseUrl}/api/v1/user/order/create`, {
         method: "POST",
         headers: {
@@ -150,59 +141,37 @@ export async function POST(req: Request) {
 
       const apiData = await apiRes.json();
 
-      // ৪. Provider Response হ্যান্ডলিং
       if (apiData.status === "success" || apiData.success === true) {
-        // Voucher Mark as USED
         await prisma.voucher.update({
           where: { id: activeVoucher.id },
-          data: {
-            status: "USED",
-            usedInOrderId: order.id,
-            usedAt: new Date(),
-          },
+          data: { status: "USED", usedInOrderId: order.id, usedAt: new Date() },
         });
 
-        // Provider API Order ID আপডেট
         await prisma.order.update({
           where: { id: order.id },
-          data: { 
-            apiOrderId: apiData.order_id || null,
-            status: "PROCESSING" 
-          },
+          data: { apiOrderId: apiData.order_id || null, status: "PROCESSING" },
         });
 
-        return NextResponse.json({
-          success: true,
-          message: "Order placed successfully! Top-up is processing.",
-          orderId: order.id,
-          redirectUrl,
-        }, { status: 200 });
-
+        return NextResponse.json({ success: true, message: "Order placed successfully!", orderId: order.id, redirectUrl }, { status: 200 });
       } else {
-        // API Failed: Order FAILED এবং Balance Refund
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { status: "FAILED" },
-        });
+        await prisma.order.update({ where: { id: order.id }, data: { status: "FAILED" } });
+        await prisma.user.update({ where: { id: parsedUserId }, data: { balance: { increment: orderAmount } } });
 
-        await prisma.user.update({
-          where: { id: parsedUserId },
-          data: { balance: { increment: orderAmount } },
-        });
-
-        return NextResponse.json({
-          success: false,
-          message: apiData.message || "Auto top-up failed! Money refunded to your balance.",
-          orderId: order.id,
-          redirectUrl,
-        }, { status: 200 });
+        return NextResponse.json({ success: false, message: apiData.message || "Auto top-up failed!", orderId: order.id, redirectUrl }, { status: 200 });
       }
     }
 
     // ==========================================
     // 🅱️ MANUAL ORDER LOGIC (Non-Auto Orders)
     // ==========================================
-    const [_, manualOrder] = await prisma.$transaction([
+
+    // ১. ভ্যারিয়েশন স্টক আউট চেক
+    if (typeof variation.stock === "number" && variation.stock < orderQty) {
+      return NextResponse.json({ success: false, message: "Stock out! Item is out of stock.", redirectUrl }, { status: 200 });
+    }
+
+    // ২. ট্রানজ্যাকশন অ্যারে (User Balance Decrement + Order Create)
+    const transactionCalls: any[] = [
       prisma.user.update({
         where: { id: parsedUserId },
         data: { balance: { decrement: orderAmount } },
@@ -214,16 +183,29 @@ export async function POST(req: Request) {
           productId,
           variationId,
           totalPrice: orderAmount,
-          quantity: Number(quantity) || 1,
+          quantity: orderQty,
           status: "PENDING",
-          inputValues: inputValues || {},
+          inputValues: parsedInputValues,
           paymentMethod: paymentMethod || "Wallet",
         },
       }),
-    ]);
+    ];
 
-    return NextResponse.json({ 
-      success: true, 
+    // ৩. স্টক কাটাকুটি (Variation Stock Decrement)
+    if (typeof variation.stock === "number") {
+      transactionCalls.push(
+        prisma.variation.update({
+          where: { id: variationId },
+          data: { stock: { decrement: orderQty } },
+        })
+      );
+    }
+
+    const results = await prisma.$transaction(transactionCalls);
+    const manualOrder = results[1];
+
+    return NextResponse.json({
+      success: true,
       message: "Manual order placed successfully!",
       orderId: manualOrder.id,
       redirectUrl,
@@ -232,19 +214,13 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("ORDER_API_ERROR:", error);
 
+    // ফেইল্ড অর্ডারে ইউজার রিফান্ড
     if (createdOrderId && currentUserId) {
       try {
-        await prisma.order.update({
-          where: { id: createdOrderId },
-          data: { status: "FAILED" },
-        });
-
-        await prisma.user.update({
-          where: { id: currentUserId },
-          data: { balance: { increment: currentOrderAmount } },
-        });
+        await prisma.order.update({ where: { id: createdOrderId }, data: { status: "FAILED" } });
+        await prisma.user.update({ where: { id: currentUserId }, data: { balance: { increment: currentOrderAmount } } });
       } catch (refundErr) {
-        console.error("REFUND_FAILED_IN_CATCH:", refundErr);
+        console.error("REFUND_FAILED:", refundErr);
       }
     }
 
