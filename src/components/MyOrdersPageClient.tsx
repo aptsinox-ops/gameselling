@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 interface Order {
   id: string;
@@ -19,12 +19,22 @@ interface MyOrdersClientProps {
   primaryColor: string;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersClientProps) {
   const [searchOrderId, setSearchOrderId] = useState("");
   const [searchPackage, setSearchPackage] = useState("");
   const [searchStatus, setSearchStatus] = useState("All Status");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
 
   const formatDateTimeBD = (dateInput: Date | string) => {
     const date = new Date(dateInput);
@@ -52,8 +62,16 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      const orderIdStr = (order.receiptNo || order.id).toLowerCase();
-      if (searchOrderId && !orderIdStr.includes(searchOrderId.toLowerCase())) return false;
+      // Fix Search Logic for Order ID / Receipt No
+      if (searchOrderId.trim()) {
+        const cleanQuery = searchOrderId.trim().toLowerCase().replace(/^#/, "");
+        const rawId = String(order.id || "").toLowerCase();
+        const receiptNo = String(order.receiptNo || "").toLowerCase();
+        const shortId = rawId.substring(0, 8);
+
+        const matchesId = rawId.includes(cleanQuery) || receiptNo.includes(cleanQuery) || shortId.includes(cleanQuery);
+        if (!matchesId) return false;
+      }
 
       const packageNameStr = (order.variation?.title || order.product?.name || "").toLowerCase();
       if (searchPackage && !packageNameStr.includes(searchPackage.toLowerCase())) return false;
@@ -80,6 +98,13 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
       return true;
     });
   }, [orders, searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
+
+  // Pagination Calculation
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredOrders, currentPage]);
 
   return (
     <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-3 sm:p-6 font-sans">
@@ -165,7 +190,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
               No orders found.
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            paginatedOrders.map((order) => {
               const statusMeta = getStatusMeta(order.status);
               const orderQuantity = order.quantity || 1;
 
@@ -228,6 +253,31 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
             })
           )}
         </div>
+
+        {/* PAGINATION CONTROL */}
+        {filteredOrders.length > 0 && (
+          <div className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 rounded-lg text-xs font-medium text-slate-600">
+            <div>
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

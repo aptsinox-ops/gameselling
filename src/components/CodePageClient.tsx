@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 
 interface VoucherOrder {
@@ -20,6 +20,8 @@ interface CodePageClientProps {
   primaryColor: string;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export default function CodePageClient({ orders, primaryColor }: CodePageClientProps) {
   // Filter States
   const [searchOrderId, setSearchOrderId] = useState("");
@@ -27,6 +29,14 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
   const [searchStatus, setSearchStatus] = useState("All Status");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
 
   const formatDateTimeBD = (dateInput: Date | string) => {
     const date = new Date(dateInput);
@@ -55,8 +65,16 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
   // Filter Logic
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      const orderIdStr = (order.receiptNo || order.id).toLowerCase();
-      if (searchOrderId && !orderIdStr.includes(searchOrderId.toLowerCase())) return false;
+      // Fix Search Logic for Order ID / Receipt No
+      if (searchOrderId.trim()) {
+        const cleanQuery = searchOrderId.trim().toLowerCase().replace(/^#/, "");
+        const rawId = String(order.id || "").toLowerCase();
+        const receiptNo = String(order.receiptNo || "").toLowerCase();
+        const shortId = rawId.substring(0, 8);
+
+        const matchesId = rawId.includes(cleanQuery) || receiptNo.includes(cleanQuery) || shortId.includes(cleanQuery);
+        if (!matchesId) return false;
+      }
 
       const packageNameStr = (order.variation?.title || order.product?.name || "").toLowerCase();
       if (searchPackage && !packageNameStr.includes(searchPackage.toLowerCase())) return false;
@@ -83,6 +101,13 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
       return true;
     });
   }, [orders, searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
+
+  // Pagination Calculation
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredOrders, currentPage]);
 
   // Copy Functionality
   const handleCopyCodes = (codes: string[]) => {
@@ -181,11 +206,10 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
               No voucher codes found.
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            paginatedOrders.map((order) => {
               const statusMeta = getStatusMeta(order.status);
               const orderQuantity = order.quantity || 1;
 
-              // Parse codes into array
               const codesArray = order.voucherCode
                 ? order.voucherCode.split(/\r?\n|,/).map((c) => c.trim()).filter(Boolean)
                 : [];
@@ -195,7 +219,6 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                   key={order.id}
                   className="w-full bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-none transition-all space-y-4"
                 >
-                  {/* Card Top Line */}
                   <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                     <div>
                       <h3 className="font-bold text-slate-800 text-sm sm:text-base">
@@ -211,7 +234,6 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                     </span>
                   </div>
 
-                  {/* Card Details Grid */}
                   <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
                     <div>
                       <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">PACKAGE:</span>
@@ -233,10 +255,8 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                     </div>
                   </div>
 
-                  {/* Action Buttons (Redeem + Copy) */}
                   {statusMeta.isComplete && codesArray.length > 0 && (
                     <div className="flex items-center gap-2 pt-1">
-                      {/* Redeem Button */}
                       <a
                         href="https://shop.garena.my/?app=100067"
                         target="_blank"
@@ -247,7 +267,6 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                         Redeem
                       </a>
 
-                      {/* Dynamic Copy Button */}
                       <button
                         onClick={() => handleCopyCodes(codesArray)}
                         className="px-4 py-2 text-xs font-semibold text-white rounded-lg transition-opacity hover:opacity-90 inline-flex items-center justify-center"
@@ -258,7 +277,6 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                     </div>
                   )}
 
-                  {/* Codes List Box */}
                   {statusMeta.isComplete && codesArray.length > 0 ? (
                     <div className="bg-slate-50/80 border border-slate-200/80 rounded-lg p-3 space-y-2">
                       <p className="text-xs font-bold text-slate-600">{codesArray.length} Code:</p>
@@ -277,7 +295,6 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
                     </div>
                   ) : null}
 
-                  {/* Info Red Box (Exact match with screenshot) */}
                   {statusMeta.isComplete && codesArray.length > 0 && (
                     <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-600 font-medium break-all">
                       <span className="font-bold mr-1">Info:</span>
@@ -290,6 +307,31 @@ export default function CodePageClient({ orders, primaryColor }: CodePageClientP
             })
           )}
         </div>
+
+        {/* 🔹 PAGINATION CONTROL */}
+        {filteredOrders.length > 0 && (
+          <div className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 rounded-lg text-xs font-medium text-slate-600">
+            <div>
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                className="px-3 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
