@@ -1,25 +1,27 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "sonner";
 
-interface Order {
+interface VoucherOrder {
   id: string;
   receiptNo?: string | null;
   status: string;
   totalPrice: number;
+  voucherCode?: string | null;
   createdAt: Date | string;
   quantity?: number;
-  inputValues?: Record<string, any> | null;
-  variation?: { title?: string | null; bonus?: number | null } | null;
+  variation?: { title?: string | null } | null;
   product?: { name?: string; productType?: string } | null;
 }
 
-interface MyOrdersClientProps {
-  orders: Order[];
+interface CodePageClientProps {
+  orders: VoucherOrder[];
   primaryColor: string;
 }
 
-export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersClientProps) {
+export default function CodePageClient({ orders, primaryColor }: CodePageClientProps) {
+  // Filter States
   const [searchOrderId, setSearchOrderId] = useState("");
   const [searchPackage, setSearchPackage] = useState("");
   const [searchStatus, setSearchStatus] = useState("All Status");
@@ -50,6 +52,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
     return { text: "Processing", isProcessing: true, bg: "bg-amber-100", textCol: "text-amber-700" };
   };
 
+  // Filter Logic
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const orderIdStr = (order.receiptNo || order.id).toLowerCase();
@@ -81,24 +84,33 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
     });
   }, [orders, searchOrderId, searchPackage, searchStatus, fromDate, toDate]);
 
+  // Copy Functionality
+  const handleCopyCodes = (codes: string[]) => {
+    if (!codes || codes.length === 0) return;
+    const formattedText = codes.map((c) => c.trim()).filter(Boolean).join(" ") + " ";
+    navigator.clipboard.writeText(formattedText);
+    toast.success("Voucher code(s) copied to clipboard!");
+  };
+
   return (
     <div className="w-full min-h-screen bg-slate-50 text-slate-800 p-3 sm:p-6 font-sans">
       <div className="max-w-5xl mx-auto space-y-6">
 
-        {/* BREADCRUMB */}
+        {/* 🔹 BREADCRUMB / TITLE */}
         <div className="flex items-center gap-2 text-sm font-medium">
           <span className="text-slate-400">Home</span>
           <span className="text-slate-300">/</span>
           <span className="font-semibold text-lg pb-0.5 border-b-2" style={{ color: primaryColor, borderColor: primaryColor }}>
-            Orders
+            Codes
           </span>
         </div>
 
-        {/* FILTER SECTION */}
+        {/* 🔹 FILTER SECTION */}
         <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-5 shadow-none space-y-3">
           <h2 className="text-sm font-bold text-slate-700 tracking-wide uppercase">Filter Orders</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
             
+            {/* Order ID Input */}
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">Order ID</label>
               <input
@@ -110,6 +122,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
               />
             </div>
 
+            {/* Package Input */}
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">Package</label>
               <input
@@ -121,6 +134,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
               />
             </div>
 
+            {/* Status Dropdown */}
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
               <select
@@ -135,6 +149,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
               </select>
             </div>
 
+            {/* From Date */}
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">From Date</label>
               <input
@@ -145,6 +160,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
               />
             </div>
 
+            {/* To Date */}
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">To Date</label>
               <input
@@ -158,16 +174,21 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
           </div>
         </div>
 
-        {/* ORDER CARDS LIST */}
+        {/* 🔹 ORDER CARDS LIST */}
         <div className="space-y-4">
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12 bg-white border border-slate-200 rounded-lg text-slate-400 text-sm">
-              No orders found.
+              No voucher codes found.
             </div>
           ) : (
             filteredOrders.map((order) => {
               const statusMeta = getStatusMeta(order.status);
               const orderQuantity = order.quantity || 1;
+
+              // Parse codes into array
+              const codesArray = order.voucherCode
+                ? order.voucherCode.split(/\r?\n|,/).map((c) => c.trim()).filter(Boolean)
+                : [];
 
               return (
                 <div
@@ -195,7 +216,7 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
                     <div>
                       <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">PACKAGE:</span>
                       <span className="font-bold text-slate-700">
-                        {order.variation?.title || order.product?.name || "Item Package"}
+                        {order.variation?.title || order.product?.name || "Voucher Pack"}
                       </span>
                     </div>
 
@@ -212,14 +233,55 @@ export default function MyOrdersPageClient({ orders, primaryColor }: MyOrdersCli
                     </div>
                   </div>
 
-                  {/* Account / Input Details (UID, User Name, etc.) */}
-                  {order.inputValues && typeof order.inputValues === "object" && (
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-3 space-y-1">
-                      {Object.entries(order.inputValues).map(([key, value]) => (
-                        <p key={key} className="text-xs font-medium text-slate-600 break-all">
-                          <span className="font-bold text-slate-700 uppercase">{key}:</span> {String(value)}
-                        </p>
+                  {/* Action Buttons (Redeem + Copy) */}
+                  {statusMeta.isComplete && codesArray.length > 0 && (
+                    <div className="flex items-center gap-2 pt-1">
+                      {/* Redeem Button */}
+                      <a
+                        href="https://shop.garena.my/?app=100067"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 text-xs font-semibold text-white rounded-lg transition-opacity hover:opacity-90 inline-flex items-center justify-center"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        Redeem
+                      </a>
+
+                      {/* Dynamic Copy Button */}
+                      <button
+                        onClick={() => handleCopyCodes(codesArray)}
+                        className="px-4 py-2 text-xs font-semibold text-white rounded-lg transition-opacity hover:opacity-90 inline-flex items-center justify-center"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        {codesArray.length > 1 ? "Copy All" : "Copy"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Codes List Box */}
+                  {statusMeta.isComplete && codesArray.length > 0 ? (
+                    <div className="bg-slate-50/80 border border-slate-200/80 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-bold text-slate-600">{codesArray.length} Code:</p>
+                      {codesArray.map((code, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs sm:text-sm font-mono font-medium text-slate-800 break-all"
+                        >
+                          {code}
+                        </div>
                       ))}
+                    </div>
+                  ) : statusMeta.isProcessing ? (
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700 font-medium">
+                      Processing, please wait for code...
+                    </div>
+                  ) : null}
+
+                  {/* Info Red Box (Exact match with screenshot) */}
+                  {statusMeta.isComplete && codesArray.length > 0 && (
+                    <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-600 font-medium break-all">
+                      <span className="font-bold mr-1">Info:</span>
+                      {codesArray.join(" ")}
                     </div>
                   )}
 
