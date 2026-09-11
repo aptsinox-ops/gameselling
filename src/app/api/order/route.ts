@@ -47,22 +47,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "User not found!", redirectUrl }, { status: 200 });
     }
 
-    const orderAmount = Number(totalPrice);
+    const orderQty = Math.max(1, Number(quantity) || 1);
+
+    // ==========================================
+    // ✅ সার্ভার-সাইড আসল প্রাইস ক্যালকুলেশন (client-এর totalPrice কখনোই trust করা হচ্ছে না)
+    // ==========================================
+    const isReseller = user.role?.toLowerCase()?.includes("reseller");
+    const resellerPercentage = isReseller ? Number((user as any).resellerPercentage) || 0 : 0;
+
+    const hasOffer = variation.offerPrice != null && Number(variation.offerPrice) > 0;
+    const basePriceToUse = hasOffer ? Number(variation.offerPrice) : Number(variation.price);
+
+    const unitPrice =
+      isReseller && resellerPercentage > 0
+        ? Math.round((basePriceToUse - (basePriceToUse * resellerPercentage) / 100) * 100) / 100
+        : Math.round(basePriceToUse * 100) / 100;
+
+    const orderAmount = Math.round(unitPrice * orderQty * 100) / 100;
     currentOrderAmount = orderAmount;
+
+    // ⚠️ (ঐচ্ছিক) client পাঠানো totalPrice-এর সাথে mismatch হলে লগ করে রাখা — সম্ভাব্য tampering ধরার জন্য
+    if (totalPrice != null && Math.abs(Number(totalPrice) - orderAmount) > 0.01) {
+      console.warn("PRICE_MISMATCH_DETECTED:", {
+        userId: parsedUserId,
+        variationId,
+        clientSentPrice: totalPrice,
+        serverCalculatedPrice: orderAmount,
+      });
+    }
 
     if (user.balance < orderAmount) {
       return NextResponse.json({ success: false, message: "Insufficient wallet balance!", redirectUrl }, { status: 200 });
     }
-
-    const orderQty = Math.max(1, Number(quantity) || 1);
-
-    // ✅ Debug log — আপনার schema-তে আসল field name ও value কী আসছে দেখার জন্য
-    // (একবার console/log চেক করে নিশ্চিত হয়ে নিন, পরে চাইলে মুছে দেবেন)
-    console.log("VARIATION_STOCK_DEBUG:", {
-      variationId: variation.id,
-      stockValue: (variation as any).stock,
-      stockType: typeof (variation as any).stock,
-    });
 
     // ৩. প্লেয়ার UID চেক
     const playerUid = inputValues && typeof inputValues === "object" && Object.keys(inputValues).length > 0
@@ -110,7 +126,6 @@ export async function POST(req: Request) {
         }, { status: 200 });
       }
 
-      // ✅ Auto-তেও variation.stock ট্র্যাক করা হলে সেটাও কাটবে (safe conditional decrement)
       const hasStockField = typeof (variation as any).stock === "number";
 
       if (hasStockField && (variation as any).stock < orderQty) {
@@ -132,7 +147,7 @@ export async function POST(req: Request) {
             userId: parsedUserId,
             productId,
             variationId,
-            totalPrice: orderAmount,
+            totalPrice: orderAmount, // ✅ সার্ভার-ক্যালকুলেটেড amount
             quantity: orderQty,
             status: "PROCESSING",
             inputValues: inputValues || {},
@@ -206,7 +221,6 @@ export async function POST(req: Request) {
           redirectUrl,
         }, { status: 200 });
       } else {
-        // ❌ API Failed → Order FAILED, Balance Refund, ✅ Stock Refund
         await prisma.order.update({
           where: { id: order.id },
           data: { status: "FAILED" },
@@ -245,7 +259,6 @@ export async function POST(req: Request) {
 
     const hasStockField = typeof (variation as any).stock === "number";
 
-    // ⚠️ যদি field-ই না থাকে, সরাসরি জানিয়ে দিন — silent skip না করে
     if (!hasStockField) {
       console.warn(
         `STOCK_FIELD_MISSING_OR_NULL for variationId=${variationId}. ` +
@@ -262,9 +275,6 @@ export async function POST(req: Request) {
       }, { status: 200 });
     }
 
-    // ✅ Race-condition-safe stock decrement:
-    // আগে conditionally variation আপডেট করি (stock >= orderQty শর্তে),
-    // যদি matched row না পাওয়া যায় (count 0), মানে stock শেষ হয়ে গেছে — order আটকে দিন।
     if (hasStockField) {
       const stockUpdateResult = await prisma.variation.updateMany({
         where: {
@@ -285,7 +295,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // ব্যালেন্স ডেবিট + Order তৈরি
     try {
       const txResults = await prisma.$transaction([
         prisma.user.update({
@@ -298,7 +307,7 @@ export async function POST(req: Request) {
             userId: parsedUserId,
             productId,
             variationId,
-            totalPrice: orderAmount,
+            totalPrice: orderAmount, // ✅ সার্ভার-ক্যালকুলেটেড amount
             quantity: orderQty,
             status: "PENDING",
             inputValues: inputValues || {},
@@ -317,7 +326,6 @@ export async function POST(req: Request) {
         redirectUrl,
       }, { status: 200 });
     } catch (innerErr) {
-      // যদি balance/order transaction fail করে, উপরে যে stock আগেই কেটে ফেলেছি সেটা ফেরত দিন
       if (hasStockField) {
         await prisma.variation.update({
           where: { id: variationId },
