@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     const { productId, variationId, inputValues, quantity, userId, name, email } = await req.json();
 
-    // ⚡ ১. Product ও Variation ID অবশ্যই String (UUID) হতে হবে
+    // ⚡ ১. Product ও Variation ID অবশ্যই String হতে হবে
     const strProductId = String(productId || "");
     const strVariationId = String(variationId || "");
 
@@ -19,21 +19,27 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚡ ২. ডেটাবেজ থেকে ডাটা ফেচ (String ID দিয়ে)
-    const product = await prisma.product.findUnique({
-      where: { id: strProductId },
+    // ⚡ ২. ডেটাবেজ থেকে ডাটা ফেচ (নিরাপত্তার জন্য variationId এবং productId মিলিয়ে ফেচ করা হচ্ছে)
+    const variation = await prisma.variation.findFirst({
+      where: {
+        id: strVariationId,
+        productId: strProductId, // নিশ্চিত করবে এই variation-টি এই product-েরই
+      },
+      include: {
+        product: true, // সাথে Product-এর তথ্যও নিয়ে আসবে
+      },
     });
 
-    const variation = await prisma.variation.findUnique({
-      where: { id: strVariationId },
-    });
-
-    if (!product || !variation) {
+    // যদি variation না পাওয়া যায় বা প্রোডাক্টের সাথে না মিলে
+    if (!variation || !variation.product) {
       return NextResponse.json(
-        { message: "আইটেমটি খুঁজে পাওয়া যায়নি।" },
+        { message: "আইটেমটি খুঁজে পাওয়া যায়নি বা তথ্য সঠিক নয়।" },
         { status: 404 }
       );
     }
+
+    // Product ডাটা ভ্যারিয়েবল এ রাখা
+    const product = variation.product;
 
     // ⚡ ৩. সেটিংস ফেচ
     const settings = await prisma.siteSettings.findFirst();
@@ -47,10 +53,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚡ ৪. প্রাইস ভ্যালিডেশন
-    const itemPrice = Number(variation.price || 0);
+    // ⚡ ৪. প্রাইস ভ্যালিডেশন (offerPrice থাকলে সেটি নিবে, না থাকলে মূল price নিবে)
+    const effectivePrice = (variation.offerPrice !== null && variation.offerPrice !== undefined && Number(variation.offerPrice) > 0)
+      ? Number(variation.offerPrice)
+      : Number(variation.price || 0);
+
     const itemQty = Number(quantity || 1);
-    const totalPrice = itemPrice * itemQty;
+    const totalPrice = effectivePrice * itemQty;
 
     if (isNaN(totalPrice) || totalPrice <= 0) {
       return NextResponse.json(
@@ -62,18 +71,18 @@ export async function POST(req: Request) {
     const cleanBaseUrl = BASE_URL.replace(/\/$/, "");
     const origin = req.headers.get("origin") || "http://localhost:3000";
 
-    // ⚡ ৫. ব্যাকএন্ড থেকে সেশন ইউজার অথবা রিকোয়েস্টের ইউজার কনফার্ম করা
+    // ⚡ ৫. ব্যাকএন্ড থেকে সেশন ইউজার অথবা রিকোয়েস্টের ইউজার কনফার্ম করা
     const finalUserId = userId || (session?.user as any)?.id || "";
     const finalEmail = email || session?.user?.email || "";
 
-    // ⚡ ৬. UddoktaPay Payload (metadata-তে userEmail সহ পাঠানো হচ্ছে)
+    // ⚡ ৬. UddoktaPay Payload
     const payload = {
       full_name: name || session?.user?.name || "Customer",
       email: finalEmail || "customer@gmail.com",
       amount: String(totalPrice),
       metadata: {
         userId: String(finalUserId),
-        userEmail: String(finalEmail), // 👈 এটি নিশ্চিত করবে সঠিক ইউজারের অ্যাকাউন্তেই অর্ডার সেভ হবে!
+        userEmail: String(finalEmail),
         productId: strProductId,
         variationId: strVariationId,
         quantity: String(itemQty),

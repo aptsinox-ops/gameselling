@@ -35,9 +35,7 @@ async function verifyAndProcessOrder(invoice_id: string | null, req: Request) {
   if (data.status === "COMPLETED") {
     const metadata = data.metadata || {};
     
-    const rawUserId = metadata.userId;
-    const parsedUserId = rawUserId && !isNaN(Number(rawUserId)) ? Number(rawUserId) : null;
-    
+    const rawUserId = String(metadata.userId || "");
     const productId = String(metadata.productId || "");
     const variationId = String(metadata.variationId || "");
 
@@ -57,16 +55,37 @@ async function verifyAndProcessOrder(invoice_id: string | null, req: Request) {
       // ⚡ Prisma Transaction শুরু
       const orderResult = await prisma.$transaction(async (tx) => {
         
+        // ⚡ ডুপ্লিকেট অর্ডার চেক (পেজ রিফ্রেশ দিলে যেন একাধিক অর্ডার না হয়)
+        const existingOrder = await tx.order.findFirst({
+          where: {
+            inputValues: {
+              path: ['invoice_id'],
+              equals: invoice_id,
+            },
+          },
+        });
+
+        if (existingOrder) {
+          const product = await tx.product.findUnique({ where: { id: productId } });
+          const isVoucher = product?.productType?.toLowerCase()?.includes("voucher");
+          return { orderId: existingOrder.id, isVoucher };
+        }
+
         let user = null;
 
-        // ১. ID (Int) দিয়ে ইউজার খোঁজা
-        if (parsedUserId) {
-          user = await tx.user.findUnique({
-            where: { id: parsedUserId },
+        // ১. ID দিয়ে ইউজার খোঁজা (String বা Number উভয় ফরম্যাটের জন্য নিরাপদ)
+        if (rawUserId) {
+          user = await tx.user.findFirst({
+            where: {
+              OR: [
+                { id: rawUserId as any },
+                ...(!isNaN(Number(rawUserId)) ? [{ id: Number(rawUserId) as any }] : []),
+              ],
+            },
           });
         }
 
-        // ২. ID দিয়ে না পেলে পেমেন্টের/মেটাডেটার ইমেইল দিয়ে ইউজার খোঁজা
+        // ২. ID দিয়ে না পেলে ইমেইল দিয়ে ইউজার খোঁজা
         if (!user && (data.email || metadata.userEmail)) {
           const searchEmail = metadata.userEmail || data.email;
           user = await tx.user.findUnique({
@@ -74,12 +93,9 @@ async function verifyAndProcessOrder(invoice_id: string | null, req: Request) {
           });
         }
 
-        // ❌ যদি কোনো ইউজারই না পাওয়া যায়
         if (!user) {
-          throw new Error("অর্ডারের জন্য ইউজার খুঁজে পাওয়া যায়নি। মেটাডেটাতে সঠিক User ID/Email ছিল না।");
+          throw new Error("অর্ডারের জন্য ইউজার খুঁজে পাওয়া যায়নি।");
         }
-
-        console.log(`✅ Order process ongoing for User ID: ${user.id} (${user.email})`);
 
         // প্রোডাক্ট ও ভ্যারিয়েশন ফেচ
         const product = await tx.product.findUnique({
@@ -115,10 +131,10 @@ async function verifyAndProcessOrder(invoice_id: string | null, req: Request) {
         let isUnique = false;
         while (!isUnique) {
           receiptNo = Math.floor(1000000 + Math.random() * 9000000).toString();
-          const existingOrder = await tx.order.findFirst({
+          const existingReceipt = await tx.order.findFirst({
             where: { receiptNo },
           });
-          if (!existingOrder) {
+          if (!existingReceipt) {
             isUnique = true;
           }
         }
@@ -129,17 +145,24 @@ async function verifyAndProcessOrder(invoice_id: string | null, req: Request) {
           voucherCode = `VCHR-${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
         }
 
-        // 📝 ডাটাবেজে ফাইনাল অর্ডার ক্রিয়েট (এখানে paymentMethod: "Instant" যোগ করা হয়েছে)
+        // অফার প্রাইস লজিক ফলব্যাক
+        const effectivePrice = (variation.offerPrice !== null && variation.offerPrice !== undefined && Number(variation.offerPrice) > 0)
+          ? Number(variation.offerPrice)
+          : Number(variation.price || 0);
+
+        const calculatedTotalPrice = effectivePrice * qty;
+
+        // 📝 ডাটাবেজে অর্ডার ক্রিয়েট (inputValues-এর ভেতরে invoice_id সেভ রাখা হচ্ছে)
         const createdOrder = await tx.order.create({
           data: {
             receiptNo,
             userId: user.id,
             productId: product.id,
             variationId: variation.id,
-            totalPrice: paidAmount > 0 ? paidAmount : Number(variation.price) * qty,
+            totalPrice: paidAmount > 0 ? paidAmount : calculatedTotalPrice,
             quantity: qty,
             status: isVoucher ? "Complete" : "Processing",
-            inputValues: inputValues,
+            inputValues: { ...inputValues, invoice_id },
             voucherCode: voucherCode,
             paymentMethod: "Instant",
           },
@@ -151,7 +174,7 @@ async function verifyAndProcessOrder(invoice_id: string | null, req: Request) {
         };
       });
 
-      // 🎯 ৪. অটোমেটিক রিডাইরেক্ট
+      // 🎯 ৪. রিডাইরেক্ট
       if (orderResult.isVoucher) {
         return NextResponse.redirect(`${origin}/code`);
       } else {
