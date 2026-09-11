@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const isVoucherType = product.productType?.toUpperCase() === "VOUCHER";
     const isFreeFireAuto = Boolean(product.isFreeFireAuto);
 
-    // অটো ডেলিভারি (Voucher অথবা FreeFire Auto) হলে ম্যানুয়াল স্টক লাগবে না
+    // অটো ডেলিভারি (Voucher অথবা FreeFire Auto) হলে ম্যানুয়াল স্টক লাগবে না
     const isAutoDelivery = isVoucherType || isFreeFireAuto;
 
     if (!isAutoDelivery && (stock === undefined || stock === null || stock === "")) {
@@ -55,6 +55,8 @@ export async function POST(req: Request) {
     }
 
     // ✨ নতুন ভেরিয়েশন ADD করার রিকোয়েস্ট
+    // (sortOrder ফিল্ডটা DB schema-তে থাকতে পারে, কিন্তু এখন থেকে sorting logic এর জন্য এটা ব্যবহার হবে না —
+    // createdAt (Prisma default @default(now())) দিয়েই insertion order নির্ধারিত হবে)
     const newVariation = await prisma.variation.create({
       data: {
         productId,
@@ -63,9 +65,9 @@ export async function POST(req: Request) {
         offerPrice: parsedOfferPrice,
         bonus: parsedBonus,
         stock: parsedStock,
-        amount: 0, 
+        amount: 0,
         status: finalStatus,
-        sortOrder: 0, 
+        sortOrder: 0,
       },
     });
 
@@ -83,23 +85,23 @@ export async function GET(req: Request) {
     const productId = searchParams.get("productId");
 
     const includeOptions = {
-      product: { 
-        select: { 
-          name: true, 
-          productType: true, 
-          isFreeFireAuto: true 
-        } 
+      product: {
+        select: {
+          name: true,
+          productType: true,
+          isFreeFireAuto: true
+        }
       },
       vouchers: {
-        where: { status: "ACTIVE" }, // কেবল ACTIVE ভাউচারগুলো গুনে নেওয়ার জন্য
+        where: { status: "ACTIVE" }, // কেবল ACTIVE ভাউচারগুলো গুনে নেওয়ার জন্য
         select: { id: true }
       }
     };
 
     const processVariation = (v: any) => {
       const isVoucherType = v.product?.productType?.toUpperCase() === "VOUCHER";
-      
-      // যদি Product Type VOUCHER হয়, তাহলে Active Vouchers সংখ্যাই হবে আসল Stock
+
+      // যদি Product Type VOUCHER হয়, তাহলে Active Vouchers সংখ্যাই হবে আসল Stock
       const finalStock = isVoucherType ? v.vouchers?.length || 0 : v.stock;
 
       return {
@@ -109,10 +111,11 @@ export async function GET(req: Request) {
         title: v.title.replace(/\s*\(\+?\d+\s*Bonus\)/gi, "").trim(),
         price: v.price,
         offerPrice: v.offerPrice,
-        bonus: v.bonus, 
-        stock: finalStock, 
-        status: v.status === "ON" ? true : false, 
-        sortOrder: v.sortOrder
+        bonus: v.bonus,
+        stock: finalStock,
+        status: v.status === "ON" ? true : false,
+        sortOrder: v.sortOrder,
+        createdAt: v.createdAt, // ✅ নতুন — frontend-এ insertion-order sort এর জন্য
       };
     };
 
@@ -120,7 +123,7 @@ export async function GET(req: Request) {
       const variations = await prisma.variation.findMany({
         where: { productId },
         include: includeOptions,
-        orderBy: { sortOrder: "asc" },
+        orderBy: { createdAt: "asc" }, // ✅ sortOrder বাদ, এখন যেটা আগে add হয়েছে সেটা আগে
       });
 
       return NextResponse.json(variations.map(processVariation), { status: 200 });
@@ -128,7 +131,7 @@ export async function GET(req: Request) {
 
     const allVariations = await prisma.variation.findMany({
       include: includeOptions,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "desc" }, // অ্যাডমিন লিস্ট ভিউ — নতুনটা উপরে (এটা আগে থেকেই ছিল, অপরিবর্তিত)
     });
 
     return NextResponse.json(allVariations.map(processVariation), { status: 200 });

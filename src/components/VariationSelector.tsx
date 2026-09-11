@@ -29,6 +29,7 @@ interface Variation {
   status: string;
   sortOrder: number;
   stock: number;
+  createdAt: string | Date;
 }
 
 interface VariationSelectorProps {
@@ -64,23 +65,22 @@ export default function VariationSelector({
 }: VariationSelectorProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  {/* 🎯 স্থায়ী সর্টিং লজিক (যা এডিট করলেও পজিশন ধরে রাখবে) */}
-  const activeVariations = useMemo(() => {
-    return [...variations]
-      .filter((v) => v.status === "ON")
-      .sort((a, b) => {
-        const orderA = Number(a.sortOrder ?? 0);
-        const orderB = Number(b.sortOrder ?? 0);
+/* 🎯 স্থায়ী সর্টিং লজিক: যেটা আগে add হয়েছে সেটা আগে থাকবে (creation order) */
+const activeVariations = useMemo(() => {
+  return [...variations]
+    .filter((v) => v.status === "ON")
+    .sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
 
-        // ১. যদি sortOrder আলাদা হয়, তবে sortOrder অনুযায়ী সাজাবে
-        if (orderA !== orderB) {
-          return orderA - orderB;
-        }
+      if (timeA !== timeB) {
+        return timeA - timeB; // পুরোনো (আগে add হওয়া) আগে
+      }
 
-        // ২. যদি sortOrder একই থাকে বা না থাকে, তবে আইডি অনুযায়ী স্থান ফিক্সড করে রাখবে
-        return String(a.id).localeCompare(String(b.id));
-      });
-  }, [variations]);
+      // একই সময়ে তৈরি হলে (edge case), id দিয়ে stable tie-break
+      return String(a.id).localeCompare(String(b.id));
+    });
+}, [variations]);
 
   /* 🎯 রিসেলার ও ডিসকাউন্ট প্রাইস হিসেব করার লজিক */
   const calculateFinalPrice = (basePrice: number) => {
