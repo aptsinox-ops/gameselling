@@ -140,7 +140,7 @@ export default function ProductPurchaseFlow({
     }
   }, [basePrice]);
 
-  /* ⏱️ ৩ সেকেন্ডে ১-১০০% প্রোগ্রেস বার চালানোর useEffect */
+  /* ⏱️ ১০ সেকেন্ডে ১-১০০% প্রোগ্রেস বার ও সমাপ্তির useEffect */
   useEffect(() => {
     if (isDialogOpen && dialogStep === "loading") {
       setProgress(0);
@@ -150,15 +150,15 @@ export default function ProductPurchaseFlow({
             clearInterval(interval);
             return 100;
           }
-          return prev + 1; // ৩০ms পর পর ১% বাড়াব (১০০ * ৩০ms = ৩,০০০ms = ৩ সেকেন্ড)
+          return prev + 1; // ১০০ms পর পর ১% বাড়বে (১০০ * ১০০ms = ১০,০০০ms = ১০ সেকেন্ড)
         });
-      }, 20);
+      }, 100);
 
       return () => clearInterval(interval);
     }
   }, [isDialogOpen, dialogStep]);
 
-  /* 🎯 প্রোগ্রেস ১০০% হলে সাকসেস স্টেপ সেট করা */
+  /* 🎯 ১০ সেকেন্ড পর প্রোগ্রেস ১০০% হলে সাকসেস স্টেপ সেট করা */
   useEffect(() => {
     if (progress >= 100 && dialogStep === "loading" && apiResponse) {
       setDialogStep("success");
@@ -369,6 +369,8 @@ export default function ProductPurchaseFlow({
         hour12: true
       });
       setOrderTime(bdFormattedTime);
+
+      // ১০ সেকেন্ড প্রোগ্রেস শেষ হওয়া পর্যন্ত অপেক্ষা করবে, তারপর useEffect নিজে থেকেই success স্টেপে পরিবর্তন করে নেবে।
 
     } catch (err: any) {
       console.error("Order submission error:", err);
