@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,7 +76,7 @@ export default function ProductPurchaseFlow({
   primaryColor = "#2563eb",
   userId,
 }: ProductPurchaseFlowProps) {
-  
+
   const router = useRouter();
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const [basePrice, setBasePrice] = useState<number>(0);
@@ -95,12 +95,20 @@ export default function ProductPurchaseFlow({
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [dialogStep, setDialogStep] = useState<"loading" | "insufficient" | "success">("loading");
-  const [errorMessage, setErrorMessage] = useState<string>(""); 
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [progress, setProgress] = useState<number>(0);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [orderTime, setOrderTime] = useState<string>("");
 
-  const animFrameRef = useRef<number | null>(null);
+  // চলমান progress-timer এর রেফারেন্স রাখার জন্য, যাতে রেসপন্স আসার সাথে সাথে থামিয়ে দেওয়া যায়
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearProgressTimer = () => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  };
 
   /* 🔹 চেক প্রোডাক্ট টাইপ ভাউচার কিনা */
   const isVoucherProduct = useMemo(() => {
@@ -130,42 +138,6 @@ export default function ProductPurchaseFlow({
     return Math.round(unitPrice * 100) / 100;
   }, [currentUserRole, resellerPercentage]);
 
-  /* 🔄 basePrice বা quantity পাল্টালে totalPrice অটো আপডেট */
-  useEffect(() => {
-    if (basePrice > 0) {
-      setPaymentDetails((prev) => ({
-        ...prev,
-        totalPrice: Math.round(basePrice * prev.quantity * 100) / 100,
-      }));
-    }
-  }, [basePrice]);
-
-  /* ⏱️ ১০ সেকেন্ডে ১-১০০% প্রোগ্রেস বার ও সমাপ্তির useEffect */
-  useEffect(() => {
-    if (isDialogOpen && dialogStep === "loading") {
-      setProgress(0);
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return prev + 1; // ১০০ms পর পর ১% বাড়বে (১০০ * ১০০ms = ১০,০০০ms = ১০ সেকেন্ড)
-        });
-      }, 100);
-
-      return () => clearInterval(interval);
-    }
-  }, [isDialogOpen, dialogStep]);
-
-  /* 🎯 ১০ সেকেন্ড পর প্রোগ্রেস ১০০% হলে সাকসেস স্টেপ সেট করা */
-  useEffect(() => {
-    if (progress >= 100 && dialogStep === "loading" && apiResponse) {
-      setDialogStep("success");
-      setIsSubmitting(false);
-    }
-  }, [progress, dialogStep, apiResponse]);
-
   const showNameChecker = useMemo(() => {
     return product?.productType === "UID" || product?.isUidNameChecker === true;
   }, [product]);
@@ -186,7 +158,7 @@ export default function ProductPurchaseFlow({
 
   const handleInputChange = useCallback((fieldName: string, value: string) => {
     setInputValues((prev) => ({ ...prev, [fieldName]: value }));
-    setPlayerData(null); 
+    setPlayerData(null);
   }, []);
 
   const handleAddBalance = useCallback(() => {
@@ -196,7 +168,7 @@ export default function ProductPurchaseFlow({
   const handleCheckUIDName = async () => {
     const firstFieldName = cleanFields[0];
     const uid = inputValues[firstFieldName];
-    
+
     if (!uid || uid.trim() === "") {
       toast(`দয়া করে প্রথমে "${firstFieldName}" ফিল্ডটি লিখুন!`, { icon: <ErrorIcon /> });
       return;
@@ -298,11 +270,14 @@ export default function ProductPurchaseFlow({
     setIsSubmitting(true);
     setIsDialogOpen(true);
     setDialogStep("loading");
+    setProgress(0);
+    setApiResponse(null);
+    setErrorMessage("");
 
     const calculatedTotalPrice = Math.round(basePrice * paymentDetails.quantity * 100) / 100;
     const validUserId = userId ? Number(userId) : null;
 
-    // ১. Instant Payment Flow
+    // ১. Instant Payment Flow (অপরিবর্তিত)
     if (paymentDetails.paymentMethod === "Instant") {
       try {
         const response = await fetch("/api/instant-payment", {
@@ -323,15 +298,24 @@ export default function ProductPurchaseFlow({
           window.location.href = resData.payment_url;
           return;
         }
+        setErrorMessage(resData?.message || "Payment session তৈরি করা যায়নি");
+        setDialogStep("insufficient");
       } catch (error) {
         console.error(error);
+        setErrorMessage("নেটওয়ার্ক এরর — পুনরায় চেষ্টা করুন।");
+        setDialogStep("insufficient");
       }
-      setIsDialogOpen(false);
       setIsSubmitting(false);
       return;
     }
 
     // ২. Wallet Payment Flow
+    // Progress বার সত্যিকারের রেসপন্স আসা পর্যন্ত সর্বোচ্চ ৯০% পর্যন্ত ধীরে ধীরে বাড়বে,
+    // ১০০% তখনই হবে যখন backend থেকে প্রকৃত কনফার্মেশন আসবে — এর আগে কখনোই না।
+    progressTimerRef.current = setInterval(() => {
+      setProgress((prev) => (prev < 90 ? prev + 2 : prev));
+    }, 60);
+
     try {
       const response = await fetch("/api/order", {
         method: "POST",
@@ -348,35 +332,59 @@ export default function ProductPurchaseFlow({
         }),
       });
 
-      const resData = await response.json();
+      const resData = await response.json().catch(() => ({}));
+      clearProgressTimer();
 
-      if (!response.ok) {
-        setErrorMessage(resData.message || "Order Failed");
+      // ⚠️ শুধু response.ok চেক করাই যথেষ্ট না — backend যদি 200 status দিয়ে
+      // success:false বা orderId ছাড়া রেসপন্স পাঠায়, সেটাও fail হিসেবে ধরতে হবে।
+      // আপনার আসল API response এর শেইপ অনুযায়ী নিচের condition-টা প্রয়োজনে
+      // adjust করুন (যেমন orderId এর বদলে অন্য কোনো ফিল্ড নেম হতে পারে)।
+      const hasOrderReference = Boolean(
+        resData?.orderId || resData?.receiptNo || resData?.order?.id
+      );
+      const isActuallySuccess =
+        response.ok && resData?.success !== false && hasOrderReference;
+
+      if (!isActuallySuccess) {
+        setErrorMessage(
+          resData?.message ||
+          (!response.ok
+            ? `Order Failed (status ${response.status})`
+            : "Order response থেকে confirmation পাওয়া যায়নি")
+        );
         setDialogStep("insufficient");
         setIsSubmitting(false);
+        setProgress(0);
         return;
       }
 
+      setProgress(100);
       setApiResponse(resData);
-      
-      const bdFormattedTime = new Date().toLocaleString("en-US", { 
+
+      const bdFormattedTime = new Date().toLocaleString("en-US", {
         timeZone: "Asia/Dhaka",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-        hour12: true
+        hour12: true,
       });
       setOrderTime(bdFormattedTime);
 
-      // ১০ সেকেন্ড প্রোগ্রেস শেষ হওয়া পর্যন্ত অপেক্ষা করবে, তারপর useEffect নিজে থেকেই success স্টেপে পরিবর্তন করে নেবে।
+      // ১০০% animation দেখানোর জন্য সামান্য delay, এরপর success স্ক্রিন
+      setTimeout(() => {
+        setDialogStep("success");
+        setIsSubmitting(false);
+      }, 400);
 
     } catch (err: any) {
+      clearProgressTimer();
       console.error("Order submission error:", err);
-      setErrorMessage("অর্ডার প্রসেস করতে ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।");
+      setErrorMessage("অর্ডার প্রসেস করতে ব্যর্থ হয়েছে (নেটওয়ার্ক/সার্ভার এরর)। পুনরায় চেষ্টা করুন।");
       setDialogStep("insufficient");
       setIsSubmitting(false);
+      setProgress(0);
     }
   };
 
@@ -384,7 +392,7 @@ export default function ProductPurchaseFlow({
     <div className="space-y-8 pt-4 pb-24 lg:pb-8">
       {/* Side by Side Grid Wrapper */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* Left Side: Step 1 */}
         <div className="lg:col-span-7 space-y-6">
           {/* ১. ভ্যারিয়েশন সেকশন */}
@@ -394,17 +402,17 @@ export default function ProductPurchaseFlow({
               <h2 style={{ color: primaryColor }} className="[font-size:clamp(15px,4vw,20px)] mt-1 font-bold px-5">Select Recharge</h2>
               <hr className="mt-3 border-slate-200 w-full" />
             </div>
-            
-            <VariationSelector 
-              variations={dbVariations || []} 
-              isListView={isListView} 
-              variationIcon={product?.variationIcon} 
+
+            <VariationSelector
+              variations={dbVariations || []}
+              isListView={isListView}
+              variationIcon={product?.variationIcon}
               resellerPercentage={resellerPercentage}
               userRole={currentUserRole}
               onChange={handleVariationChange}
-              primaryColor={primaryColor} 
+              primaryColor={primaryColor}
               userBalance={paymentDetails.userBalance}
-              isInstantPayment={paymentDetails.paymentMethod === "Instant"} 
+              isInstantPayment={paymentDetails.paymentMethod === "Instant"}
               onAddBalance={handleAddBalance}
               nextStepId="step-2"
             />
@@ -415,23 +423,23 @@ export default function ProductPurchaseFlow({
         <div className="lg:col-span-5 space-y-6">
           {/* ২. অ্যাকাউন্ট সেকশন */}
           <section className="relative bg-white rounded-md border border-slate-200 pt-5 sm:pt-6">
-            <div 
-              style={{ backgroundColor: primaryColor }} 
+            <div
+              style={{ backgroundColor: primaryColor }}
               className="absolute -top-5 sm:-top-6 left-3.5 sm:left-4 z-10 flex items-center justify-center text-white rounded-full [width:clamp(34px,8vw,44px)] [height:clamp(34px,8vw,44px)] [font-size:clamp(15px,4.5vw,20px)] font-bold"
             >
               2
             </div>
 
             <div className="w-full pb-2.5 sm:pb-3">
-              <h2 
-                style={{ color: primaryColor }} 
+              <h2
+                style={{ color: primaryColor }}
                 className="[font-size:clamp(14px,3.8vw,18px)] mt-0.5 font-bold px-3.5 sm:px-5"
               >
                 Account Info
               </h2>
               <hr className="mt-2.5 border-slate-200 w-full" />
             </div>
-            
+
             {/* Input Fields & Content Area */}
             <div className="px-3.5 sm:px-5 pb-5 sm:pb-6 space-y-3.5 sm:space-y-4">
               {cleanFields.map((labelName, index) => (
@@ -439,12 +447,12 @@ export default function ProductPurchaseFlow({
                   <label className="[font-size:clamp(11px,2.7vw,13.5px)] font-semibold text-slate-600 block capitalize">
                     Enter {labelName}
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={inputValues[labelName] || ""}
                     onChange={(e) => handleInputChange(labelName, e.target.value)}
-                    onFocus={(e) => (e.target.style.outlineColor = primaryColor)} 
-                    className="w-full px-3.5 py-2.5 sm:py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 [font-size:clamp(12px,3vw,15px)] transition-all bg-slate-50/30 focus:bg-white text-slate-800 placeholder:text-slate-400" 
+                    onFocus={(e) => (e.target.style.outlineColor = primaryColor)}
+                    className="w-full px-3.5 py-2.5 sm:py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 [font-size:clamp(12px,3vw,15px)] transition-all bg-slate-50/30 focus:bg-white text-slate-800 placeholder:text-slate-400"
                     placeholder={`Enter your ${labelName}`}
                   />
                 </div>
@@ -466,26 +474,26 @@ export default function ProductPurchaseFlow({
                   {/* Player Details Result Card */}
                   {playerData && (
                     <div className="mt-3.5 sm:mt-4 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/60 shadow-sm transition-all duration-300">
-                      <div 
-                        style={{ backgroundColor: primaryColor }} 
+                      <div
+                        style={{ backgroundColor: primaryColor }}
                         className="px-3.5 sm:px-4 py-2 sm:py-2.5 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
                       >
                         <FireIcon /> Player Account Details
                       </div>
-                      
+
                       <div className="p-3 sm:p-4 grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
                         <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
                           <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
                             Name
                           </span>
-                          <span 
-                            style={{ color: primaryColor }} 
+                          <span
+                            style={{ color: primaryColor }}
                             className="font-bold [font-size:clamp(12.5px,3.2vw,15px)] block mt-0.5 truncate"
                           >
                             {playerData.username}
                           </span>
                         </div>
-                        
+
                         <div className="bg-white p-2.5 sm:p-3 rounded-md border border-slate-100 min-w-0 shadow-2xs">
                           <span className="block text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
                             UID
@@ -509,12 +517,12 @@ export default function ProductPurchaseFlow({
               <h2 style={{ color: primaryColor }} className="[font-size:clamp(14px,3.5vw,18px)] font-bold mt-1 px-5">Select Payment</h2>
               <hr className="mt-3 border-slate-200 w-full" />
             </div>
-            
-            <PaymentSelector 
-              takaSvg={takaSvg} 
+
+            <PaymentSelector
+              takaSvg={takaSvg}
               basePrice={basePrice}
               onChange={handlePaymentChange}
-              primaryColor={primaryColor} 
+              primaryColor={primaryColor}
             />
           </section>
 
@@ -558,8 +566,8 @@ export default function ProductPurchaseFlow({
             </div>
             <hr className="mt-3 border-slate-200 w-full" />
           </div>
-            
-          <div 
+
+          <div
             className="text-slate-600 leading-relaxed font-medium prose prose-slate max-w-none px-5 [font-size:clamp(13px,3.2vw,16px)] product-description"
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
@@ -570,9 +578,9 @@ export default function ProductPurchaseFlow({
 {isDialogOpen && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
     <div className="relative w-full max-w-[380px] sm:max-w-md bg-white rounded-2xl p-5 sm:p-7 shadow-2xl border border-slate-100 transition-all duration-300 overflow-hidden max-h-[92vh] overflow-y-auto scale-95 sm:scale-100 origin-center">
-      
+
       {/* ক্লোজ বাটন */}
-      <button 
+      <button
         onClick={() => { if (!isSubmitting) setIsDialogOpen(false); }}
         disabled={isSubmitting}
         className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-20 z-10"
@@ -583,19 +591,19 @@ export default function ProductPurchaseFlow({
       {/* ১. প্রোগ্রেস ও অ্যানিমেটেড লোডিং স্ক্রিন */}
       {dialogStep === "loading" && (
         <div className="py-4 flex flex-col items-center justify-center text-center">
-          
+
           <h3 className="text-lg font-extrabold text-slate-900 tracking-tight mt-2">Processing Order</h3>
           <p className="text-xs text-slate-500 font-medium max-w-xs mt-1 mb-6 leading-relaxed">
             Please wait a moment while we process your request securely.
           </p>
-          
+
           {/* 🚀 Smooth Progress Bar Line */}
           <div className="w-full px-1 relative flex items-center justify-between mb-6">
-            
+
             {/* Background Track & Animated Fill Bar */}
             <div className="absolute left-5 right-5 top-3.5 h-1.5 bg-slate-100 rounded-full z-0 overflow-hidden">
-              <div 
-                style={{ 
+              <div
+                style={{
                   width: `${Math.min(Math.max(progress, 0), 100)}%`,
                   transition: "width 100ms linear"
                 }}
@@ -655,7 +663,7 @@ export default function ProductPurchaseFlow({
           <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 ring-8 ring-rose-50/50 shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="18" y2="18"></line></svg>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-bold text-slate-900 tracking-tight">
               {errorMessage === "This Method are not allow This Time" ? "Action Blocked" : "Order Failed"}
@@ -666,16 +674,16 @@ export default function ProductPurchaseFlow({
           </div>
 
           <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-            {errorMessage === "Insufficient Balance" 
-              ? "আপনার ওয়ালেট ব্যালেন্স পর্যাপ্ত নয়। দয়া করে অ্যাকাউন্টে ব্যালেন্স রিচার্জ করে পুনরায় চেষ্টা করুন।" 
-              : errorMessage === "Out of Stock" 
-              ? "দুঃখিত, এই ভ্যারিয়েশনটি বর্তমানে স্টকআউট! অ্যাডমিন প্যানেল থেকে এর স্টক বাড়িয়ে পুনরায় চেষ্টা করুন।" 
+            {errorMessage === "Insufficient Balance"
+              ? "আপনার ওয়ালেট ব্যালেন্স পর্যাপ্ত নয়। দয়া করে অ্যাকাউন্টে ব্যালেন্স রিচার্জ করে পুনরায় চেষ্টা করুন।"
+              : errorMessage === "Out of Stock"
+              ? "দুঃখিত, এই ভ্যারিয়েশনটি বর্তমানে স্টকআউট! অ্যাডমিন প্যানেল থেকে এর স্টক বাড়িয়ে পুনরায় চেষ্টা করুন।"
               : errorMessage === "This Method are not allow This Time"
               ? "This Method are not allow This Time"
               : "অর্ডারটি সম্পন্ন করা সম্ভব হয়নি। দয়া করে ব্যালেন্স রিচার্জ অথবা পুনরায় চেষ্টা করুন।"}
           </p>
 
-          <button 
+          <button
             onClick={() => setIsDialogOpen(false)}
             className="w-full mt-2 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs tracking-wide transition shadow-sm active:scale-[0.98]"
           >
@@ -687,11 +695,11 @@ export default function ProductPurchaseFlow({
       {/* ৩. সফল পারচেজ ও ইনভয়েস স্ক্রিন */}
       {dialogStep === "success" && (
         <div className="flex flex-col items-center text-center pt-2">
-          
+
           <div className="my-1 flex items-center justify-center">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white ring-8 shadow-lg transition-all duration-300 animate-in zoom-in-75 ${
-              isVoucherProduct 
-                ? "bg-emerald-500 ring-emerald-50 shadow-emerald-500/20" 
+              isVoucherProduct
+                ? "bg-emerald-500 ring-emerald-50 shadow-emerald-500/20"
                 : "bg-amber-500 ring-amber-50 shadow-amber-500/20"
             }`}>
               {isVoucherProduct ? (
@@ -709,8 +717,8 @@ export default function ProductPurchaseFlow({
           </h2>
 
           <div className="mt-1">
-            <Link 
-              href={isVoucherProduct ? "/code" : "/myorder"} 
+            <Link
+              href={isVoucherProduct ? "/code" : "/myorder"}
               className="text-xs text-slate-500 hover:text-blue-600 hover:underline font-semibold transition-colors duration-150 inline-block cursor-pointer"
             >
               Check Your Order History
