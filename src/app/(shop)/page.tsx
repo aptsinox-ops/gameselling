@@ -47,7 +47,7 @@ export default async function Home() {
     const safeOrders = JSON.parse(JSON.stringify(rawOrders));
 
     return (
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-2 space-y-0 sm:space-y-0">
+      <main className="max-w-7xl mx-auto sm:px-4 py-2 sm:py-2 space-y-0 sm:space-y-0">
         <HeroSlider 
           noticeText={siteSettings?.noticeText} 
           primaryColor={primaryColor}

@@ -119,11 +119,10 @@ export default function HeroSlider({
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
 
         .noto-sans-bengali {
           font-family: 'Noto Sans Bengali', sans-serif;
-          font-weight: 400;
         }
 
         @keyframes slideUpBadge {
@@ -157,42 +156,77 @@ export default function HeroSlider({
         }}
       />
 
-      {/* Notice Box */}
+      {/* Modern Dynamic Notice Box */}
       {showNotice && (
         <div
-          style={{ 
-            backgroundColor: primaryColor,
-            borderColor: 'rgba(255, 255, 255, 0.2)' 
+          style={{
+            background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}E6 100%)`,
+            boxShadow: `0 8px 20px -6px ${primaryColor}40`,
           }}
-          className="relative text-white p-2.5 pr-8 xs:p-3 xs:pr-9 sm:p-3.5 sm:pr-10 rounded-lg border text-left transition-all backdrop-blur-sm"
+          className="relative overflow-hidden text-white p-3 sm:p-3.5 rounded-xl border border-white/20 transition-all duration-300 backdrop-blur-md"
         >
-          <button
-            onClick={() => setShowNotice(false)}
-            aria-label="Close notice"
-            className="absolute top-2.5 right-2.5 xs:top-3 xs:right-3 w-5 h-5 flex items-center justify-center rounded-md bg-white/10 hover:bg-white/20 active:scale-95 transition-all shrink-0"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              className="w-3 h-3 text-white"
+          {/* Subtle Decorative Ambient Glow */}
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
+
+          <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+            <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
+              {/* Notification Icon Badge */}
+              <div className="shrink-0 p-2 sm:p-2.5 rounded-lg bg-white/15 backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center mt-0.5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </div>
+
+              {/* Text Area */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-hind text-[10px] sm:text-[11px] font-bold tracking-wider text-white uppercase px-2 py-0.5 rounded-full bg-white/20 border border-white/25 backdrop-blur-sm leading-none">
+                    Notice
+                  </span>
+                  
+                  {/* Animated Live Indicator Dot */}
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
+                </div>
+
+                <p className="noto-sans-bengali text-[12px] sm:text-[13px] leading-relaxed text-white/95 font-medium break-words">
+                  {finalNoticeText}
+                </p>
+              </div>
+            </div>
+
+            {/* Responsive Close Button */}
+            <button
+              onClick={() => setShowNotice(false)}
+              aria-label="Close notice"
+              className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/25 active:scale-95 transition-all duration-200 border border-white/15 text-white/90 hover:text-white"
             >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-
-          <div className="flex items-center gap-1.5 mb-1">
-            <h2 className="font-hind text-xs xs:text-[13px] sm:text-sm font-bold text-white leading-none uppercase tracking-wide">
-              Notice
-            </h2>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4 sm:w-4.5 sm:h-4.5"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-
-          <p className="noto-sans-bengali text-[11px] xs:text-[12px] sm:text-[13px] leading-relaxed text-white/90 break-words font-normal">
-            {finalNoticeText}
-          </p>
         </div>
       )}
 
@@ -331,9 +365,9 @@ export default function HeroSlider({
           )}
         </div>
 
-        {/* Indicators */}
-        {slides.length > 0 && (
-          <div className="flex justify-center items-center gap-2 py-0 my-0.5">
+        {/* Indicators: minimum 2 slides required to show dots */}
+        {slides.length > 1 && (
+          <div className="flex justify-center items-center gap-1.5 py-0 my-0.5">
             {slides.map((_, index) => {
               const isSelected = currentSlide === index;
 
@@ -343,16 +377,15 @@ export default function HeroSlider({
                   onClick={() => setCurrentSlide(index)}
                   aria-label={`Go to slide ${index + 1}`}
                   style={{
-                    willChange: "transform, opacity, background",
-                    transition: "transform 250ms ease, opacity 250ms ease, background 250ms ease",
+                    transition: "background 200ms ease, opacity 200ms ease",
                     background: isSelected
-                      ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}CC 100%)`
+                      ? primaryColor
                       : `linear-gradient(135deg, ${primaryColor}40 0%, ${primaryColor}20 100%)`,
                   }}
-                  className={`w-3 h-3 rounded-full cursor-pointer transform-gpu shrink-0 ${
+                  className={`w-2 h-2 rounded-full cursor-pointer shrink-0 ${
                     isSelected
-                      ? "scale-110 opacity-100 shadow-sm"
-                      : "scale-75 opacity-50 hover:opacity-80"
+                      ? "opacity-100"
+                      : "opacity-40 hover:opacity-75"
                   }`}
                 />
               );
