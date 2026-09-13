@@ -156,7 +156,7 @@ export default function AdminAuthPage() {
       try {
         await loginAdmin(formData);
         showToast.success("Login Successful!");
-        router.push("`${ADMIN_ROUTE}/dashboard");
+        router.push(`${ADMIN_ROUTE}/dashboard`);
       } catch (err: any) {
         showToast.error("Wrong Password or AdminName/Gmail!");
       }
