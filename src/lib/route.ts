@@ -1,0 +1,1 @@
+export const ADMIN_ROUTE = '/apt-start-avix-admin';

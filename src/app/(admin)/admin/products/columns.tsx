@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { ADMIN_ROUTE } from '@/lib/route';
 
 // লাইভ স্ট্যাটাস সুইচ সেল
 const StatusSwitchCell = ({ row }: { row: any }) => {
@@ -223,7 +224,7 @@ export const columns: ColumnDef<any>[] = [
               
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/admin/products?edit=${item.id}`}
+                  href={`${ADMIN_ROUTE}/products?edit=${item.id}`}
                   className="flex items-center gap-2 cursor-pointer font-medium"
                 >
                   <Pencil className="h-3.5 w-3.5" /> Edit

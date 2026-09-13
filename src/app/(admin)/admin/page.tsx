@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { loginAdmin, registerAdmin, checkAdminExists } from "../auth/actions";
 import { Sun, Moon, Loader2 } from "lucide-react";
 import { showToast } from "@/lib/toast";
+import { ADMIN_ROUTE } from '@/lib/route';
+import Link from 'next/link';
 
 // সাবমিট বাটন কম্পোনেন্ট (Spinner এবং কালার লজিকসহ)
 function SubmitButton({ label, isDark }: { label: string; isDark: boolean }) {
@@ -154,7 +156,7 @@ export default function AdminAuthPage() {
       try {
         await loginAdmin(formData);
         showToast.success("Login Successful!");
-        router.push("/admin/dashboard");
+        router.push("`${ADMIN_ROUTE}/dashboard");
       } catch (err: any) {
         showToast.error("Wrong Password or AdminName/Gmail!");
       }

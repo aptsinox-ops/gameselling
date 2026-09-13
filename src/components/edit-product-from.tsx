@@ -8,6 +8,8 @@ import UnderlineExtension from "@tiptap/extension-underline";
 import LinkExtension from "@tiptap/extension-link";
 import ImageExtension from "@tiptap/extension-image";
 import { showToast } from "@/lib/toast";
+import { ADMIN_ROUTE } from '@/lib/route';
+import Link from 'next/link';
 import { 
   ChevronDown, 
   Check, 
@@ -102,9 +104,9 @@ export default function EditProductForm({
     if (typeof onCancel === "function") {
       onCancel();
     } else if (typeof onCancel === "string") {
-      router.push(onCancel); // /admin/products এ নিয়ে যাবে (ফর্ম বন্ধ হয়ে যাবে)
+      router.push(onCancel);
     } else {
-      router.push("/admin/products");
+      router.push(`${ADMIN_ROUTE}/products`);
     }
   };
 
@@ -294,7 +296,7 @@ export default function EditProductForm({
         router.push(onSuccess);
         router.refresh();
       } else {
-        router.push("/admin/products");
+        router.push(`${ADMIN_ROUTE}/products`);
         router.refresh();
       }
     } catch (error: any) {

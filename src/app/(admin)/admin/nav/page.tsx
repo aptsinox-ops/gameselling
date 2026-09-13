@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { NavTable } from "./nav-table"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
+import { ADMIN_ROUTE } from '@/lib/route';
 
 interface PageProps {
   searchParams: Promise<{ status?: string }>
@@ -45,7 +46,7 @@ export default async function NavManagementPage({ searchParams }: PageProps) {
               {/* ফিল্টার ট্যাব */}
               <div className="flex items-center gap-2 bg-neutral-100/60 dark:bg-neutral-900/40 p-1 rounded-xl w-fit border border-neutral-200/50 dark:border-neutral-800/50 select-none">
                 <Link
-                  href="/admin/nav"
+                  href={`${ADMIN_ROUTE}/nav`}
                   className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
                     activeStatus === "ALL"
                       ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm border border-neutral-200 dark:border-neutral-800"
@@ -55,7 +56,7 @@ export default async function NavManagementPage({ searchParams }: PageProps) {
                   All Items
                 </Link>
                 <Link
-                  href="/admin/nav?status=active"
+                  href={`${ADMIN_ROUTE}/nav?status=active`}
                   className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                     activeStatus === "ACTIVE"
                       ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm border border-neutral-200 dark:border-neutral-800"
@@ -66,7 +67,7 @@ export default async function NavManagementPage({ searchParams }: PageProps) {
                   Active
                 </Link>
                 <Link
-                  href="/admin/nav?status=inactive"
+                  href={`${ADMIN_ROUTE}/nav?status=inactive`}
                   className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                     activeStatus === "INACTIVE"
                       ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm border border-neutral-200 dark:border-neutral-800"

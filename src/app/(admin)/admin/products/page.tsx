@@ -6,6 +6,7 @@ import EditProductForm from "@/components/edit-product-from" // 🟢 সমা�
 import { AddProductForm } from "@/components/add-product-form"   // অ্যাড ফর্ম ইম্পোর্ট
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
+import { ADMIN_ROUTE } from '@/lib/route';
 
 interface PageProps {
   // Next.js 15+ এর নিয়মানুযায়ী searchParams একটি Promise
@@ -58,12 +59,12 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 {editId ? (
   <div className="bg-white dark:bg-neutral-900/50 max-w-5xl">
     {singleProductData ? (
-      <EditProductForm 
-        initialData={singleProductData} 
-        categories={categories}
-        onSuccess="/admin/products"
-        onCancel="/admin/products" 
-      />
+<EditProductForm 
+  initialData={singleProductData} 
+  categories={categories}
+  onSuccess={`${ADMIN_ROUTE}/products`}
+  onCancel={`${ADMIN_ROUTE}/products`} 
+/>
     ) : (
       <div className="text-center py-6 text-sm text-destructive font-medium">
         Product not found or failed to load data.
@@ -75,7 +76,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               // 🟢 মোড ২: অ্যাড মোড (ইউআরএল-এ ?add=true থাকলে)
               : isAddMode ? (
                 <div className="bg-white dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50 rounded-2xl p-6 shadow-sm w-full max-w-5xl">
-                <AddProductForm onCancel={() => { window.location.href = "/admin/products"; }} />
+                <AddProductForm onCancel={() => { window.location.href = `${ADMIN_ROUTE}/products`; }} />
                 </div>
               ) 
               
@@ -85,7 +86,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                   {/* 🔘 ফিল্টার ট্যাব */}
                   <div className="flex items-center gap-2 bg-neutral-100/60 dark:bg-neutral-900/40 p-1 rounded-xl w-fit border border-neutral-200/50 dark:border-neutral-800/50 select-none">
                     <Link
-                      href="/admin/products"
+                      href={`${ADMIN_ROUTE}/products`}
                       className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
                         activeStatus === "ALL"
                           ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm border border-neutral-200 dark:border-neutral-800"
@@ -95,7 +96,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                       All Products
                     </Link>
                     <Link
-                      href="/admin/products?status=active"
+                      href={`${ADMIN_ROUTE}/products?status=active`}
                       className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                         activeStatus === "ACTIVE"
                           ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm border border-neutral-200 dark:border-neutral-800"
@@ -106,7 +107,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                       Active
                     </Link>
                     <Link
-                      href="/admin/products?status=inactive"
+                      href={`${ADMIN_ROUTE}/products?status=inactive`}
                       className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                         activeStatus === "INACTIVE"
                           ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm border border-neutral-200 dark:border-neutral-800"

@@ -1,11 +1,12 @@
+import { ADMIN_ROUTE } from "@/lib/route"; // আপনার routes ফাইলের সঠিক পাথটি চেক করে নেবেন
 import { 
   IdCardIcon, 
   User, 
   GalleryVerticalEnd,
-  Package,        // নতুন আইকন
-  CreditCard,     // নতুন আইকন
-  Sliders,        // নতুন আইকন
-  Settings2,       // নতুন আইকন
+  Package,        
+  CreditCard,     
+  Sliders,        
+  Settings2,       
   Plus,
   Bell,
   ListOrdered,
@@ -44,85 +45,85 @@ export const sidebarData = {
   projects: [
     {
       name: "DASHBOARD",
-      url: "/admin/dashboard", // /admin/dashboard/page.tsx-এ নিয়ে যাবে
+      url: `${ADMIN_ROUTE}/dashboard`,
       icon: Home,
     },
     {
       name: "Statement",
-      url: "/admin/statement",
+      url: `${ADMIN_ROUTE}/statement`,
       icon: ListOrdered,
     },
     {
       name: "Users",
-      url: "/admin/users",
+      url: `${ADMIN_ROUTE}/users`,
       icon: User,
     },
     {
       name: "Orders",
-      url: "/admin/orders",
+      url: `${ADMIN_ROUTE}/orders`,
       icon: BookTextIcon,
     },
   ],
   NavMain: [
     {
-      name: "Add Category", // বানানের টাইপো ঠিক করা হয়েছে
-      url: "/admin/categories",
+      name: "Add Category",
+      url: `${ADMIN_ROUTE}/categories`,
       icon: BoltIcon,
     },
     {
       name: "Add Products",
-      url: "/admin/products",
+      url: `${ADMIN_ROUTE}/products`,
       icon: Package2,
     },
     {
       name: "Add Variation",
-      url: "/admin/add-item",
+      url: `${ADMIN_ROUTE}/add-item`,
       icon: BoxIcon,
     },
     {
       name: "Shell Vouchers",
-      url: "/admin/add-sh-voucher",
+      url: `${ADMIN_ROUTE}/add-sh-voucher`,
       icon: Ticket,
     },
     {
       name: "Unipin Vouchers",
-      url: "/admin/add-upn-voucher", // url-এ সব ছোট হাতের অক্ষর রাখাই স্ট্যান্ডার্ড
+      url: `${ADMIN_ROUTE}/add-upn-voucher`,
       icon: Ticket,
     },
   ],
   NavPayment: [
     {
       name: "Payment Details",
-      url: "/admin/payment-details",
+      url: `${ADMIN_ROUTE}/payment-details`,
       icon: CreditCard,
     },
     {
       name: "Payment Informations",
-      url: "/admin/payment-setting",
+      url: `${ADMIN_ROUTE}/payment-setting`,
       icon: Settings2,
     },
   ],
   NavWeb: [
     {
       name: "Notice",
-      url: "/admin/notice",
+      url: `${ADMIN_ROUTE}/notice`,
       icon: Bell,
     },
     {
       name: "Slider",
-      url: "/admin/slider-setting",
+      url: `${ADMIN_ROUTE}/slider-setting`,
       icon: Sliders,
     },
     {
-      name: "Maintenance", // বানানের টাইপো ঠিক করা হয়েছে
-      url: "/admin/maintenance", // ইউনিক ইউআরএল দেওয়া হলো, আগে payment-details ছিল
+      name: "Maintenance",
+      url: `${ADMIN_ROUTE}/maintenance`,
       icon: Settings,
     },
   ],
   NavFront: [
     {
       name: "Settings",
-      url: "/admin/settings",
+      url: `${ADMIN_ROUTE}/settings`,
       icon: Settings2,
     },
   ],

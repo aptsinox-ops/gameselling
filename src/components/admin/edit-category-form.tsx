@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ADMIN_ROUTE } from '@/lib/route';
+import Link from 'next/link';
 
 export function EditCategoryForm({ currentCategory }: { currentCategory: any }) {
   const router = useRouter();
@@ -21,7 +23,7 @@ export function EditCategoryForm({ currentCategory }: { currentCategory: any }) 
     console.log("Updated Data:", { name, slotNo });
     
     setLoading(false);
-    router.push("/admin/categories"); // আপডেট শেষে লিস্ট পেজে ফেরত যাবে
+    router.push(`${ADMIN_ROUTE}/categories`); // আপডেট শেষে লিস্ট পেজে ফেরত যাবে
   };
 
   return (

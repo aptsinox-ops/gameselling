@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "next-themes";
+import { ADMIN_ROUTE } from '@/lib/route';
 import { 
   Sun, 
   Moon, 
@@ -24,10 +25,10 @@ interface HeaderProps {
 }
 
 const profileMenuItems = [
-  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboardIcon },
-  { title: "Website Setting", url: "/admin/settings", icon: SettingsIcon },
-  { title: "Orders", url: "/admin/orders", icon: BoxIcon },
-  { title: "Users", url: "/admin/users", icon: User2 },
+  { title: "Dashboard", url: `${ADMIN_ROUTE}/dashboard`, icon: LayoutDashboardIcon },
+  { title: "Website Setting", url: `${ADMIN_ROUTE}/settings`, icon: SettingsIcon },
+  { title: "Orders", url: `${ADMIN_ROUTE}/orders`, icon: BoxIcon },
+  { title: "Users", url: `${ADMIN_ROUTE}/users`, icon: User2 },
 ];
 
 export default function Header({ initialSiteName, initialLogoUrl }: HeaderProps) {

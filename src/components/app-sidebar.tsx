@@ -4,6 +4,7 @@ import * as React from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { SearchCommand } from "./SearchCommand"
+import { ADMIN_ROUTE } from "@/lib/route" // আপনার routes ফাইলের পাথটি কনফার্ম করে নিন
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +24,6 @@ import {
   Package2Icon,
   LucidePackageCheck,
   Ticket,
-  Settings,
   ListIcon,
   Slice,
   FileDownIcon,
@@ -36,34 +36,34 @@ const menuGroups = [
   {
     group: "Main Overview",
     list: [
-      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboardIcon },
-      { title: "Users", url: "/admin/users", icon: User2 },
-      { title: "Statement", url: "/admin/statement", icon: TagIcon },
-      { title: "All Orders", url: "/admin/orders", icon: BoxIcon },
+      { title: "Dashboard", url: `${ADMIN_ROUTE}/dashboard`, icon: LayoutDashboardIcon },
+      { title: "Users", url: `${ADMIN_ROUTE}/users`, icon: User2 },
+      { title: "Statement", url: `${ADMIN_ROUTE}/statement`, icon: TagIcon },
+      { title: "All Orders", url: `${ADMIN_ROUTE}/orders`, icon: BoxIcon },
     ],
   },
   {
     group: "Inventory & Stock",
     list: [
-      { title: "Add Categories", url: "/admin/categories", icon: PlusCircleIcon },
-      { title: "Add Products", url: "/admin/products", icon: Package2Icon },
-      { title: "Add Variations", url: "/admin/variations", icon: LucidePackageCheck },
-      { title: "Add Auto Topup Vouchers", url: "/admin/autorobot", icon: Ticket },
+      { title: "Add Categories", url: `${ADMIN_ROUTE}/categories`, icon: PlusCircleIcon },
+      { title: "Add Products", url: `${ADMIN_ROUTE}/products`, icon: Package2Icon },
+      { title: "Add Variations", url: `${ADMIN_ROUTE}/variations`, icon: LucidePackageCheck },
+      { title: "Add Auto Topup Vouchers", url: `${ADMIN_ROUTE}/autorobot`, icon: Ticket },
     ],
   },
   {
     group: "System & Management",
     list: [
-      { title: "Addmoney List", url: "/admin/addmoneylist", icon: ListIcon },
-      { title: "Slider", url: "/admin/slider", icon: Slice },
-      { title: "Bottom Navigation", url: "/admin/nav", icon: FileDownIcon },
-      { title: "Work Notice App", url: "/admin/store-control", icon: SettingsIcon },
+      { title: "Addmoney List", url: `${ADMIN_ROUTE}/addmoneylist`, icon: ListIcon },
+      { title: "Slider", url: `${ADMIN_ROUTE}/slider`, icon: Slice },
+      { title: "Bottom Navigation", url: `${ADMIN_ROUTE}/nav`, icon: FileDownIcon },
+      { title: "Work Notice App", url: `${ADMIN_ROUTE}/store-control`, icon: SettingsIcon },
     ],
   },
   {
     group: "Settings",
     list: [
-      { title: "Website Settings", url: "/admin/settings", icon: SettingsIcon },
+      { title: "Website Settings", url: `${ADMIN_ROUTE}/settings`, icon: SettingsIcon },
     ],
   },
 ]

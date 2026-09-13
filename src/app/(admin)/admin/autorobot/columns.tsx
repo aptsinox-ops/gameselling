@@ -1,4 +1,3 @@
-// src/app/(admin)/admin/autorobot/columns.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";

@@ -4,6 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import EditProductForm from "@/components/edit-product-from"; 
 import { AddProductForm } from "@/components/add-product-form"; 
 import { Suspense, useEffect, useState } from "react";
+import { ADMIN_ROUTE } from '@/lib/route';
+import Link from 'next/link';
 
 function ProductFormContent() {
   const searchParams = useSearchParams();
@@ -28,8 +30,8 @@ function ProductFormContent() {
       try {
         // আপনার এডিট ডাটা এবং ক্যাটাগরি নিয়ে আসার API কল (প্রয়োজন অনুযায়ী এন্ডপয়েন্ট চেঞ্জ করতে পারেন)
         const [resProduct, resCategories] = await Promise.all([
-          fetch(`/api/admin/products/${editId}`).then(res => res.json()),
-          fetch(`/api/admin/categories`).then(res => res.json())
+          fetch(`/api/${ADMIN_ROUTE}/products/${editId}`).then(res => res.json()),
+          fetch(`/api/${ADMIN_ROUTE}/categories`).then(res => res.json())
         ]);
         
         if (resProduct) setProductData(resProduct);
