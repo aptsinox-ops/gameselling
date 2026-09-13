@@ -2,37 +2,42 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // ১. অ্যাডমিনের কাস্টম টোকেন রিড করুন
   const adminToken = request.cookies.get('admin_token')?.value; 
   
-  // ২. NextAuth-এর ইউজার সেশন টোকেন রিড করুন (লোকালহোস্টের জন্য এবং প্রোডাকশনের জন্য দুটোই চেক রাখা ভালো)
   const nextAuthToken = 
     request.cookies.get('next-auth.session-token')?.value || 
     request.cookies.get('__Secure-next-auth.session-token')?.value;
 
   const { pathname } = request.nextUrl;
+  const SECRET_ADMIN = '/apt-start-avix-admin';
 
   // ----------------------------------------------------
-  // 🔒 অ্যাডমিন প্যানেল প্রটেকশন লজিক
+  // 🚫 ১. কেউ সরাসরি /admin এ ঢুকতে চাইলে তাকে হোম পেজে রিডাইরেক্ট করে দেওয়া হবে
   // ----------------------------------------------------
-  if (pathname.startsWith('/admin')) {
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // ----------------------------------------------------
+  // 🔒 ২. সিক্রেট অ্যাডমিন প্যানেল প্রটেকশন লজিক
+  // ----------------------------------------------------
+  if (pathname.startsWith(SECRET_ADMIN)) {
     
-    // অ্যাডমিন ড্যাশবোর্ডে ঢুকতে চাচ্ছে কিন্তু অ্যাডমিন টোকেন নাই (NextAuth টোকেন থাকলে লাভ নাই)
-    if (!adminToken && pathname.startsWith('/admin/dashboard')) {
-      return NextResponse.redirect(new URL('/admin', request.url));
+    // টোকেন ছাড়া ড্যাশবোর্ডে ঢুকতে চাইলে লগইন পেজে পাঠাবে
+    if (!adminToken && pathname.startsWith(`${SECRET_ADMIN}/dashboard`)) {
+      return NextResponse.redirect(new URL(SECRET_ADMIN, request.url));
     }
 
-    // অলরেডি অ্যাডমিন লগইন আছে, তাকে আবার লগইন ফর্মে (/admin) ঢুকতে দেবে না
-    if (adminToken && pathname === '/admin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    // অলরেডি অ্যাডমিন লগইন থাকলে লগইন পেজে ঢুকতে না দিয়ে ড্যাশবোর্ডে পাঠাবে
+    if (adminToken && pathname === SECRET_ADMIN) {
+      return NextResponse.redirect(new URL(`${SECRET_ADMIN}/dashboard`, request.url));
     }
   }
 
   // ----------------------------------------------------
-  // 👤 ইউজার ড্যাশবোর্ড / প্রোফাইল প্রটেকশন (যদি ফিউচারে লাগে)
+  // 👤 ৩. ইউজার ড্যাশবোর্ড / প্রোফাইল প্রটেকশন
   // ----------------------------------------------------
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/profile')) {
-    // ইউজারের NextAuth টোকেন না থাকলে তাকে মেইন ইউজার লগইন পেজে পাঠাবে
     if (!nextAuthToken) {
       return NextResponse.redirect(new URL('/login', request.url)); 
     }
@@ -43,8 +48,10 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/admin/dashboard/:path*', 
-    '/admin', 
+    '/admin',
+    '/admin/:path*',
+    '/apt-start-avix-admin',
+    '/apt-start-avix-admin/:path*', 
     '/dashboard/:path*', 
     '/profile/:path*'
   ],

@@ -1,4 +1,4 @@
-/** @type {import('next').NextNextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: [
     "puppeteer-extra",
@@ -12,6 +12,18 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/apt-start-avix-admin',
+        destination: '/admin',
+      },
+      {
+        source: '/apt-start-avix-admin/:path*',
+        destination: '/admin/:path*',
+      },
+    ];
   },
 };
 
