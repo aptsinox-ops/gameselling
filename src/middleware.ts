@@ -12,10 +12,10 @@ export function middleware(request: NextRequest) {
   const SECRET_ADMIN = '/apt-start-avix-admin';
 
   // ----------------------------------------------------
-  // 🚫 ১. কেউ সরাসরি /admin এ ঢুকতে চাইলে তাকে হোম পেজে রিডাইরেক্ট করে দেওয়া হবে
+  // 🚫 ১. কেউ সরাসরি /admin বা /admin/* এ ঢুকলে 404 পেজ দেখাবে
   // ----------------------------------------------------
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.rewrite(new URL('/404', request.url));
   }
 
   // ----------------------------------------------------
