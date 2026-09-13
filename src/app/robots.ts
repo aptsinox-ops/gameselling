@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin/", "/api/"], // এডমিন ও API সিকিউরিটির জন্য গুগলে হাইড থাকবে
+      disallow: ["/admin/"], // এডমিন ও API সিকিউরিটির জন্য গুগলে হাইড থাকবে
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };
