@@ -192,7 +192,7 @@ export default async function ProductPage({
     <div className="flex items-center gap-2.5 xs:gap-3 md:gap-4 w-full min-w-0">
       
       {/* ⚡ Scalable Image: ছোট স্ক্রিনে ১৪ (56px), কিছুটা বড় হলে ১৬ (64px), sm তে ২৪ (96px), md তে ১০০px */}
-      <div className="w-18 h-18 xs:w-20 xs:h-20 sm:w-28 sm:h-28 md:w-[125px] md:h-[125px] rounded-md overflow-hidden flex-shrink-0 border border-black/10 shadow-sm">
+      <div className="w-18 h-18 xs:w-18 xs:h-28 sm:w-24 sm:h-24 md:w-[100px] md:h-[100px] rounded-md overflow-hidden flex-shrink-0 border border-black/10 shadow-sm">
         <img 
           src={
             serializedProduct.image === "placeholder.png" || !serializedProduct.image 
