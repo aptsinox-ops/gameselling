@@ -24,18 +24,20 @@ const urbanist = Urbanist({
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const siteUrl = "https://avixtopup.com"; // সঠিক ডোমেইন
+
   try {
     const settings = await db.siteSettings.findFirst();
 
-    const title = settings?.siteTitle || settings?.siteName || "Zebo Topup";
-    const description = settings?.siteDescription || "Premium Gaming Top-Up Platform";
+    const title = settings?.siteTitle || "Avix Topup - Free Fire Diamond Top Up bKash BD";
+    const description = settings?.siteDescription || "100% Trusted Gaming Top Up platform in Bangladesh. Buy Free Fire Diamond, PUBG UC at lowest prices.";
     const favicon = settings?.faviconUrl || "/favicon.ico";
     const keywords = settings?.metaKeywords 
       ? settings.metaKeywords.split(",").map((k) => k.trim()).filter(Boolean)
       : [];
 
     return {
-      metadataBase: new URL("https://zebotopup.store"),
+      metadataBase: new URL(siteUrl),
       title: title,
       description: description,
       keywords: keywords.length > 0 ? keywords : undefined,
@@ -52,8 +54,8 @@ export async function generateMetadata(): Promise<Metadata> {
       openGraph: {
         title: title,
         description: description,
-        url: "https://zebotopup.store",
-        siteName: title,
+        url: siteUrl,
+        siteName: settings?.siteName || "Avix Topup",
         images: settings?.logoUrl ? [{ url: settings.logoUrl }] : undefined,
       },
       twitter: {
@@ -66,9 +68,9 @@ export async function generateMetadata(): Promise<Metadata> {
   } catch (error) {
     console.error("Error loading metadata settings:", error);
     return {
-      metadataBase: new URL("https://zebotopup.store"),
-      title: "Zebo Topup",
-      description: "Premium Gaming Top-Up Platform",
+      metadataBase: new URL(siteUrl),
+      title: "Avix Topup - Free Fire Diamond Top Up bKash BD",
+      description: "100% Trusted Gaming Top Up platform in Bangladesh.",
       verification: {
         google: "L3H4jnfIz3abChAr1u3-cu7jvZ77kCzLnaboR6wI148",
       },
@@ -81,7 +83,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🟢 সার্ভার রেন্ডারিংয়ের সময় সাইট কালার তুলে আনা
   let primaryColor = "#2563eb";
   let backgroundColor = "#ffffff";
 
@@ -103,7 +104,6 @@ export default async function RootLayout({
       } as React.CSSProperties}
     >
       <head>
-        {/* ⚡ ফার্স্ট রেন্ডারেই CSS Variable ইঞ্জেকশন (Zero Color Flash / Instant Load) */}
         <style
           dangerouslySetInnerHTML={{
             __html: `

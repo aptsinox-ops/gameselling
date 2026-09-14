@@ -1,43 +1,43 @@
 import { MetadataRoute } from 'next'
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://avixtopup.com' // সঠিক ডোমেইন সেট করা হয়েছে
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://avixtopup.com'
 
-  // ১. স্ট্যাটিক পেজসমূহ
-  const staticRoutes: MetadataRoute.Sitemap = [
+  return [
     {
       url: `${baseUrl}`,
       lastModified: new Date(),
-      changeFrequency: 'daily',
       priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/topup`,
+      lastModified: new Date(),
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/shop`,
+      lastModified: new Date(),
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/login`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.3, // লগইন পেজের প্রায়োরিটি কমানো ভালো
+      priority: 0.8,
     },
     {
-      url: `${baseUrl}/register`,
+      url: `${baseUrl}/contact`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.3,
+      priority: 0.8,
     },
-  ]
-
-  // ২. ডায়নামিক প্রোডাক্ট/টপ-আপ পেজ (ডাটাবেস বা API থেকে ডায়নামিক ডাটা আনুন)
-  /*
-  const products = await fetchProducts() // আপনার ডাটাবেস বা API কল
-  const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
-    url: `${baseUrl}/top-up/${product.slug}`,
-    lastModified: new Date(product.updatedAt || Date.now()),
-    changeFrequency: 'daily',
-    priority: 0.8,
-  }))
-  */
-
-  return [
-    ...staticRoutes,
-    // ...productRoutes // ডায়নামিক ইউআরএল থাকলে এটি আনকমেন্ট করুন
+    {
+      url: `${baseUrl}/privacy-policy`,
+      lastModified: new Date(),
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      priority: 0.5,
+    },
   ]
 }
