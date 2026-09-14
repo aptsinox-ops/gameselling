@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-// 🎯 ডাইনামিক প্রোডাক্ট SEO মেটাডাটা
+// 🎯 ডাইনামিক প্রোডাক্ট SEO মেটাডাটা (ডিফল্ট সাইট নেম: Demo Store)
 export async function generateMetadata({
   params,
 }: {
@@ -19,22 +19,31 @@ export async function generateMetadata({
   if (!slug) return { title: "Product Not Found" };
 
   try {
-    const product = await prisma.product.findUnique({
-      where: { slug },
-      select: {
-        name: true,
-        rulesCondition: true,
-        image: true,
-        bannerImage: true,
-      },
-    });
+    const [product, siteSettings] = await Promise.all([
+      prisma.product.findUnique({
+        where: { slug },
+        select: {
+          name: true,
+          rulesCondition: true,
+          image: true,
+          bannerImage: true,
+        },
+      }),
+      prisma.siteSettings.findUnique({
+        where: { id: "STATIC" },
+      }),
+    ]);
 
     if (!product) return { title: "Product Not Found" };
 
-    const siteTitle = `${product.name} Top Up | Zebo Topup`;
+    // 🟢 ডাটাবেজ থেকে siteName নেওয়া হচ্ছে, না থাকলে ডিফল্ট "Demo Store" ব্যবহার হবে
+    const siteName = (siteSettings as any)?.siteName || (siteSettings as any)?.site_title || "Demo Store";
+    const siteTitle = `${product.name} | ${siteName}`;
+
     const description = product.rulesCondition
       ? product.rulesCondition.slice(0, 160)
-      : `Buy ${product.name} instantly at cheap price in Bangladesh via bKash, Nagad. Fast delivery on Zebo Topup.`;
+      : `Buy ${product.name} instantly at cheap price via bKash, Nagad. Fast delivery on ${siteName}.`;
+
     const ogImage = product.bannerImage || product.image || "/uploads/placeholder.png";
 
     return {
@@ -44,7 +53,7 @@ export async function generateMetadata({
         title: siteTitle,
         description: description,
         url: `https://zebotopup.store/product/${slug}`,
-        siteName: "Zebo Topup",
+        siteName: siteName,
         images: [{ url: ogImage }],
         type: "website",
       },
@@ -57,7 +66,7 @@ export async function generateMetadata({
     };
   } catch (error) {
     return {
-      title: "Buy Game Top Up | Zebo Topup",
+      title: "Buy Game Top Up | Demo Store",
     };
   }
 }
@@ -137,7 +146,7 @@ export default async function ProductPage({
     const isListView = (product as any).variationsDesign === "List";
     const displayProductType = product.productType === "UID" ? "FreeFire Service" : product.productType;
 
-    // 🎯 সব ডাটা প্রোপারলি সেফ সোলাইজ করা হয়েছে
+    // 🎯 সব ডাটা সেফলি সোলাইজ করা হয়েছে
     const plainData = JSON.parse(
       JSON.stringify({
         product,
@@ -169,77 +178,75 @@ export default async function ProductPage({
     return (
       <main className="max-w-7xl mx-auto px-3 py-5 space-y-8 min-h-screen text-slate-800 font-sans">
         
-        {/* ব্যানার সেকশন - মোবাইলে মিনিমাম হাইট বাড়িয়ে দেওয়া হয়েছে */}
-<div 
-  className={`block relative w-full h-auto min-h-[90px] xs:min-h-[105px] sm:min-h-[120px] md:h-[140px] rounded-md overflow-hidden transition-all ${
-    hasBanner 
-      ? "bg-slate-950 border border-slate-200/60" 
-      : "bg-transparent border border-slate-300"
-  }`}
->
-  {hasBanner && (
-    <>
-      <img 
-        src={serializedProduct.bannerImage} 
-        alt="Banner" 
-        className="absolute inset-0 w-full h-full object-cover object-center" 
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent backdrop-blur-[0.3px]" />
-    </>
-  )}
-
-  <div className="relative z-10 flex items-center p-2.5 xs:p-3 md:p-4 min-h-[90px] xs:min-h-[105px] sm:min-h-[120px] md:h-[140px]">
-    <div className="flex items-center gap-2.5 xs:gap-3 md:gap-4 w-full min-w-0">
-      
-      {/* ⚡ Scalable Image: ছোট স্ক্রিনে ১৪ (56px), কিছুটা বড় হলে ১৬ (64px), sm তে ২৪ (96px), md তে ১০০px */}
-      <div className="w-18 h-18 xs:w-18 xs:h-28 sm:w-24 sm:h-24 md:w-[100px] md:h-[100px] rounded-md overflow-hidden flex-shrink-0 border border-black/10 shadow-sm">
-        <img 
-          src={
-            serializedProduct.image === "placeholder.png" || !serializedProduct.image 
-              ? "/uploads/placeholder.png"
-              : serializedProduct.image
-          } 
-          alt={serializedProduct.name} 
-          className="w-full h-full object-cover" 
-        />
-      </div>
-
-      {/* ⚡ Scalable Content Area */}
-      <div className="flex flex-col gap-1 xs:gap-1.5 min-w-0 flex-1 justify-center">
-        <h1 className={`text-xs xs:text-sm sm:text-xl md:text-2xl font-bold uppercase tracking-wide leading-tight truncate ${
-          hasBanner ? "text-white" : "text-black"
-        }`}>
-          {serializedProduct.name}
-        </h1>
-        
-        <div className="flex flex-wrap gap-1 xs:gap-1.5 items-center">
-          {displayProductType && (
-            <div className={`inline-flex items-center px-1.5 xs:px-2 py-0.5 rounded-md text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase ${
-              hasBanner 
-                ? "bg-black/40 text-white border border-white/20" 
-                : "bg-slate-100 text-slate-800 border border-slate-300"
-            }`}>
-              {displayProductType}
-            </div>
-          )}
-          
-          <div className={`inline-flex items-center gap-1 px-1.5 xs:px-2 py-0.5 rounded-md ${
+        {/* ব্যানার সেকশন */}
+        <div 
+          className={`block relative w-full h-auto min-h-[90px] xs:min-h-[105px] sm:min-h-[120px] md:h-[140px] rounded-md overflow-hidden transition-all ${
             hasBanner 
-              ? "bg-black/40 text-white border border-white/20" 
-              : "bg-slate-100 text-slate-800 border border-slate-300"
-          }`}>
-            <span className={`text-[9px] xs:text-[10px] sm:text-xs font-bold whitespace-nowrap ${
-              hasBanner ? "text-slate-100" : "text-slate-700"
-            }`}>
-              Trusted Secure
-            </span>
+              ? "bg-slate-950 border border-slate-200/60" 
+              : "bg-transparent border border-slate-300"
+          }`}
+        >
+          {hasBanner && (
+            <>
+              <img 
+                src={serializedProduct.bannerImage} 
+                alt="Banner" 
+                className="absolute inset-0 w-full h-full object-cover object-center" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent backdrop-blur-[0.3px]" />
+            </>
+          )}
+
+          <div className="relative z-10 flex items-center p-2.5 xs:p-3 md:p-4 min-h-[90px] xs:min-h-[105px] sm:min-h-[120px] md:h-[140px]">
+            <div className="flex items-center gap-2.5 xs:gap-3 md:gap-4 w-full min-w-0">
+              
+              <div className="w-18 h-18 xs:w-18 xs:h-28 sm:w-24 sm:h-24 md:w-[100px] md:h-[100px] rounded-md overflow-hidden flex-shrink-0 border border-black/10 shadow-sm">
+                <img 
+                  src={
+                    serializedProduct.image === "placeholder.png" || !serializedProduct.image 
+                      ? "/uploads/placeholder.png"
+                      : serializedProduct.image
+                  } 
+                  alt={serializedProduct.name} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+
+              <div className="flex flex-col gap-1 xs:gap-1.5 min-w-0 flex-1 justify-center">
+                <h1 className={`text-xs xs:text-sm sm:text-xl md:text-2xl font-bold uppercase tracking-wide leading-tight truncate ${
+                  hasBanner ? "text-white" : "text-black"
+                }`}>
+                  {serializedProduct.name}
+                </h1>
+                
+                <div className="flex flex-wrap gap-1 xs:gap-1.5 items-center">
+                  {displayProductType && (
+                    <div className={`inline-flex items-center px-1.5 xs:px-2 py-0.5 rounded-md text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase ${
+                      hasBanner 
+                        ? "bg-black/40 text-white border border-white/20" 
+                        : "bg-slate-100 text-slate-800 border border-slate-300"
+                    }`}>
+                      {displayProductType}
+                    </div>
+                  )}
+                  
+                  <div className={`inline-flex items-center gap-1 px-1.5 xs:px-2 py-0.5 rounded-md ${
+                    hasBanner 
+                      ? "bg-black/40 text-white border border-white/20" 
+                      : "bg-slate-100 text-slate-800 border border-slate-300"
+                  }`}>
+                    <span className={`text-[9px] xs:text-[10px] sm:text-xs font-bold whitespace-nowrap ${
+                      hasBanner ? "text-slate-100" : "text-slate-700"
+                    }`}>
+                      Trusted Secure
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
-      </div>
-
-    </div>
-  </div>
-</div>
 
         {/* ক্লায়েন্ট পারচেজ ফ্লো কম্পোনেন্ট */}
         <ProductPurchaseFlow 
