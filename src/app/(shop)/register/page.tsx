@@ -20,7 +20,8 @@ export default function RegisterPage() {
   const { status } = useSession(); 
   const [isLoading, setIsLoading] = useState(false);
   const [dynamicColor, setDynamicColor] = useState('#2563eb'); 
-  const [loginSystem, setLoginSystem] = useState<string>('OAUTH_MANUAL'); // 🟢 State যুক্ত করা হলো
+  const [loginSystem, setLoginSystem] = useState<string>('OAUTH_MANUAL');
+  const [siteName, setSiteName] = useState<string>('AvixTopup'); // 🟢 Site Name State
   const [isCheckingSettings, setIsCheckingSettings] = useState(true); 
   const router = useRouter();
 
@@ -43,17 +44,24 @@ export default function RegisterPage() {
           }
 
           if (data?.loginSystem) {
-            setLoginSystem(data.loginSystem); // 🟢 State আপডেট করা হলো
+            setLoginSystem(data.loginSystem);
             
-            // যদি শুধুমাত্র "OAUTH" সেটিং থাকে, রেজিস্টার পেজ বন্ধ রেখে সরাসরি /login এ পাঠাবে
             if (data.loginSystem === "OAUTH") {
               router.push('/login');
               return;
             }
           }
+
+          // 🟢 ডাটাবেজ থেকে সাইট নেম নিয়ে Title আপডেট করা
+          const fetchedSiteName = data?.siteName || data?.site_title || 'AvixTopup';
+          setSiteName(fetchedSiteName);
+          document.title = `Register | ${fetchedSiteName}`;
+        } else {
+          document.title = 'Register | AvixTopup';
         }
       } catch (error) {
         console.error("Failed to load settings on register page:", error);
+        document.title = 'Register | AvixTopup';
       } finally {
         setIsCheckingSettings(false);
       }
@@ -171,6 +179,9 @@ export default function RegisterPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      {/* 🟢 Title fallback for React SSR */}
+      <title>{`Register | ${siteName}`}</title>
+
       <div className="w-full max-w-md bg-white p-8 rounded-lg border border-gray-200">
         <h1 className="text-2xl font-extrabold text-gray-800 mb-2">Create an Account</h1>
         <p className="text-gray-500 mb-6 text-sm">Sign up to get the latest updates.</p>
@@ -236,7 +247,6 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        {/* 🟢 শুধুমাত্র loginSystem "MANUAL" না হলেই Google Option দেখাবে */}
         {loginSystem !== 'MANUAL' && (
           <>
             <div className="relative my-6">
@@ -244,7 +254,6 @@ export default function RegisterPage() {
               <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Or</span></div>
             </div>
 
-            {/* Google Sign Up Button */}
             <button 
               onClick={() => signIn('google', { callbackUrl: '/' })}
               className="w-full border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-gray-700 cursor-pointer"

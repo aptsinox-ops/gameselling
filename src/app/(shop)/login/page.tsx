@@ -32,6 +32,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [dynamicColor, setDynamicColor] = useState('#2563eb'); 
   const [loginSystem, setLoginSystem] = useState<string>('OAUTH_MANUAL');
+  const [siteName, setSiteName] = useState<string>('AvixTopup'); // 🟢 Site Name State
   const [isCheckingSettings, setIsCheckingSettings] = useState(true);
   const router = useRouter();
 
@@ -55,9 +56,16 @@ export default function LoginPage() {
           if (data?.loginSystem) {
             setLoginSystem(data.loginSystem);
           }
+          // 🟢 ডাটাবেজ থেকে সাইট নেম নিয়ে Title আপডেট করা
+          const fetchedSiteName = data?.siteName || data?.site_title || 'AvixTopup';
+          setSiteName(fetchedSiteName);
+          document.title = `Login | ${fetchedSiteName}`;
+        } else {
+          document.title = 'Login | AvixTopup';
         }
       } catch (error) {
         console.error("Failed to load settings on login page:", error);
+        document.title = 'Login | AvixTopup';
       } finally {
         setIsCheckingSettings(false);
       }
@@ -108,14 +116,16 @@ export default function LoginPage() {
 
   if (status === 'authenticated') return null;
 
-  // 🟢 CASE 1: শুধুমাত্র OAUTH সক্রিয় থাকলে প্রফেশনাল Google UI দেখাবে
-  if (loginSystem === 'OAUTH') {
-    return (
-      <main className="py-6 sm:py-10 px-4 flex items-center justify-center min-h-[calc(100vh-160px)]">
+  return (
+    <main className="py-6 sm:py-10 px-4 flex items-center justify-center min-h-[calc(100vh-160px)]">
+      {/* 🟢 Title fallback for React SSR */}
+      <title>{`Login | ${siteName}`}</title>
+
+      {/* CASE 1: OAUTH */}
+      {loginSystem === 'OAUTH' ? (
         <div className="relative w-full max-w-sm rounded-[28px] p-[1.5px] bg-gradient-to-br from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853] shadow-[0_15px_35px_rgba(0,0,0,0.06)]">
           <div className="relative w-full bg-white rounded-[26.5px] p-6 sm:p-7 flex flex-col items-center text-center">
             
-            {/* Google Top Avatar / Icon */}
             <div className="w-14 h-14 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center mb-3.5 shadow-sm">
               <GoogleIcon className="w-7 h-7" />
             </div>
@@ -127,7 +137,6 @@ export default function LoginPage() {
               Fast, private, and secure authentication powered by Google.
             </p>
 
-            {/* Security Feature Box */}
             <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mb-5 text-left flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
@@ -142,7 +151,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Main Action Button */}
             <button 
               onClick={() => signIn('google', { callbackUrl: '/' })}
               style={{ backgroundColor: dynamicColor || '#0082FF' }}
@@ -156,7 +164,6 @@ export default function LoginPage() {
               </span>
             </button>
 
-            {/* Bottom Security Trust Badges */}
             <div className="w-full border-t border-gray-100 pt-4">
               <div className="grid grid-cols-3 w-full gap-2">
                 <div className="flex flex-col items-center">
@@ -191,80 +198,74 @@ export default function LoginPage() {
 
           </div>
         </div>
-      </main>
-    );
-  }
+      ) : (
+        /* CASE 2: MANUAL / OAUTH_MANUAL */
+        <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+          <h1 className="text-2xl font-extrabold text-gray-800 mb-1">Welcome Back</h1>
+          <p className="text-gray-500 mb-6 text-sm">Please login to your account.</p>
 
-  // 🟢 CASE 2: MANUAL অথবা OAUTH_MANUAL থাকলে এই ফর্ম দেখাবে
-  return (
-    <main className="py-6 sm:py-10 px-4 flex items-center justify-center min-h-[calc(100vh-160px)]">
-      <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
-        <h1 className="text-2xl font-extrabold text-gray-800 mb-1">Welcome Back</h1>
-        <p className="text-gray-500 mb-6 text-sm">Please login to your account.</p>
-
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <input 
-            type="email" 
-            placeholder="Email Address" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onFocus={(e) => (e.target.style.borderColor = dynamicColor)}
-            onBlur={(e) => (e.target.style.borderColor = '')}
-            className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800 text-sm" 
-          />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onFocus={(e) => (e.target.style.borderColor = dynamicColor)}
-            onBlur={(e) => (e.target.style.borderColor = '')}
-            className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800 text-sm" 
-          />
-          
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{ 
-              backgroundColor: dynamicColor,
-              opacity: loading ? 0.6 : 1
-            }}
-            className={`w-full text-white font-bold p-3 rounded-lg transition duration-200 flex items-center justify-center gap-2 ${
-              loading ? 'cursor-not-allowed' : 'hover:opacity-90 cursor-pointer'
-            }`}
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                Processing...
-              </>
-            ) : 'Login'}
-          </button>
-        </form>
-
-        {/* 🟢 শুধুমাত্র loginSystem "MANUAL" না হলেই (অর্থাৎ OAUTH_MANUAL হলে) Google Option দেখাবে */}
-        {loginSystem !== 'MANUAL' && (
-          <>
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Or</span></div>
-            </div>
-
-            {/* Google Sign In Button */}
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={(e) => (e.target.style.borderColor = dynamicColor)}
+              onBlur={(e) => (e.target.style.borderColor = '')}
+              className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800 text-sm" 
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={(e) => (e.target.style.borderColor = dynamicColor)}
+              onBlur={(e) => (e.target.style.borderColor = '')}
+              className="w-full border border-gray-300 p-3 rounded-lg outline-none transition text-gray-800 text-sm" 
+            />
+            
             <button 
-              onClick={() => signIn('google', { callbackUrl: '/' })}
-              className="w-full border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-gray-700 cursor-pointer text-sm"
+              type="submit" 
+              disabled={loading}
+              style={{ 
+                backgroundColor: dynamicColor,
+                opacity: loading ? 0.6 : 1
+              }}
+              className={`w-full text-white font-bold p-3 rounded-lg transition duration-200 flex items-center justify-center gap-2 ${
+                loading ? 'cursor-not-allowed' : 'hover:opacity-90 cursor-pointer'
+              }`}
             >
-              <GoogleIcon className="w-5 h-5" />
-              Login with Google
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  Processing...
+                </>
+              ) : 'Login'}
             </button>
-          </>
-        )}
-        
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account? <a href="/register" style={{ color: dynamicColor }} className="font-bold hover:underline">Sign Up</a>
-        </p>
-      </div>
+          </form>
+
+          {loginSystem !== 'MANUAL' && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Or</span></div>
+              </div>
+
+              <button 
+                onClick={() => signIn('google', { callbackUrl: '/' })}
+                className="w-full border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-gray-700 cursor-pointer text-sm"
+              >
+                <GoogleIcon className="w-5 h-5" />
+                Login with Google
+              </button>
+            </>
+          )}
+          
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Don't have an account? <a href="/register" style={{ color: dynamicColor }} className="font-bold hover:underline">Sign Up</a>
+          </p>
+        </div>
+      )}
     </main>
   );
 }
