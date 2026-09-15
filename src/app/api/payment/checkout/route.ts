@@ -4,8 +4,13 @@ import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
-    const { amount, name, email, userId } = await req.json();
+    const body = await req.json();
+    const { amount, name, email, userId } = body;
 
+    // 🔍 টার্মিনাল লগে পে-লোড দেখার জন্য
+    console.log("--> Checkout Received Data:", { amount, name, email, userId });
+
+    // ১. ইউজার আইডি চেক
     if (!userId) {
       return NextResponse.json(
         { message: "ইউজার আইডি পাওয়া যায়নি। পুনরায় লগইন করুন।" },
@@ -19,6 +24,7 @@ export async function POST(req: Request) {
     const maxAmount = Number(settings?.paymentMaxAmount || "50000");
     const numAmount = Number(amount);
 
+    // ২. অ্যামাউন্ট চেক
     if (!amount || isNaN(numAmount) || numAmount < minAmount) {
       return NextResponse.json(
         { message: `সর্বনিম্ন ${minAmount} টাকা এড করতে পারবেন।` },
@@ -34,11 +40,21 @@ export async function POST(req: Request) {
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    const gatewayType = settings?.paymentGateway || "local";
+    
+    // 🟢 ক্যাপিটাল লেটার বা স্পেস যাই থাকুক লোয়ারকেস করে নিবে
+    const rawGateway = settings?.paymentGateway || "local";
+    const gatewayType = rawGateway.toString().trim().toLowerCase();
+
+    console.log("--> Selected Payment Gateway in DB:", gatewayType);
 
     // 🟢 LOCAL / INTERNAL GATEWAY LOGIC
-    if (gatewayType === "local") {
-      // র্যান্ডম ১০০+ ক্যারেক্টারের মতো সিকিউর আনপ্রেডিক্টেবল টোকেন তৈরি
+        if (
+          gatewayType === "local" || 
+          gatewayType === "internal" || 
+          gatewayType === "manual" || 
+          gatewayType === "localweb" ||
+          gatewayType.includes("local")
+        ) {
       const randomString = crypto.randomBytes(32).toString('hex');
       const timeStamp = Date.now().toString(36);
       const secureToken = `avixtopup_${timeStamp}_${randomString}`;
@@ -46,7 +62,6 @@ export async function POST(req: Request) {
       const invoiceId = `INV-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
       const numUserId = Number(userId);
 
-      // ১০ মিনিটের জন্য এক্সপায়ারি টাইম
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await prisma.autoPaymentInvoice.create({
@@ -65,9 +80,12 @@ export async function POST(req: Request) {
     }
 
     // 🔵 UDDOKTAPAY OFFICIAL API LOGIC
-    const API_KEY = settings?.paymentApiKey || "";
+    const rawApiKey = (settings as any)?.paymentApiKey || (settings as any)?.providerApiKey || "";
+    const API_KEY = rawApiKey.trim();
+
     const DEFAULT_BASE_URL = "https://pay.yourdomain.com/api"; 
-    const BASE_URL = settings?.paymentBaseUrl || DEFAULT_BASE_URL;
+    const rawBaseUrl = settings?.paymentBaseUrl || DEFAULT_BASE_URL;
+    const BASE_URL = rawBaseUrl.trim();
 
     if (!API_KEY) {
       return NextResponse.json(
@@ -83,7 +101,7 @@ export async function POST(req: Request) {
       email: email || "customer@gmail.com",
       amount: String(numAmount),
       metadata: {
-        userId: userId,
+        userId: String(userId),
       },
       redirect_url: `${origin}/api/payment/verify`,
       cancel_url: `${origin}/add-money?status=cancelled`,
