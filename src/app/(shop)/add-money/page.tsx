@@ -13,9 +13,8 @@ function AddMoneyContent() {
 
   const [amount, setAmount] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [dynamicColor, setDynamicColor] = useState<string>("#2563eb");
+  const [dynamicColor, setDynamicColor] = useState<string>("#2596be");
 
-  // 🎨 সাইট সেটিংস থেকে প্রাইমারি কালার ফেচ করা
   useEffect(() => {
     async function fetchSettings() {
       try {
@@ -88,8 +87,6 @@ function AddMoneyContent() {
     <div className="w-full max-w-md flex flex-col gap-3">
       {/* 💳 Main Card */}
       <div className="w-full bg-white p-5 sm:p-6 rounded-md border border-gray-200">
-        
-        {/* Header Section */}
         <div className="flex items-center gap-3.5 pb-4 mb-5 border-b border-gray-100">
           <div 
             className="w-11 h-11 rounded-md flex items-center justify-center shrink-0"
@@ -173,7 +170,6 @@ function AddMoneyContent() {
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
@@ -204,35 +200,11 @@ function AddMoneyContent() {
           </button>
         </form>
 
-        {/* Trust & Security Tag */}
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-4 font-medium">
           <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
           <span>100% Encrypted & Safe Payment</span>
-        </div>
-      </div>
-
-      {/* 📹 Tutorial Card */}
-      <div className="w-full bg-white p-4 sm:p-5 rounded-md border border-gray-200">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="p-1.5 bg-amber-50 rounded-md text-amber-600">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-sm font-bold text-gray-800">Need Help? Watch Tutorial</h2>
-        </div>
-        
-        {/* Placeholder / Video Box */}
-        <div className="relative aspect-video w-full rounded-md bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 group cursor-pointer hover:border-gray-300 transition">
-          <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 group-hover:scale-110 transition">
-            <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.841z" />
-            </svg>
-          </div>
-          <span className="text-xs font-medium mt-2 text-gray-500">How to add money tutorial</span>
         </div>
       </div>
     </div>

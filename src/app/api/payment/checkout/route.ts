@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from "@/lib/prisma";
+import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
     const { amount, name, email, userId } = await req.json();
 
-    // ১. ইউজার আইডি চেক
     if (!userId) {
       return NextResponse.json(
         { message: "ইউজার আইডি পাওয়া যায়নি। পুনরায় লগইন করুন।" },
@@ -13,27 +13,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // ২. ডেটাবেজ থেকে পেমেন্ট সেটিংস ফেচ করা
     const settings = await prisma.siteSettings.findFirst();
 
-    const API_KEY = settings?.paymentApiKey || "";
-    // ⚡ Base URL না থাকলে গেটওয়ের ডিফল্ট ডোমেন বসবে (এখানে আপনার গেটওয়ের API Domain দিন)
-    const DEFAULT_BASE_URL = "https://pay.yourdomain.com/api"; 
-    const BASE_URL = settings?.paymentBaseUrl || DEFAULT_BASE_URL;
-
-    const minAmount = Number(settings?.paymentMinAmount || "1");
-    const maxAmount = Number(settings?.paymentMaxAmount || "9999999");
-
-    if (!API_KEY) {
-      return NextResponse.json(
-        { message: "পেমেন্ট গেটওয়ে API Key সেটআপ করা হয়নি।" },
-        { status: 400 }
-      );
-    }
-
+    const minAmount = Number(settings?.paymentMinAmount || "10");
+    const maxAmount = Number(settings?.paymentMaxAmount || "50000");
     const numAmount = Number(amount);
 
-    // ৩. ডাইনামিক Min / Max অ্যামাউন্ট ভ্যালিডেশন
     if (!amount || isNaN(numAmount) || numAmount < minAmount) {
       return NextResponse.json(
         { message: `সর্বনিম্ন ${minAmount} টাকা এড করতে পারবেন।` },
@@ -48,9 +33,50 @@ export async function POST(req: Request) {
       );
     }
 
-    // ৪. Base URL ক্লিন করে রিডাইরেক্ট ইউআরএল সেটআপ
-    const cleanBaseUrl = BASE_URL.replace(/\/$/, "");
     const origin = req.headers.get("origin") || "http://localhost:3000";
+    const gatewayType = settings?.paymentGatewayType || "local";
+
+    // 🟢 LOCAL / INTERNAL GATEWAY LOGIC
+    if (gatewayType === "local") {
+      // র্যান্ডম ১০০+ ক্যারেক্টারের মতো সিকিউর আনপ্রেডিক্টেবল টোকেন তৈরি
+      const randomString = crypto.randomBytes(32).toString('hex');
+      const timeStamp = Date.now().toString(36);
+      const secureToken = `avixtopup_${timeStamp}_${randomString}`;
+      
+      const invoiceId = `INV-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const numUserId = Number(userId);
+
+      // ১০ মিনিটের জন্য এক্সপায়ারি টাইম
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await prisma.autoPaymentInvoice.create({
+        data: {
+          invoiceId,
+          token: secureToken,
+          amount: numAmount,
+          userId: numUserId,
+          expiresAt,
+          status: "PENDING",
+        },
+      });
+
+      const localPaymentUrl = `${origin}/payment-provider/${secureToken}`;
+      return NextResponse.json({ payment_url: localPaymentUrl });
+    }
+
+    // 🔵 UDDOKTAPAY OFFICIAL API LOGIC
+    const API_KEY = settings?.paymentApiKey || "";
+    const DEFAULT_BASE_URL = "https://pay.yourdomain.com/api"; 
+    const BASE_URL = settings?.paymentBaseUrl || DEFAULT_BASE_URL;
+
+    if (!API_KEY) {
+      return NextResponse.json(
+        { message: "পেমেন্ট গেটওয়ে API Key সেটআপ করা হয়নি।" },
+        { status: 400 }
+      );
+    }
+
+    const cleanBaseUrl = BASE_URL.replace(/\/$/, "");
 
     const payload = {
       full_name: name || "Customer",
@@ -63,7 +89,6 @@ export async function POST(req: Request) {
       cancel_url: `${origin}/add-money?status=cancelled`,
     };
 
-    // ৫. গেটওয়েতে হিট করা
     const response = await fetch(`${cleanBaseUrl}/checkout-v2`, {
       method: "POST",
       headers: {

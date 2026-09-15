@@ -16,7 +16,8 @@ model User {
   email     String   @unique
   password  String? 
   image     String? 
-  role      String   @default("User") 
+  role      String   @default("User")
+  autoPaymentInvoices AutoPaymentInvoice[]
   orders    Order[]
   createdAt DateTime @default(now())
 }
@@ -308,4 +309,19 @@ model Navigation {
   updatedAt      DateTime       @updatedAt
 
   @@map("navigations")
+}
+
+model AutoPaymentInvoice {
+  id        Int      @id @default(autoincrement())
+  invoiceId String   @unique
+  token     String   @unique
+  amount    Float
+  trxId     String?
+  method    String?
+  status    String   @default("PENDING")
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
