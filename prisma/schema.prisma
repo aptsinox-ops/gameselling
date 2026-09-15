@@ -222,28 +222,33 @@ model SiteSettings {
   footerCard2Link      String?        @default("#")
   footerCard2ImageUrl  String?
 
-  paymentGateway   String? @default("Uddokotapay")
-  paymentBaseUrl   String?
-  paymentApiKey    String?
-  paymentMinAmount String? @default("1")
-  paymentMaxAmount String? @default("99999999")
+  // 💳 Payment Settings
+  paymentGateway       String?        @default("LocalWeb")
+  paymentBaseUrl       String?
+  paymentApiKey        String?
+  paymentMinAmount     String?        @default("1")
+  paymentMaxAmount     String?        @default("99999999")
 
-  isHeroBtn1Visible   Boolean  @default(true)       
-  heroBtn1Subtitle    String?  @default("SUPPORT") 
-  heroBtn1Title       String?  @default("Telegram") 
-  heroBtn1Link        String?                     
-  heroBtn1ImageUrl    String?                     
-  heroBtn1Svg         String?                     
+  // 📱 Local Web / App SMS Reader Settings
+  localWebUsername     String?
+  smsReaderKey         String?
 
-  isHeroBtn2Visible   Boolean  @default(true)      
-  heroBtn2Subtitle    String?  @default("GROUP")    
-  heroBtn2Title       String?  @default("Telegram") 
-  heroBtn2Link        String?                     
-  heroBtn2ImageUrl    String?                     
-  heroBtn2Svg         String?     
+  isHeroBtn1Visible    Boolean        @default(true)       
+  heroBtn1Subtitle     String?        @default("SUPPORT") 
+  heroBtn1Title        String?        @default("Telegram") 
+  heroBtn1Link         String?                     
+  heroBtn1ImageUrl     String?                     
+  heroBtn1Svg          String?                     
 
-  providerBaseUrl    String?
-  providerApiKey     String?
+  isHeroBtn2Visible    Boolean        @default(true)      
+  heroBtn2Subtitle     String?        @default("GROUP")    
+  heroBtn2Title        String?        @default("Telegram") 
+  heroBtn2Link         String?                     
+  heroBtn2ImageUrl     String?                     
+  heroBtn2Svg          String?                     
+
+  providerBaseUrl      String?
+  providerApiKey       String?
 
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt

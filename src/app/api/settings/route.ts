@@ -37,13 +37,17 @@ export async function GET() {
           loginSystem: "OAUTH_MANUAL",
 
           // Payment
-          paymentGateway: "Uddokotapay",
+          paymentGateway: "LocalWeb",
           paymentBaseUrl: null,
           paymentApiKey: null,
           paymentMinAmount: "20",
           paymentMaxAmount: "50000",
 
-          // 🤖 শুধুমাত্র Provider Base URL এবং API Key
+          // Local Web / Custom App
+          localWebUsername: null,
+          smsReaderKey: null,
+
+          // Provider Base URL & API Key
           providerBaseUrl: null,
           providerApiKey: null,
 
@@ -113,13 +117,18 @@ export async function PUT(request: Request) {
       autoPaymentBanner: parseString(body.autoPaymentBanner),
       loginSystem: body.loginSystem ?? "OAUTH_MANUAL",
 
-      paymentGateway: body.paymentGateway ?? "Uddokotapay",
+      // Payment Settings
+      paymentGateway: body.paymentGateway ?? "LocalWeb",
       paymentBaseUrl: parseString(body.paymentBaseUrl),
       paymentApiKey: parseString(body.paymentApiKey),
       paymentMinAmount: parseString(body.paymentMinAmount) || "20",
       paymentMaxAmount: parseString(body.paymentMaxAmount) || "50000",
 
-      // 🤖 শুধুমাত্র Provider Base URL এবং API Key
+      // Local Web / Custom App Settings
+      localWebUsername: parseString(body.localWebUsername),
+      smsReaderKey: parseString(body.smsReaderKey),
+
+      // Provider Base URL and API Key
       providerBaseUrl: parseString(body.providerBaseUrl),
       providerApiKey: parseString(body.providerApiKey),
 

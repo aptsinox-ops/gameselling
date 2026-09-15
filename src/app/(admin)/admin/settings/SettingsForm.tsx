@@ -42,11 +42,15 @@ interface SettingsFormProps {
     autoPaymentBanner?: string | null;
     loginSystem?: "OAUTH" | "MANUAL" | "OAUTH_MANUAL";
 
-    paymentGateway?: "Uddokotapay" | "Piprapay" | "others";
+    paymentGateway?: "LocalWeb" | "Uddokotapay" | "Piprapay" | "others";
     paymentBaseUrl?: string | null;
     paymentApiKey?: string | null;
     paymentMinAmount?: string | number | null;
     paymentMaxAmount?: string | number | null;
+
+    // 📱 Local Web / App Fields
+    localWebUsername?: string | null;
+    smsReaderKey?: string | null;
 
     // 🤖 Provider Credentials
     providerBaseUrl?: string | null;
@@ -124,11 +128,15 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
     loginSystem: initialData?.loginSystem || "OAUTH_MANUAL",
 
     // Payment fields
-    paymentGateway: initialData?.paymentGateway || "Uddokotapay",
+    paymentGateway: initialData?.paymentGateway || "LocalWeb",
     paymentBaseUrl: initialData?.paymentBaseUrl || "",
     paymentApiKey: initialData?.paymentApiKey || "",
     paymentMinAmount: initialData?.paymentMinAmount || "20",
     paymentMaxAmount: initialData?.paymentMaxAmount || "50000",
+
+    // Local Web / Custom App fields
+    localWebUsername: initialData?.localWebUsername || "",
+    smsReaderKey: initialData?.smsReaderKey || "",
 
     // Provider fields
     providerBaseUrl: initialData?.providerBaseUrl || "",
@@ -207,11 +215,14 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         autoPaymentBanner: initialData.autoPaymentBanner || "",
         loginSystem: initialData.loginSystem || "OAUTH_MANUAL",
 
-        paymentGateway: initialData.paymentGateway || "Uddokotapay",
+        paymentGateway: initialData.paymentGateway || "LocalWeb",
         paymentBaseUrl: initialData.paymentBaseUrl || "",
         paymentApiKey: initialData.paymentApiKey || "",
         paymentMinAmount: initialData.paymentMinAmount || "20",
         paymentMaxAmount: initialData.paymentMaxAmount || "50000",
+
+        localWebUsername: initialData.localWebUsername || "",
+        smsReaderKey: initialData.smsReaderKey || "",
 
         // Provider fields
         providerBaseUrl: initialData.providerBaseUrl || "",
@@ -423,7 +434,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         </TabsTrigger>
       </TabsList>
 
-      {/* ==================== GENERAL TAB ==================== */}
+      {/* GENERAL TAB */}
       <TabsContent value="general">
         <GeneralTab
           formData={formData}
@@ -434,7 +445,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== FOOTER SECTIONS TAB ==================== */}
+      {/* FOOTER SECTIONS TAB */}
       <TabsContent value="footerSections">
         <FooterTab
           formData={formData}
@@ -445,7 +456,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== SOCIAL & CONTACT ==================== */}
+      {/* SOCIAL & CONTACT */}
       <TabsContent value="social">
         <SocialTab
           formData={formData}
@@ -456,7 +467,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== THEME TAB ==================== */}
+      {/* THEME TAB */}
       <TabsContent value="theme">
         <ThemeTab
           formData={formData}
@@ -466,7 +477,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== INFORMATIONS TAB ==================== */}
+      {/* INFORMATIONS TAB */}
       <TabsContent value="informations">
         <InformationsTab
           formData={formData}
@@ -476,7 +487,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== PAYMENT TAB ==================== */}
+      {/* PAYMENT TAB */}
       <TabsContent value="payment">
         <PaymentTab
           formData={formData}
@@ -486,7 +497,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== AUTOPROVIDER TAB ==================== */}
+      {/* AUTOPROVIDER TAB */}
       <TabsContent value="autoprovider">
         <AutoProviderTab
           formData={formData}
@@ -496,7 +507,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
         />
       </TabsContent>
 
-      {/* ==================== ADMIN INFO TAB ==================== */}
+      {/* ADMIN INFO TAB */}
       <TabsContent value="adminInfo">
         <AdminInfoTab
           adminForm={adminForm}

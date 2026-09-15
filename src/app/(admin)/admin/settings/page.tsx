@@ -6,7 +6,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 // 🛠️ প্রিজমা ইম্পোর্ট
 import { prisma } from "@/lib/prisma";
 
-// ⚡ Dynamic Data Fetching (ক্যাশ এড়ানোর জন্য)
+// ⚡ Dynamic Data Fetching (ক্যাশ এড়ানোর জন্য)
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -26,11 +26,11 @@ export default async function SettingsPage() {
   const defaultData = {
     siteName: dbSettings?.siteName || "", 
     
-    // ⚡ Auto Provider (এখন ডেটা ফেচ হবে)
+    // ⚡ Auto Provider
     providerBaseUrl: dbSettings?.providerBaseUrl || "",
     providerApiKey: dbSettings?.providerApiKey || "",
 
-    // 🎯 নতুন যোগ করা SEO & Google OAuth ফিল্ডস
+    // 🎯 SEO & Google OAuth ফিল্ডস
     siteTitle: dbSettings?.siteTitle || "",
     siteDescription: dbSettings?.siteDescription || "",
     googleClientId: dbSettings?.googleClientId || "",
@@ -40,17 +40,21 @@ export default async function SettingsPage() {
     bannerUrl: dbSettings?.bannerUrl || "",
     faviconUrl: dbSettings?.faviconUrl || "",
 
-    // 🎯 নতুন যোগ করা ব্যানার ও লগইন সিস্টেম
+    // 🎯 ব্যানার ও লগইন সিস্টেম
     walletPayBanner: dbSettings?.walletPayBanner || "",
     autoPaymentBanner: dbSettings?.autoPaymentBanner || "",
     loginSystem: (dbSettings?.loginSystem as "OAUTH" | "MANUAL" | "OAUTH_MANUAL") || "OAUTH_MANUAL",
 
     // 💳 পেমেন্ট গেটওয়ে সেটিং ডাটা
-    paymentGateway: (dbSettings?.paymentGateway as "Uddokotapay" | "Piprapay" | "others") || "Uddokotapay",
+    paymentGateway: (dbSettings?.paymentGateway as "LocalWeb" | "Uddokotapay" | "Piprapay" | "others") || "LocalWeb",
     paymentBaseUrl: dbSettings?.paymentBaseUrl || "",
     paymentApiKey: dbSettings?.paymentApiKey || "",
     paymentMinAmount: dbSettings?.paymentMinAmount || "20",
     paymentMaxAmount: dbSettings?.paymentMaxAmount || "50000",
+
+    // 📱 Local Web / Custom App Fields
+    localWebUsername: dbSettings?.localWebUsername || "",
+    smsReaderKey: dbSettings?.smsReaderKey || "",
 
     metaKeywords: dbSettings?.metaKeywords || "", 
     noticeText: dbSettings?.noticeText || "", 
