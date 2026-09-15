@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    const gatewayType = settings?.paymentGatewayType || "local";
+    const gatewayType = settings?.paymentGateway || "local";
 
     // 🟢 LOCAL / INTERNAL GATEWAY LOGIC
     if (gatewayType === "local") {
