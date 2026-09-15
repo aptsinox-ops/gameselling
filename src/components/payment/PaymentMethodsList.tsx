@@ -16,7 +16,6 @@ interface PaymentMethodsProps {
   onSelectMethod: (id: string) => void;
   onPay: () => void;
   loading: boolean;
-  primaryColor?: string;
 }
 
 export default function PaymentMethodsList({
@@ -25,22 +24,20 @@ export default function PaymentMethodsList({
   onSelectMethod,
   onPay,
   loading,
-  primaryColor = "#2596be",
 }: PaymentMethodsProps) {
   const [activeTab, setActiveTab] = useState<"ALL" | "MFS" | "MORE">("ALL");
 
-  // ভবিষ্যতে পেমেন্ট মেথড ডাইনামিক বা আনলিমিটেড এড করার জন্য এই এরে তৈরি করা হয়েছে
   const providers: PaymentProviderItem[] = [
-    { id: "bangla_qr", name: "Bangla QR", category: "MFS", logo: "https://uddoktapay.com/assets/images/bangla_qr.png", active: true },
-    { id: "bkash", name: "Bkash", category: "MFS", logo: "https://uddoktapay.com/assets/images/bkash.png", active: true },
-    { id: "nagad", name: "Nagad", category: "MFS", logo: "https://uddoktapay.com/assets/images/nagad.png", active: true },
-    { id: "rocket", name: "Rocket", category: "MFS", logo: "https://uddoktapay.com/assets/images/rocket.png", active: true },
-    { id: "upay", name: "Upay", category: "MFS", logo: "https://uddoktapay.com/assets/images/upay.png", active: true },
-    { id: "cellfin", name: "Cellfin Personal", category: "MFS", logo: "https://uddoktapay.com/assets/images/cellfin.png", active: true },
-    { id: "okwallet", name: "Ok Wallet", category: "MFS", logo: "https://uddoktapay.com/assets/images/okwallet.png", active: true },
-    { id: "pathaopay", name: "Pathao Pay", category: "MFS", logo: "https://uddoktapay.com/assets/images/pathaopay.png", active: true },
-    { id: "tap", name: "Tap", category: "MFS", logo: "https://uddoktapay.com/assets/images/tap.png", active: true },
-    { id: "paddle", name: "Card & Paypal", category: "CARD", logo: "https://uddoktapay.com/assets/images/paddle.png", active: true },
+    { id: "bangla_qr", name: "Bangla QR", category: "MFS", logo: "/banglaqr.png", active: true },
+    { id: "bkash", name: "Bkash", category: "MFS", logo: "/bkashpersonal.png", active: true },
+    { id: "nagad", name: "Nagad", category: "MFS", logo: "/nagadpersonal.png", active: true },
+    { id: "rocket", name: "Rocket", category: "MFS", logo: "/rocketpersonal.png", active: true },
+    { id: "upay", name: "Upay", category: "MFS", logo: "/upaypersonal.png", active: true },
+    { id: "cellfin", name: "Cellfin Personal", category: "MFS", logo: "/cellfinpersonal.png", active: true },
+    { id: "okwallet", name: "Ok Wallet", category: "MFS", logo: "/okwalletpersonal.png", active: true },
+    { id: "pathaopay", name: "Pathao Pay", category: "MFS", logo: "/pathaopaypersonal.png", active: true },
+    { id: "tap", name: "Tap", category: "MFS", logo: "/tappersonal.png", active: true },
+    { id: "paddle", name: "Card & Paypal", category: "CARD", logo: "/paddle.png", active: true },
   ];
 
   const filteredProviders = providers.filter((p) => {
@@ -54,21 +51,20 @@ export default function PaymentMethodsList({
   return (
     <div className="flex flex-col h-full justify-between">
       <div>
-        {/* Header Title */}
-        <h2 className="font-['Space_Grotesk'] font-bold text-[18px] leading-[28px] text-[#111111] mb-4">
+        {/* Header Title (Hidden on Mobile) */}
+        <h2 className="hidden md:block font-['Space_Grotesk'] font-bold text-[18px] leading-[28px] text-[#111111] mb-4">
           Payment Options
         </h2>
 
         {/* Tab Filters */}
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center gap-2 mb-4 md:mb-5">
           <button
             type="button"
             onClick={() => setActiveTab("ALL")}
-            style={activeTab === "ALL" ? { backgroundColor: `${primaryColor}15`, color: primaryColor, borderColor: primaryColor } : {}}
             className={`px-3.5 py-1.5 rounded-lg border text-[13px] font-inter font-semibold transition flex items-center gap-1.5 ${
               activeTab === "ALL"
-                ? "border-[#2596be]"
-                : "border-gray-200 text-[#4D4D4D] bg-white hover:bg-gray-50"
+                ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                : "border-[#ededed] text-[#4D4D4D] bg-white hover:bg-gray-50"
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,11 +76,10 @@ export default function PaymentMethodsList({
           <button
             type="button"
             onClick={() => setActiveTab("MFS")}
-            style={activeTab === "MFS" ? { backgroundColor: `${primaryColor}15`, color: primaryColor, borderColor: primaryColor } : {}}
             className={`px-3.5 py-1.5 rounded-lg border text-[13px] font-inter font-semibold transition flex items-center gap-1.5 ${
               activeTab === "MFS"
-                ? "border-[#2596be]"
-                : "border-gray-200 text-[#4D4D4D] bg-white hover:bg-gray-50"
+                ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                : "border-[#ededed] text-[#4D4D4D] bg-white hover:bg-gray-50"
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,11 +91,10 @@ export default function PaymentMethodsList({
           <button
             type="button"
             onClick={() => setActiveTab("MORE")}
-            style={activeTab === "MORE" ? { backgroundColor: `${primaryColor}15`, color: primaryColor, borderColor: primaryColor } : {}}
             className={`px-3.5 py-1.5 rounded-lg border text-[13px] font-inter font-semibold transition flex items-center gap-1.5 ${
               activeTab === "MORE"
-                ? "border-[#2596be]"
-                : "border-gray-200 text-[#4D4D4D] bg-white hover:bg-gray-50"
+                ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                : "border-[#ededed] text-[#4D4D4D] bg-white hover:bg-gray-50"
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,8 +104,8 @@ export default function PaymentMethodsList({
           </button>
         </div>
 
-        {/* Payment Grid */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 max-h-[340px] overflow-y-auto pr-1">
+        {/* Payment Grid - Mobile 2 cols, PC 3 cols */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {filteredProviders.map((p) => {
             const isSelected = selectedMethod === p.id;
             return (
@@ -119,19 +113,30 @@ export default function PaymentMethodsList({
                 key={p.id}
                 type="button"
                 onClick={() => onSelectMethod(p.id)}
-                style={isSelected ? { borderColor: primaryColor, backgroundColor: `${primaryColor}08` } : {}}
-                className={`flex flex-col items-center justify-center p-3 rounded-lg border transition duration-150 ${
+                className={`flex flex-col items-center justify-between rounded-xl border transition duration-150 cursor-pointer overflow-hidden ${
                   isSelected
-                    ? "border-2"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                    ? "border-2 border-blue-600 bg-blue-50/20 shadow-xs"
+                    : "border-[#ededed] bg-white hover:border-gray-300 hover:shadow-xs"
                 }`}
               >
-                <div className="h-8 flex items-center justify-center mb-1.5">
-                  <img src={p.logo} alt={p.name} className="max-h-7 object-contain" />
+                {/* Logo Section */}
+                <div className="h-16 w-full flex items-center justify-center p-2.5">
+                  <img
+                    src={p.logo}
+                    alt={p.name}
+                    className="max-h-10 sm:max-h-11 w-auto max-w-full object-contain"
+                  />
                 </div>
-                <span className="font-inter font-medium text-[12px] leading-[16px] text-[#333333] text-center line-clamp-1">
-                  {p.name}
-                </span>
+
+                {/* Divider Line */}
+                <hr className="w-full border-t border-[#ededed] m-0" />
+
+                {/* Text Section */}
+                <div className="w-full py-2 px-1 text-center bg-white">
+                  <span className="font-inter font-medium text-[12px] sm:text-[13px] text-[#333333] line-clamp-1">
+                    {p.name}
+                  </span>
+                </div>
               </button>
             );
           })}
@@ -144,8 +149,11 @@ export default function PaymentMethodsList({
           type="button"
           onClick={onPay}
           disabled={loading || !selectedMethod}
-          style={{ backgroundColor: primaryColor }}
-          className="w-full text-white font-inter font-bold text-[15px] py-3.5 rounded-lg shadow-sm hover:opacity-95 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full font-inter font-semibold text-[15px] py-3.5 rounded-xl transition duration-200 ${
+            selectedMethod && !loading
+              ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-sm"
+              : "bg-[#e2e8f0] text-gray-500 cursor-not-allowed"
+          }`}
         >
           {loading ? "Processing Payment..." : `Pay ${amount} BDT`}
         </button>
